@@ -527,4 +527,78 @@
                 return;
             }
 
-            if (!gpsLat ||
+            if (!gpsLat || !gpsLng) {
+                alert('Aguardando o sinal do GPS do celular. Certifique-se de que a localização está ativada.');
+                return;
+            }
+
+            let pontoAtualLat = gpsLat;
+            let pontoAtualLng = gpsLng;
+
+            let naoVisitados = [...listaParadas];
+            let otimizadas = [];
+
+            while (naoVisitados.length > 0) {
+                let maisProximoIndex = 0;
+                let menorDistancia = Infinity;
+
+                for (let i = 0; i < naoVisitados.length; i++) {
+                    let p = naoVisitados[i];
+                    let dist = Math.pow(p.lat - pontoAtualLat, 2) + Math.pow(p.lng - pontoAtualLng, 2);
+                    if (dist < menorDistancia) {
+                        menorDistancia = dist;
+                        maisProximoIndex = i;
+                    }
+                }
+
+                let proximoPonto = naoVisitados.splice(maisProximoIndex, 1)[0];
+                otimizadas.push(proximoPonto);
+                
+                pontoAtualLat = proximoPonto.lat;
+                pontoAtualLng = proximoPonto.lng;
+            }
+
+            listaParadas = otimizadas;
+            indiceAtual = 0;
+            atualizarInterface();
+            alert('Circuito otimizado perfeitamente a partir da sua posição de GPS atual!');
+        }
+
+        function gerarPDF() {
+            if (listaParadas.length === 0) return;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("ROTA E MATO - Relatorio de Circuito Otimizado", 14, 20);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text(`Total de Paradas: ${listaParadas.length}`, 14, 28);
+            doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 34);
+
+            let y = 45;
+            listaParadas.forEach((item, index) => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.setFont("helvetica", "bold");
+                doc.text(`Parada ${index + 1} [${item.status}]:`, 14, y);
+                doc.setFont("helvetica", "normal");
+                doc.text(`Endereco: ${item.endereco}`, 32, y);
+                doc.text(`Pacote SPX: ${item.spx}`, 32, y + 5);
+
+                doc.setLineDash([1, 1], 0);
+                doc.line(14, y + 8, 196, y + 8);
+                doc.setLineDash([]);
+                y += 14;
+            });
+
+            doc.save("circuito-otimizado-spx.pdf");
+        }
+    </script>
+</body>
+</html>
