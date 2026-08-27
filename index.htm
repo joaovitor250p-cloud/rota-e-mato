@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rota e Mato - GPS Ativo</title>
+    <title>Rota e Mato - GPS Real</title>
     <!-- SheetJS para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- jsPDF para gerar o PDF -->
@@ -76,11 +76,11 @@
             background: #090d16;
         }
 
-        /* Painel Flexível com Área de Rolagem Direitinho */
+        /* Container principal inferior que segura tudo sem vazar */
         .bottom-sheet {
             flex: 1;
             background: var(--surface);
-            padding: 14px;
+            padding: 12px;
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
             box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.5);
@@ -88,14 +88,13 @@
             display: flex;
             flex-direction: column;
             margin-top: -15px;
-            position: relative;
             overflow: hidden;
         }
 
         .panel-scrollable {
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 10px;
+            padding-bottom: 8px;
         }
 
         .slide-left { transform: translateX(-30px); opacity: 0; transition: transform 0.15s, opacity 0.15s; }
@@ -107,7 +106,7 @@
             padding: 8px;
             border-radius: 10px;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .upload-area input {
@@ -137,7 +136,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .action-btn {
@@ -181,13 +180,15 @@
         .detail-val { font-weight: 600; color: var(--text-dark); }
         .status-badge-tag { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
 
-        /* Barra de Ações Globais Fixa na Parte Inferior do Painel */
+        /* Barra de Ações Fixa e Sempre Visível no Rodapé */
         .global-actions {
             display: flex;
             gap: 8px;
             padding-top: 8px;
             border-top: 1px solid var(--border);
             background: var(--surface);
+            margin-top: auto;
+            flex-shrink: 0;
         }
 
         .btn-global {
@@ -250,7 +251,7 @@
 
     <div class="top-bar">
         <div class="route-title" id="info-header-titulo">ROTA E MATO</div>
-        <div class="route-time" id="info-tempo" onclick="centralizarNoGPS()">🎯 GPS</div>
+        <div class="route-time" id="info-tempo" onclick="forcarCapturaGPS()">🎯 Obter GPS</div>
     </div>
 
     <div id="map"></div>
@@ -262,13 +263,13 @@
             </div>
 
             <div id="parada-ativa-container">
-                <div class="empty-state">Selecione a planilha XLSX. O app vai rastrear sua posição via GPS. Deslize para os lados para navegar entre as paradas.</div>
+                <div class="empty-state">Clique em "🎯 Obter GPS" para travar sua localização, depois carregue a planilha XLSX.</div>
             </div>
         </div>
 
-        <!-- Botões fixos sempre visíveis no rodapé do painel -->
-        <div class="global-actions" id="botoes-globais" style="display: none;">
-            <button class="btn-global btn-opt" onclick="otimizarRotaCircuito()">⚡ Otimizar</button>
+        <!-- Botões fixos agora presos no rodapé inferior do painel -->
+        <div class="global-actions" id="botoes-globais" style="display: flex;">
+            <button class="btn-global btn-opt" onclick="otimizarRotaCircuito()">⚡ Otimizar do GPS</button>
             <button class="btn-global btn-pdf" onclick="gerarPDF()">📄 PDF</button>
             <button class="btn-global btn-install" id="btnInstallApp" onclick="instalarApp()">📲 Instalar</button>
         </div>
@@ -288,37 +289,36 @@
         let indiceAtual = 0;
         let gpsLat = null;
         let gpsLng = null;
-        let primeiraCentralizacao = true;
         let deferredPrompt = null;
 
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(position => {
-                gpsLat = position.coords.latitude;
-                gpsLng = position.coords.longitude;
-                atualizarMarcadorGPS();
-                
-                if (primeiraCentralizacao) {
-                    map.setView([gpsLat, gpsLng], 15, { animate: true });
-                    primeiraCentralizacao = false;
-                }
-            }, err => {
-                console.warn("GPS pendente", err.message);
-            }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+        function forcarCapturaGPS() {
+            if (navigator.geolocation) {
+                document.getElementById('info-tempo').innerText = "Buscando...";
+                navigator.geolocation.getCurrentPosition(position => {
+                    gpsLat = position.coords.latitude;
+                    gpsLng = position.coords.longitude;
+                    atualizarMarcadorGPS();
+                    map.setView([gpsLat, gpsLng], 16, { animate: true });
+                    document.getElementById('info-tempo').innerText = "🎯 GPS Ativo";
+                    alert("Localização obtida com sucesso!");
+                }, err => {
+                    alert("Erro ao obter GPS. Verifique se a localização está ativada.");
+                    document.getElementById('info-tempo').innerText = "⚠️ Erro GPS";
+                }, { enableHighAccuracy: true, timeout: 15000 });
+            } else {
+                alert("Geolocalização não suportada.");
+            }
         }
+
+        window.onload = function() {
+            forcarCapturaGPS();
+        };
 
         function atualizarMarcadorGPS() {
             if (!gpsLat || !gpsLng) return;
             if (window.gpsMarker) map.removeLayer(window.gpsMarker);
             let gpsIcon = L.divIcon({ className: 'gps-user-marker', iconSize: [18, 18] });
             window.gpsMarker = L.marker([gpsLat, gpsLng], { icon: gpsIcon }).addTo(map).bindPopup("<b>Você está aqui</b>");
-        }
-
-        function centralizarNoGPS() {
-            if (gpsLat && gpsLng) {
-                map.flyTo([gpsLat, gpsLng], 16, { animate: true });
-            } else {
-                alert("Aguardando sinal do GPS...");
-            }
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -395,7 +395,6 @@
 
                     indiceAtual = 0;
                     atualizarInterface();
-                    document.getElementById('botoes-globais').style.display = 'flex';
                 } catch (err) {
                     console.error(err);
                     alert('Erro ao processar a planilha.');
@@ -528,8 +527,14 @@
                 return;
             }
 
-            let pontoAtualLat = gpsLat !== null ? gpsLat : listaParadas[0].lat;
-            let pontoAtualLng = gpsLng !== null ? gpsLng : listaParadas[0].lng;
+            if (gpsLat === null || gpsLng === null) {
+                forcarCapturaGPS();
+                alert('Aguardando o sinal do GPS. Certifique-se de que a localização está ativada.');
+                return;
+            }
+
+            let pontoAtualLat = gpsLat;
+            let pontoAtualLng = gpsLng;
 
             let naoVisitados = [...listaParadas];
             let otimizadas = [];
@@ -556,7 +561,7 @@
             listaParadas = otimizadas;
             indiceAtual = 0;
             atualizarInterface();
-            alert('Circuito otimizado a partir da sua posição!');
+            alert('Circuito otimizado perfeitamente a partir da sua posição de GPS atual!');
         }
 
         function gerarPDF() {
