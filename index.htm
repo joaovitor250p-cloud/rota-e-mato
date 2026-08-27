@@ -15,14 +15,14 @@
 
     <style>
         :root {
-            --bg-main: #f8fafc;
-            --surface: #ffffff;
+            --bg-main: #0f172a;
+            --surface: #1e293b;
             --primary: #2563eb;
             --success: #16a34a;
             --danger: #dc2626;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
+            --text-dark: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
         }
 
         * {
@@ -59,18 +59,19 @@
         }
 
         .route-time {
-            background: #f1f5f9;
+            background: #0f172a;
             padding: 6px 10px;
             border-radius: 8px;
             font-size: 12px;
             font-weight: 700;
-            color: var(--text-dark);
+            color: var(--success);
+            border: 1px solid var(--border);
         }
 
         #map {
             width: 100%;
             height: 42vh;
-            background: #e2e8f0;
+            background: #1e293b;
         }
 
         .bottom-sheet {
@@ -79,7 +80,7 @@
             padding: 16px;
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
             z-index: 1000;
             display: flex;
             flex-direction: column;
@@ -89,18 +90,11 @@
             transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
         }
 
-        /* Classes para animação de transição suave ao deslizar */
-        .slide-left {
-            transform: translateX(-30px);
-            opacity: 0;
-        }
-        .slide-right {
-            transform: translateX(30px);
-            opacity: 0;
-        }
+        .slide-left { transform: translateX(-30px); opacity: 0; }
+        .slide-right { transform: translateX(30px); opacity: 0; }
 
         .upload-area {
-            background: #f8fafc;
+            background: #0f172a;
             border: 2px dashed var(--border);
             padding: 12px;
             border-radius: 12px;
@@ -139,7 +133,7 @@
         }
 
         .action-btn {
-            background: #f8fafc;
+            background: #0f172a;
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 10px 4px;
@@ -154,27 +148,10 @@
             color: var(--text-dark);
         }
 
-        .action-btn.primary {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        .action-btn.success {
-            background: var(--success);
-            color: white;
-            border-color: var(--success);
-        }
-
-        .action-btn.danger {
-            background: var(--danger);
-            color: white;
-            border-color: var(--danger);
-        }
-
-        .action-btn span {
-            font-size: 16px;
-        }
+        .action-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .action-btn.success { background: var(--success); color: white; border-color: var(--success); }
+        .action-btn.danger { background: var(--danger); color: white; border-color: var(--danger); }
+        .action-btn span { font-size: 16px; }
 
         .details-list {
             border-top: 1px solid var(--border);
@@ -187,37 +164,21 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid var(--border);
             font-size: 13px;
         }
 
-        .detail-row:last-child {
-            border-bottom: none;
-        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: var(--text-muted); display: flex; align-items: center; gap: 8px; }
+        .detail-val { font-weight: 600; color: var(--text-dark); }
+        .status-badge-tag { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
 
-        .detail-label {
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .detail-val {
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .status-badge-tag {
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-
+        /* Barra de botões globais fixa embaixo para aparecer sempre no celular */
         .global-actions {
             display: flex;
             gap: 10px;
-            margin-top: auto;
+            margin-top: 12px;
+            padding-bottom: 10px;
         }
 
         .btn-global {
@@ -229,6 +190,7 @@
             border: none;
             cursor: pointer;
             text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
 
         .btn-opt { background: var(--primary); color: white; }
@@ -241,31 +203,33 @@
             font-size: 13px;
         }
 
+        /* Marcadores Circuit Modernos */
         .circuit-marker {
             background: #1e293b;
             color: white;
-            border: 2px solid white;
+            border: 2px solid #38bdf8;
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
             font-size: 12px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
-        .circuit-marker.entregue { background: var(--success); }
-        .circuit-marker.nao-entregue { background: var(--danger); }
+        .circuit-marker.entregue { background: var(--success); border-color: #fff; }
+        .circuit-marker.nao-entregue { background: var(--danger); border-color: #fff; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <div class="route-title" id="info-header-titulo">Carregue sua rota</div>
+        <div class="route-title" id="info-header-titulo">ROTA E MATO</div>
         <div class="route-time" id="info-tempo">-- km | -- min</div>
     </div>
 
+    <!-- Mapa Fluido Estilo Circuit (CartoDB Dark Basemap) -->
     <div id="map"></div>
 
     <div class="bottom-sheet" id="painel-conteudo">
@@ -274,7 +238,7 @@
         </div>
 
         <div id="parada-ativa-container">
-            <div class="empty-state">Nenhuma planilha carregada. Selecione o arquivo XLSX para começar. Deslize para os lados para navegar entre as paradas.</div>
+            <div class="empty-state">Selecione o arquivo XLSX da rota. Deslize para os lados para alternar entre as paradas.</div>
         </div>
 
         <div class="global-actions" id="botoes-globais" style="display: none;">
@@ -284,11 +248,14 @@
     </div>
 
     <script>
+        // Inicializa o mapa com estilo escuro e fluido idêntico ao Circuit
         let map = L.map('map', { zoomControl: false }).setView([-23.5505, -46.6333], 13);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap'
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20
         }).addTo(map);
 
         let markersLayer = L.layerGroup().addTo(map);
@@ -309,12 +276,10 @@
             if (listaParadas.length === 0) return;
             let diferenca = touchEndX - touchStartX;
             if (diferenca > 50) {
-                // Deslizou para a direita -> Anterior
                 if (indiceAtual > 0) {
                     animarTrocaParada('direita', () => { indiceAtual--; });
                 }
             } else if (diferenca < -50) {
-                // Deslizou para a esquerda -> Próxima
                 if (indiceAtual < listaParadas.length - 1) {
                     animarTrocaParada('esquerda', () => { indiceAtual++; });
                 }
@@ -404,8 +369,8 @@
                 let customIcon = L.divIcon({
                     className: 'custom-div-icon',
                     html: `<div class="${className}">${idx + 1}</div>`,
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
                 });
 
                 let marker = L.marker([p.lat, p.lng], { icon: customIcon }).bindPopup(`<b>Parada ${idx + 1}</b><br>${p.endereco}`);
@@ -422,16 +387,15 @@
             if (listaParadas.length === 0) return;
             let p = listaParadas[indiceAtual];
 
-            // Faz o mapa dar um zoom suave direto na parada ativa
             map.flyTo([p.lat, p.lng], 16, { animate: true, duration: 0.8 });
 
             document.getElementById('info-header-titulo').innerText = `${indiceAtual + 1}/${listaParadas.length} paradas`;
 
             const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}`;
 
-            let statusHtml = `<span class="status-badge-tag" style="background:#f1f5f9; color:#64748b;">Pendente</span>`;
-            if(p.status === 'Entregue') statusHtml = `<span class="status-badge-tag" style="background:rgba(22,163,74,0.1); color:var(--success);">Entregue</span>`;
-            if(p.status === 'Não Entregue') statusHtml = `<span class="status-badge-tag" style="background:rgba(220,38,38,0.1); color:var(--danger);">Não Entregue</span>`;
+            let statusHtml = `<span class="status-badge-tag" style="background:#334155; color:#94a3b8;">Pendente</span>`;
+            if(p.status === 'Entregue') statusHtml = `<span class="status-badge-tag" style="background:rgba(22,163,74,0.2); color:#4ade80;">Entregue</span>`;
+            if(p.status === 'Não Entregue') statusHtml = `<span class="status-badge-tag" style="background:rgba(220,38,38,0.2); color:#f87171;">Não Entregue</span>`;
 
             const container = document.getElementById('parada-ativa-container');
             container.innerHTML = `
