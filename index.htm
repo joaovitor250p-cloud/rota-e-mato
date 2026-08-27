@@ -85,6 +85,18 @@
             flex-direction: column;
             overflow-y: auto;
             margin-top: -15px;
+            position: relative;
+            transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+        }
+
+        /* Classes para animação de transição suave ao deslizar */
+        .slide-left {
+            transform: translateX(-30px);
+            opacity: 0;
+        }
+        .slide-right {
+            transform: translateX(30px);
+            opacity: 0;
         }
 
         .upload-area {
@@ -119,7 +131,6 @@
             font-weight: 500;
         }
 
-        /* 3 Botões de Ação Direta */
         .action-buttons-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -230,7 +241,6 @@
             font-size: 13px;
         }
 
-        /* Marcador Circuito Customizado */
         .circuit-marker {
             background: #1e293b;
             color: white;
@@ -264,7 +274,7 @@
         </div>
 
         <div id="parada-ativa-container">
-            <div class="empty-state">Nenhuma planilha carregada. Selecione o arquivo XLSX para começar. Deslize para os lados para navegar entre as paradas após carregar.</div>
+            <div class="empty-state">Nenhuma planilha carregada. Selecione o arquivo XLSX para começar. Deslize para os lados para navegar entre as paradas.</div>
         </div>
 
         <div class="global-actions" id="botoes-globais" style="display: none;">
@@ -285,7 +295,6 @@
         let listaParadas = [];
         let indiceAtual = 0;
 
-        // Controle de Swipe (Deslizar para os lados no painel)
         let touchStartX = 0;
         let touchEndX = 0;
         
@@ -300,18 +309,25 @@
             if (listaParadas.length === 0) return;
             let diferenca = touchEndX - touchStartX;
             if (diferenca > 50) {
-                // Deslizou para a direita -> Parada Anterior
+                // Deslizou para a direita -> Anterior
                 if (indiceAtual > 0) {
-                    indiceAtual--;
-                    renderizarParadaAtiva();
+                    animarTrocaParada('direita', () => { indiceAtual--; });
                 }
             } else if (diferenca < -50) {
-                // Deslizou para a esquerda -> Próxima Parada
+                // Deslizou para a esquerda -> Próxima
                 if (indiceAtual < listaParadas.length - 1) {
-                    indiceAtual++;
-                    renderizarParadaAtiva();
+                    animarTrocaParada('esquerda', () => { indiceAtual++; });
                 }
             }
+        }
+
+        function animarTrocaParada(direcao, callback) {
+            painelEl.classList.add(direcao === 'esquerda' ? 'slide-left' : 'slide-right');
+            setTimeout(() => {
+                callback();
+                renderizarParadaAtiva();
+                painelEl.classList.remove('slide-left', 'slide-right');
+            }, 200);
         }
 
         function processarPlanilha() {
@@ -334,7 +350,7 @@
                             endereco: row['Destination Address'] || row['Endereco'] || Object.values(row)[0] || 'Endereço não informado',
                             spx: row['SPX TN'] || row['Pacote'] || 'SPX-N/A',
                             bairro: row['Bairro'] || 'São Paulo',
-                            status: 'Pendente', // Pendente, Entregue, Nao Entregue
+                            status: 'Pendente',
                             lat: parseFloat(row['Latitude']) || (-23.5505 + (Math.random() * 0.04 - 0.02)),
                             lng: parseFloat(row['Longitude']) || (-46.6333 + (Math.random() * 0.04 - 0.02))
                         };
@@ -362,7 +378,6 @@
             }
             if(distanciaTotalKm === 0 && listaParadas.length > 0) distanciaTotalKm = listaParadas.length * 1.2;
 
-            // 3 minutos de espera por parada fixa + tempo de deslocamento
             let tempoDeslocamentoMin = Math.round((distanciaTotalKm / 30) * 60);
             let tempoEsperaMin = listaParadas.length * 3;
             let tempoTotalMin = tempoDeslocamentoMin + tempoEsperaMin;
@@ -397,10 +412,6 @@
                 markersLayer.addLayer(marker);
             });
 
-            if (bounds.length > 0) {
-                map.fitBounds(bounds, { padding: [40, 40] });
-            }
-
             let metricas = calcularMetricasRota();
             document.getElementById('info-tempo').innerText = `${metricas.km} km | ${metricas.min} min`;
 
@@ -410,6 +421,9 @@
         function renderizarParadaAtiva() {
             if (listaParadas.length === 0) return;
             let p = listaParadas[indiceAtual];
+
+            // Faz o mapa dar um zoom suave direto na parada ativa
+            map.flyTo([p.lat, p.lng], 16, { animate: true, duration: 0.8 });
 
             document.getElementById('info-header-titulo').innerText = `${indiceAtual + 1}/${listaParadas.length} paradas`;
 
@@ -459,11 +473,11 @@
             if (listaParadas.length === 0) return;
             listaParadas[indiceAtual].status = novoStatus;
             
-            // Avança automaticamente para a próxima parada se houver
             if (indiceAtual < listaParadas.length - 1) {
-                indiceAtual++;
+                animarTrocaParada('esquerda', () => { indiceAtual++; });
+            } else {
+                atualizarInterface();
             }
-            atualizarInterface();
         }
 
         function otimizarRota() {
