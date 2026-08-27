@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rota e Mato</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            padding: 16px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 22px;
+            color: #4CAF50;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        p.subtitle {
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #1e1e1e;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: #2d2d2d;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            padding: 10px;
+            font-size: 14px;
+            resize: vertical;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        button {
+            width: 100%;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .stop-item {
+            background: #252525;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #4CAF50;
+        }
+        .stop-info {
+            flex: 1;
+            margin-right: 10px;
+        }
+        .stop-num {
+            font-size: 11px;
+            color: #4CAF50;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .stop-address {
+            font-size: 14px;
+            color: #fff;
+            margin-top: 2px;
+        }
+        .nav-btn {
+            background: #2196F3;
+            color: white;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        .nav-btn:hover {
+            background: #1976D2;
+        }
+        #lista-paradas {
+            margin-top: 15px;
+        }
+        .empty-state {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Rota e Mato</h1>
+        <p class="subtitle">Otimização rápida de entregas</p>
+
+        <div class="card">
+            <label for="enderecos">Cole os endereços (um por linha):</label>
+            <textarea id="enderecos" placeholder="Ex: Rua das Flores, 123&#10;Avenida Brasil, 1500&#10;Praça da Sé, 45"></textarea>
+            <button onclick="gerarRota()" style="margin-top: 12px;">Organizar Rota</button>
+        </div>
+
+        <div class="card">
+            <label>Paradas da Rota:</label>
+            <div id="lista-paradas">
+                <div class="empty-state">Nenhuma rota gerada ainda. Cole os endereços acima.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function gerarRota() {
+            const texto = document.getElementById('enderecos').value.trim();
+            const container = document.getElementById('lista-paradas');
+            
+            if (!texto) {
+                alert('Cole pelo menos um endereço!');
+                return;
+            }
+
+            // Separa os endereços por quebra de linha
+            let linhas = texto.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            container.innerHTML = '';
+
+            linhas.forEach((endereco, index) => {
+                const numeroParada = index + 1;
+                // Cria o link para abrir direto no Google Maps com o endereço formatado
+                const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+
+                const itemHTML = `
+                    <div class="stop-item">
+                        <div class="stop-info">
+                            <div class="stop-num">Parada ${numeroParada}</div>
+                            <div class="stop-address">${endereco}</div>
+                        </div>
+                        <a href="${urlMaps}" target="_blank" class="nav-btn">Navegar</a>
+                    </div>
+                `;
+                container.innerHTML += itemHTML;
+            });
+        }
+    </script>
+
+</body>
+</html>
