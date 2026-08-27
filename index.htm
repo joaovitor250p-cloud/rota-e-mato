@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota e Mato - SPX</title>
-    <!-- Importando a biblioteca PDF.js para ler arquivos PDF no navegador -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        // Configurando o worker do PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
+    <title>Rota e Mato - Excel</title>
+    <!-- Importando a biblioteca SheetJS para ler arquivos XLSX no navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -135,85 +131,97 @@
 
     <div class="container">
         <h1>Rota e Mato</h1>
-        <p class="subtitle">Leitor de PDF & Otimizador SPX</p>
+        <p class="subtitle">Leitor de Planilha Excel (XLSX)</p>
 
         <div class="card">
-            <label for="pdfFile">Selecione o PDF da SPX:</label>
-            <input type="file" id="pdfFile" accept=".pdf">
-            <button onclick="processarPDF()">Ler PDF e Gerar Rota</button>
+            <label for="excelFile">Selecione o arquivo XLSX:</label>
+            <input type="file" id="excelFile" accept=".xlsx, .xls">
+            <button onclick="processarExcel()">Ler Planilha e Gerar Rota</button>
         </div>
 
         <div class="card">
-            <label>Paradas Identificadas:</label>
+            <label>Paradas da Planilha:</label>
             <div id="lista-paradas">
-                <div class="empty-state">Nenhum PDF carregado ainda.</div>
+                <div class="empty-state">Nenhuma planilha carregada ainda.</div>
             </div>
         </div>
     </div>
 
     <script>
-        async function processarPDF() {
-            const fileInput = document.getElementById('pdfFile');
+        function processarExcel() {
+            const fileInput = document.getElementById('excelFile');
             const container = document.getElementById('lista-paradas');
 
             if (fileInput.files.length === 0) {
-                alert('Por favor, selecione um arquivo PDF!');
+                alert('Por favor, selecione um arquivo Excel (.xlsx)!');
                 return;
             }
 
             const file = fileInput.files[0];
-            container.innerHTML = '<div class="loading">Lendo PDF da SPX...</div>';
+            container.innerHTML = '<div class="loading">Lendo planilha...</div>';
 
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                let textoCompleto = '';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
 
-                // Extrai o texto de todas as páginas do PDF
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const textosPagina = textContent.items.map(item => item.str);
-                    textoCompleto += textosPagina.join(' ') + '\n';
+                    // Pega a primeira aba da planilha
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    // Converte a aba em uma lista de objetos (linhas)
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    exibirParadas(jsonRows);
+                } catch (error) {
+                    console.error(error);
+                    container.innerHTML = '<div class="empty-state" style="color: #ff5252;">Erro ao ler o arquivo Excel.</div>';
                 }
-
-                // Processa o texto extraído para achar endereços ou blocos relevantes da SPX
-                gerarParadasDoTexto(textoCompleto);
-
-            } catch (error) {
-                console.error(error);
-                container.innerHTML = '<div class="empty-state" style="color: #ff5252;">Erro ao ler o PDF. Verifique se o arquivo é válido.</div>';
-            }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
-        function gerarParadasDoTexto(texto) {
+        function exibirParadas(linhas) {
             const container = document.getElementById('lista-paradas');
             container.innerHTML = '';
 
-            // Limpa quebras excessivas e divide por linhas ou blocos lógicos
-            let linhas = texto.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+            // Filtra linhas vazias
+            const linhasValidas = linhas.filter(row => row && row.length > 0);
 
-            if (linhas.length === 0) {
-                container.innerHTML = '<div class="empty-state">Nenhum endereço encontrado neste PDF.</div>';
+            if (linhasValidas.length === 0) {
+                container.innerHTML = '<div class="empty-state">A planilha está vazia.</div>';
                 return;
             }
 
-            // Exibindo as linhas encontradas como paradas (futuramente refinaremos o filtro para focar exatamente no padrão de endereço da SPX)
-            linhas.forEach((endereco, index) => {
-                const numeroParada = index + 1;
-                const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+            let contadorParadas = 0;
+
+            // Percorre as linhas da planilha (pulando o cabeçalho se houver, ou lendo tudo)
+            linhasValidas.forEach((row, rowIndex) => {
+                // Junta todas as colunas da linha em um texto só para garantir que achamos o endereço
+                let textoLinha = row.map(cell => String(cell || '')).join(' - ');
+                
+                // Ignora linhas muito curtas (cabeçalhos ou códigos isolados)
+                if (textoLinha.trim().length < 5) return;
+
+                contadorParadas++;
+                const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(textoLinha)}`;
 
                 const itemHTML = `
                     <div class="stop-item">
                         <div class="stop-info">
-                            <div class="stop-num">Parada ${numeroParada}</div>
-                            <div class="stop-address">${endereco}</div>
+                            <div class="stop-num">Parada ${contadorParadas}</div>
+                            <div class="stop-address">${textoLinha}</div>
                         </div>
                         <a href="${urlMaps}" target="_blank" class="nav-btn">Navegar</a>
                     </div>
                 `;
                 container.innerHTML += itemHTML;
             });
+
+            if (contadorParadas === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhum dado válido encontrado na planilha.</div>';
+            }
         }
     </script>
 
