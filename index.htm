@@ -44,7 +44,7 @@
 
         .top-bar {
             background: var(--surface);
-            padding: 12px 16px;
+            padding: 10px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -61,8 +61,8 @@
 
         .route-time {
             background: var(--bg-main);
-            padding: 6px 10px;
-            border-radius: 8px;
+            padding: 5px 8px;
+            border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
             color: var(--success);
@@ -72,34 +72,40 @@
 
         #map {
             width: 100%;
-            height: 42vh;
+            height: 38vh;
             background: #090d16;
         }
 
+        /* Painel Flexível com Área de Rolagem Direitinho */
         .bottom-sheet {
             flex: 1;
             background: var(--surface);
-            padding: 16px;
+            padding: 14px;
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
             box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.5);
             z-index: 1000;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
             margin-top: -15px;
             position: relative;
-            transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+            overflow: hidden;
         }
 
-        .slide-left { transform: translateX(-30px); opacity: 0; }
-        .slide-right { transform: translateX(30px); opacity: 0; }
+        .panel-scrollable {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 10px;
+        }
+
+        .slide-left { transform: translateX(-30px); opacity: 0; transition: transform 0.15s, opacity 0.15s; }
+        .slide-right { transform: translateX(30px); opacity: 0; transition: transform 0.15s, opacity 0.15s; }
 
         .upload-area {
             background: var(--bg-main);
             border: 2px dashed #334155;
-            padding: 10px;
-            border-radius: 12px;
+            padding: 8px;
+            border-radius: 10px;
             text-align: center;
             margin-bottom: 10px;
         }
@@ -111,11 +117,11 @@
         }
 
         .stop-header-info {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .stop-address-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: var(--text-dark);
             margin-bottom: 2px;
@@ -130,22 +136,22 @@
         .action-buttons-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 6px;
+            margin-bottom: 10px;
         }
 
         .action-btn {
             background: var(--bg-main);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 10px 4px;
+            border-radius: 10px;
+            padding: 8px 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 2px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--text-dark);
         }
@@ -153,45 +159,47 @@
         .action-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
         .action-btn.success { background: var(--success); color: white; border-color: var(--success); }
         .action-btn.danger { background: var(--danger); color: white; border-color: var(--danger); }
-        .action-btn span { font-size: 16px; }
+        .action-btn span { font-size: 14px; }
 
         .details-list {
             border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
 
         .detail-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
+            padding: 6px 0;
             border-bottom: 1px solid var(--border);
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .detail-row:last-child { border-bottom: none; }
-        .detail-label { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+        .detail-label { color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
         .detail-val { font-weight: 600; color: var(--text-dark); }
-        .status-badge-tag { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .status-badge-tag { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
 
+        /* Barra de Ações Globais Fixa na Parte Inferior do Painel */
         .global-actions {
             display: flex;
             gap: 8px;
-            margin-top: auto;
-            padding-bottom: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
         }
 
         .btn-global {
             flex: 1;
-            padding: 11px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 12px;
             border: none;
             cursor: pointer;
             text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
         .btn-opt { background: var(--primary); color: white; }
@@ -201,7 +209,7 @@
         .empty-state {
             text-align: center;
             color: var(--text-muted);
-            padding: 15px;
+            padding: 10px;
             font-size: 12px;
         }
 
@@ -210,31 +218,30 @@
             color: white;
             border: 2px solid #38bdf8;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 30px;
+            height: 30px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            font-size: 13px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+            font-size: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
         }
         .circuit-marker.entregue { background: var(--success); border-color: #fff; }
         .circuit-marker.nao-entregue { background: var(--danger); border-color: #fff; }
         
-        /* Ponto Azul Animado do GPS Real */
         .gps-user-marker {
             background: #2563eb;
             border: 3px solid #fff;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            box-shadow: 0 0 15px #2563eb;
+            box-shadow: 0 0 12px #2563eb;
             animation: pulse-gps 1.5s infinite;
         }
         @keyframes pulse-gps {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
     </style>
@@ -243,22 +250,25 @@
 
     <div class="top-bar">
         <div class="route-title" id="info-header-titulo">ROTA E MATO</div>
-        <div class="route-time" id="info-tempo" onclick="centralizarNoGPS()" title="Clique para focar no GPS">🎯 Localizar GPS</div>
+        <div class="route-time" id="info-tempo" onclick="centralizarNoGPS()">🎯 GPS</div>
     </div>
 
     <div id="map"></div>
 
-    <div class="bottom-sheet" id="painel-conteudo">
-        <div class="upload-area">
-            <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="processarPlanilha()">
+    <div class="bottom-sheet">
+        <div class="panel-scrollable" id="painel-conteudo">
+            <div class="upload-area">
+                <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="processarPlanilha()">
+            </div>
+
+            <div id="parada-ativa-container">
+                <div class="empty-state">Selecione a planilha XLSX. O app vai rastrear sua posição via GPS. Deslize para os lados para navegar entre as paradas.</div>
+            </div>
         </div>
 
-        <div id="parada-ativa-container">
-            <div class="empty-state">Permita o acesso ao GPS do celular quando solicitado. Selecione a planilha XLSX e clique em Otimizar Circuito.</div>
-        </div>
-
+        <!-- Botões fixos sempre visíveis no rodapé do painel -->
         <div class="global-actions" id="botoes-globais" style="display: none;">
-            <button class="btn-global btn-opt" onclick="otimizarRotaCircuito()">⚡ Otimizar Circuito</button>
+            <button class="btn-global btn-opt" onclick="otimizarRotaCircuito()">⚡ Otimizar</button>
             <button class="btn-global btn-pdf" onclick="gerarPDF()">📄 PDF</button>
             <button class="btn-global btn-install" id="btnInstallApp" onclick="instalarApp()">📲 Instalar</button>
         </div>
@@ -281,31 +291,25 @@
         let primeiraCentralizacao = true;
         let deferredPrompt = null;
 
-        // GPS Real de alta precisão ligado direto
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(position => {
                 gpsLat = position.coords.latitude;
                 gpsLng = position.coords.longitude;
                 atualizarMarcadorGPS();
                 
-                // Centraliza o mapa automaticamente na primeira leitura do GPS
                 if (primeiraCentralizacao) {
                     map.setView([gpsLat, gpsLng], 15, { animate: true });
                     primeiraCentralizacao = false;
                 }
             }, err => {
-                console.warn("Erro de GPS: ", err.message);
-                alert("Ative a localização (GPS) no seu celular para o Rota e Mato funcionar corretamente.");
+                console.warn("GPS pendente", err.message);
             }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
-        } else {
-            alert("Seu navegador não suporta geolocalização.");
         }
 
         function atualizarMarcadorGPS() {
             if (!gpsLat || !gpsLng) return;
             if (window.gpsMarker) map.removeLayer(window.gpsMarker);
-            
-            let gpsIcon = L.divIcon({ className: 'gps-user-marker', iconSize: [20, 20] });
+            let gpsIcon = L.divIcon({ className: 'gps-user-marker', iconSize: [18, 18] });
             window.gpsMarker = L.marker([gpsLat, gpsLng], { icon: gpsIcon }).addTo(map).bindPopup("<b>Você está aqui</b>");
         }
 
@@ -333,7 +337,7 @@
                     deferredPrompt = null;
                 });
             } else {
-                alert('Abra o menu do seu navegador e selecione "Adicionar à tela inicial".');
+                alert('Abra o menu do navegador e selecione "Adicionar à tela inicial".');
             }
         }
 
@@ -360,7 +364,7 @@
                 cb();
                 renderizarParadaAtiva();
                 painelEl.classList.remove('slide-left', 'slide-right');
-            }, 180);
+            }, 150);
         }
 
         function processarPlanilha() {
@@ -423,10 +427,7 @@
             let tempoEsperaMin = listaParadas.length * 3;
             let tempoTotalMin = tempoDeslocamentoMin + tempoEsperaMin;
 
-            return {
-                km: distanciaTotalKm.toFixed(1),
-                min: tempoTotalMin
-            };
+            return { km: distanciaTotalKm.toFixed(1), min: tempoTotalMin };
         }
 
         function atualizarInterface() {
@@ -447,8 +448,8 @@
                 let customIcon = L.divIcon({
                     className: 'custom-div-icon',
                     html: `<div class="${className}">${idx + 1}</div>`,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
                 });
 
                 let marker = L.marker([p.lat, p.lng], { icon: customIcon }).bindPopup(`<b>Parada ${idx + 1}</b><br>${p.endereco}`);
@@ -503,7 +504,7 @@
                         <span class="detail-val">${statusHtml}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">⏱️ Espera parada</span>
+                        <span class="detail-label">⏱️ Espera</span>
                         <span class="detail-val">3 min</span>
                     </div>
                 </div>
@@ -527,13 +528,8 @@
                 return;
             }
 
-            if (!gpsLat || !gpsLng) {
-                alert('Aguardando o sinal do GPS do celular. Certifique-se de que a localização está ativada.');
-                return;
-            }
-
-            let pontoAtualLat = gpsLat;
-            let pontoAtualLng = gpsLng;
+            let pontoAtualLat = gpsLat !== null ? gpsLat : listaParadas[0].lat;
+            let pontoAtualLng = gpsLng !== null ? gpsLng : listaParadas[0].lng;
 
             let naoVisitados = [...listaParadas];
             let otimizadas = [];
@@ -553,7 +549,6 @@
 
                 let proximoPonto = naoVisitados.splice(maisProximoIndex, 1)[0];
                 otimizadas.push(proximoPonto);
-                
                 pontoAtualLat = proximoPonto.lat;
                 pontoAtualLng = proximoPonto.lng;
             }
@@ -561,7 +556,7 @@
             listaParadas = otimizadas;
             indiceAtual = 0;
             atualizarInterface();
-            alert('Circuito otimizado perfeitamente a partir da sua posição de GPS atual!');
+            alert('Circuito otimizado a partir da sua posição!');
         }
 
         function gerarPDF() {
