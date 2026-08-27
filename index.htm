@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rota e Mato</title>
+    <title>Rota e Mato - App</title>
     <!-- SheetJS para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- jsPDF para gerar o PDF otimizado -->
+    <!-- jsPDF para gerar o PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Leaflet CSS para o Mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -15,16 +15,14 @@
 
     <style>
         :root {
-            --bg-primary: #0f172a;
-            --bg-surface: #1e293b;
-            --bg-card: #131c31;
-            --accent: #2563eb;
-            --accent-hover: #1d4ed8;
-            --success: #10b981;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #334155;
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
         }
 
         * {
@@ -36,17 +34,18 @@
         }
 
         body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
+            background-color: var(--bg-main);
+            color: var(--text-dark);
             display: flex;
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
 
-        header {
-            background: var(--bg-surface);
-            padding: 14px 20px;
+        /* Top Bar / Header estilo app */
+        .top-bar {
+            background: var(--surface);
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -54,213 +53,215 @@
             z-index: 10;
         }
 
-        .logo-area h1 {
-            font-size: 17px;
+        .menu-icon {
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-dark);
+            background: none;
+            border: none;
+        }
+
+        .route-title {
+            font-size: 14px;
             font-weight: 700;
-            color: var(--success);
-            letter-spacing: -0.3px;
+            color: var(--text-dark);
         }
 
-        .badge-status {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid rgba(16, 185, 129, 0.2);
+        .route-time {
+            background: #f1f5f9;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
         }
 
+        /* Mapa */
         #map {
             width: 100%;
-            height: 38vh;
-            background: #1a2234;
+            height: 45vh;
+            background: #e2e8f0;
         }
 
-        .panel {
+        /* Painel Inferior Estilo Card Flutuante */
+        .bottom-sheet {
             flex: 1;
-            background: var(--bg-surface);
+            background: var(--surface);
             padding: 16px;
-            overflow-y: auto;
             border-top-left-radius: 20px;
             border-top-right-radius: 20px;
-            margin-top: -14px;
-            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
             z-index: 1000;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
+            margin-top: -15px;
         }
 
-        .upload-box {
-            background: var(--bg-card);
-            padding: 14px 16px;
+        .upload-area {
+            background: #f8fafc;
+            border: 2px dashed var(--border);
+            padding: 14px;
             border-radius: 12px;
-            margin-bottom: 12px;
-            border: 1px dashed var(--border);
             text-align: center;
-            cursor: pointer;
+            margin-bottom: 14px;
         }
 
-        .upload-label {
+        .upload-area input {
+            font-size: 13px;
+            width: 100%;
+            color: var(--text-muted);
+        }
+
+        /* Informações da Parada Selecionada */
+        .stop-header-info {
+            margin-bottom: 12px;
+        }
+
+        .stop-address-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .stop-meta {
             font-size: 13px;
             color: var(--text-muted);
-            display: block;
-            margin-bottom: 6px;
             font-weight: 500;
         }
 
-        input[type="file"] {
-            font-size: 13px;
-            color: var(--text-main);
-            width: 100%;
-        }
-
-        .actions-bar {
-            display: flex;
+        /* Barra de Ações Rápidas (Botões estilo print) */
+        .action-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 8px;
             margin-bottom: 16px;
         }
 
-        .btn {
-            flex: 1;
-            border: none;
-            padding: 11px 8px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
+        .action-btn {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 4px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            transition: background 0.2s, transform 0.1s;
+            gap: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dark);
+            transition: background 0.2s;
         }
 
-        .btn:active {
-            transform: scale(0.98);
-        }
-
-        .btn-primary {
-            background: var(--accent);
+        .action-btn.primary {
+            background: var(--primary);
             color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            border-color: var(--primary);
         }
 
-        .btn-success {
-            background: var(--success);
-            color: white;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        .action-btn span {
+            font-size: 16px;
         }
 
-        .stops-container {
-            flex: 1;
-            overflow-y: auto;
+        /* Detalhes do Pacote (SPX / Bairro / ID) */
+        .details-list {
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
         }
 
-        .stop-card {
-            background: var(--bg-card);
-            padding: 14px;
-            border-radius: 12px;
-            margin-bottom: 10px;
+        .detail-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--success);
-        }
-
-        .stop-info {
-            flex: 1;
-            margin-right: 12px;
-            min-width: 0;
-        }
-
-        .stop-num {
-            font-size: 10px;
-            color: var(--success);
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-
-        .stop-address {
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
             font-size: 13px;
-            color: var(--text-main);
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
-        .stop-spx {
-            font-size: 11px;
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
             color: var(--text-muted);
-            margin-top: 4px;
-            background: rgba(255, 255, 255, 0.05);
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .nav-btn {
+        .detail-val {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Botões Globais de Rota (Otimizar e PDF) */
+        .global-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-global {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-opt {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-pdf {
             background: var(--success);
             color: white;
-            text-decoration: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
         }
 
         .empty-state {
             text-align: center;
             color: var(--text-muted);
-            font-size: 13px;
-            padding: 30px 20px;
-            background: var(--bg-card);
-            border-radius: 12px;
-            border: 1px dashed var(--border);
+            padding: 20px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo-area">
-            <h1>ROTA E MATO</h1>
-        </div>
-        <div id="status-paradas" class="badge-status">0 paradas</div>
-    </header>
+    <!-- Barra Superior -->
+    <div class="top-bar">
+        <button class="menu-icon">☰</button>
+        <div class="route-title" id="info-header-titulo">Carregue sua rota</div>
+        <div class="route-time" id="info-tempo">--:--</div>
+    </div>
 
-    <!-- Mapa Interativo -->
+    <!-- Mapa -->
     <div id="map"></div>
 
-    <!-- Painel Inferior Moderno -->
-    <div class="panel">
-        <div class="upload-box">
-            <span class="upload-label">Carregar Planilha de Rotas (.xlsx)</span>
-            <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="processarExcel()">
+    <!-- Painel de Controle Inferior -->
+    <div class="bottom-sheet" id="painel-conteudo">
+        
+        <div class="upload-area">
+            <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="processarPlanilha()">
         </div>
 
-        <div id="actions-wrapper" style="display: none;">
-            <div class="actions-bar">
-                <button class="btn btn-primary" onclick="executarOtimizacao()">
-                    ⚡ Otimizar
-                </button>
-                <button class="btn btn-success" onclick="gerarPDF()">
-                    📄 Gerar PDF
-                </button>
-            </div>
+        <div id="parada-ativa-container">
+            <div class="empty-state">Nenhuma planilha carregada. Selecione o arquivo XLSX para começar.</div>
         </div>
 
-        <div class="stops-container" id="lista-paradas">
-            <div class="empty-state">
-                Nenhuma planilha carregada.<br>Selecione o arquivo para iniciar.
-            </div>
+        <div class="global-actions" id="botoes-globais" style="display: none;">
+            <button class="btn-global btn-opt" onclick="otimizarRota()">⚡ Otimizar Rota</button>
+            <button class="btn-global btn-pdf" onclick="gerarPDF()">📄 Gerar PDF</button>
         </div>
+
     </div>
 
     <script>
@@ -271,10 +272,11 @@
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        let markersLayer = L.layerGroup().addTo(map);
-        let listaGlobalParadas = [];
+        let markersLayer = layerGroup = L.layerGroup().addTo(map);
+        let listaParadas = [];
+        let indiceAtual = 0;
 
-        function processarExcel() {
+        function processarPlanilha() {
             const fileInput = document.getElementById('excelFile');
             if (fileInput.files.length === 0) return;
 
@@ -285,34 +287,112 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonRows = XLSX.utils.sheet_to_json(worksheet);
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(sheet);
 
-                    listaGlobalParadas = jsonRows.map((row) => {
-                        const endereco = row['Destination Address'] || row['Endereco'] || row['Endereço'] || Object.values(row)[0] || 'Endereço não informado';
-                        const spx = row['SPX TN'] || row['Pacote'] || row['Código'] || 'SPX-N/A';
-                        let lat = parseFloat(row['Latitude']) || (-23.5505 + (Math.random() * 0.05 - 0.025));
-                        let lng = parseFloat(row['Longitude']) || (-46.6333 + (Math.random() * 0.05 - 0.025));
-
-                        return { endereco, spx, lat, lng };
+                    listaParadas = rows.map((row, idx) => {
+                        return {
+                            id: idx + 1,
+                            endereco: row['Destination Address'] || row['Endereco'] || Object.values(row)[0] || 'Endereço não informado',
+                            spx: row['SPX TN'] || row['Pacote'] || 'SPX-N/A',
+                            bairro: row['Bairro'] || 'São Paulo',
+                            lat: parseFloat(row['Latitude']) || (-23.5505 + (Math.random() * 0.04 - 0.02)),
+                            lng: parseFloat(row['Longitude']) || (-46.6333 + (Math.random() * 0.04 - 0.02))
+                        };
                     });
 
-                    renderizarParadas(listaGlobalParadas);
-                    document.getElementById('actions-wrapper').style.display = 'block';
-                } catch (error) {
-                    console.error(error);
-                    alert('Erro ao ler a planilha.');
+                    indiceAtual = 0;
+                    atualizarInterface();
+                    document.getElementById('botoes-globais').style.display = 'flex';
+                } catch (err) {
+                    console.error(err);
+                    alert('Erro ao processar a planilha.');
                 }
             };
             reader.readAsArrayBuffer(file);
         }
 
-        function executarOtimizacao() {
-            if (listaGlobalParadas.length === 0) return;
+        function atualizarInterface() {
+            if (listaParadas.length === 0) return;
 
-            let naoVisitados = [...listaGlobalParadas];
+            markersLayer.clearLayers();
+            let bounds = [];
+
+            listaParadas.forEach((p, idx) => {
+                bounds.push([p.lat, p.lng]);
+                let marker = L.marker([p.lat, p.lng]).bindPopup(`<b>Parada ${idx + 1}</b><br>${p.endereco}`);
+                markersLayer.addLayer(marker);
+            });
+
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [40, 40] });
+            }
+
+            renderizarParadaAtiva();
+        }
+
+        function renderizarParadaAtiva() {
+            if (listaParadas.length === 0) return;
+            let p = listaParadas[indiceAtual];
+
+            document.getElementById('info-header-titulo').innerText = `${indiceAtual + 1}/${listaParadas.length} paradas`;
+            document.getElementById('info-tempo').innerText = `${Math.floor(listaParadas.length * 4.5)} min`;
+
+            const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}`;
+
+            const container = document.getElementById('parada-ativa-container');
+            container.innerHTML = `
+                <div class="stop-header-info">
+                    <div class="stop-address-title">${p.endereco}</div>
+                    <div class="stop-meta">Parada ${indiceAtual + 1} de ${listaParadas.length}</div>
+                </div>
+
+                <div class="action-buttons-grid">
+                    <a href="${urlMaps}" target="_blank" class="action-btn primary" style="text-decoration: none;">
+                        <span>🧭</span> Navegar
+                    </a>
+                    <button class="action-btn" onclick="proximaParada()">
+                        <span>⏭️</span> Próxima
+                    </button>
+                    <button class="action-btn" onclick="alert('Marcado como não entregue')">
+                        <span>❌</span> Não ent.
+                    </button>
+                    <button class="action-btn" onclick="alert('Marcado como entregue!')">
+                        <span>✅</span> Entregue
+                    </button>
+                </div>
+
+                <div class="details-list">
+                    <div class="detail-row">
+                        <span class="detail-label">📦 SPX TN</span>
+                        <span class="detail-val">${p.spx}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">📍 Bairro</span>
+                        <span class="detail-val">${p.bairro}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">🆔 ID Parada</span>
+                        <span class="detail-val">C${indiceAtual + 1}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function proximaParada() {
+            if (indiceAtual < listaParadas.length - 1) {
+                indiceAtual++;
+                renderizarParadaAtiva();
+            } else {
+                alert('Você chegou na última parada da rota!');
+            }
+        }
+
+        function otimizarRota() {
+            if (listaParadas.length === 0) return;
+
+            let naoVisitados = [...listaParadas];
             let otimizadas = [];
-
             let atual = naoVisitados.shift();
             otimizadas.push(atual);
 
@@ -328,20 +408,18 @@
                         maisProximoIndex = i;
                     }
                 }
-
                 atual = naoVisitados.splice(maisProximoIndex, 1)[0];
                 otimizadas.push(atual);
             }
 
-            listaGlobalParadas = otimizadas;
-            renderizarParadas(listaGlobalParadas);
+            listaParadas = otimizadas;
+            indiceAtual = 0;
+            atualizarInterface();
+            alert('Rota otimizada com sucesso para menor trajeto!');
         }
 
         function gerarPDF() {
-            if (listaGlobalParadas.length === 0) {
-                alert('Nenhuma rota para exportar!');
-                return;
-            }
+            if (listaParadas.length === 0) return;
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -352,21 +430,17 @@
 
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
-            doc.text(`Total de Paradas: ${listaGlobalParadas.length}`, 14, 28);
+            doc.text(`Total de Paradas: ${listaParadas.length}`, 14, 28);
             doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 34);
 
             let y = 45;
-            doc.setLineWidth(0.5);
-
-            listaGlobalParadas.forEach((item, index) => {
+            listaParadas.forEach((item, index) => {
                 if (y > 270) {
                     doc.addPage();
                     y = 20;
                 }
-
                 doc.setFont("helvetica", "bold");
                 doc.text(`Parada ${index + 1}:`, 14, y);
-                
                 doc.setFont("helvetica", "normal");
                 doc.text(`Endereco: ${item.endereco}`, 32, y);
                 doc.text(`Pacote SPX: ${item.spx}`, 32, y + 5);
@@ -374,45 +448,10 @@
                 doc.setLineDash([1, 1], 0);
                 doc.line(14, y + 8, 196, y + 8);
                 doc.setLineDash([]);
-
                 y += 14;
             });
 
             doc.save("rota-otimizada-spx.pdf");
-        }
-
-        function renderizarParadas(paradas) {
-            const container = document.getElementById('lista-paradas');
-            container.innerHTML = '';
-            markersLayer.clearLayers();
-
-            document.getElementById('status-paradas').innerText = `${paradas.length} paradas`;
-            let bounds = [];
-
-            paradas.forEach((item, index) => {
-                const numero = index + 1;
-                bounds.push([item.lat, item.lng]);
-
-                let marker = L.marker([item.lat, item.lng]).bindPopup(`<b>Parada ${numero}</b><br>${item.endereco}<br><small>${item.spx}</small>`);
-                markersLayer.addLayer(marker);
-
-                const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.endereco)}`;
-
-                container.innerHTML += `
-                    <div class="stop-card">
-                        <div class="stop-info">
-                            <div class="stop-num">Parada ${numero}</div>
-                            <div class="stop-address" title="${item.endereco}">${item.endereco}</div>
-                            <div class="stop-spx">📦 ${item.spx}</div>
-                        </div>
-                        <a href="${urlMaps}" target="_blank" class="nav-btn">Navegar</a>
-                    </div>
-                `;
-            });
-
-            if (bounds.length > 0) {
-                map.fitBounds(bounds, { padding: [50, 50] });
-            }
         }
     </script>
 </body>
