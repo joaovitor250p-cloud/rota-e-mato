@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rota e Mato - Circuit Mode</title>
+    <title>Rota e Mato - GPS Ativo</title>
     <!-- SheetJS para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- jsPDF para gerar o PDF -->
@@ -67,6 +67,7 @@
             font-weight: 700;
             color: var(--success);
             border: 1px solid var(--border);
+            cursor: pointer;
         }
 
         #map {
@@ -221,13 +222,20 @@
         .circuit-marker.entregue { background: var(--success); border-color: #fff; }
         .circuit-marker.nao-entregue { background: var(--danger); border-color: #fff; }
         
+        /* Ponto Azul Animado do GPS Real */
         .gps-user-marker {
             background: #2563eb;
             border: 3px solid #fff;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            box-shadow: 0 0 12px #2563eb;
+            box-shadow: 0 0 15px #2563eb;
+            animation: pulse-gps 1.5s infinite;
+        }
+        @keyframes pulse-gps {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
     </style>
 </head>
@@ -235,7 +243,7 @@
 
     <div class="top-bar">
         <div class="route-title" id="info-header-titulo">ROTA E MATO</div>
-        <div class="route-time" id="info-tempo">GPS Buscando...</div>
+        <div class="route-time" id="info-tempo" onclick="centralizarNoGPS()" title="Clique para focar no GPS">🎯 Localizar GPS</div>
     </div>
 
     <div id="map"></div>
@@ -246,7 +254,7 @@
         </div>
 
         <div id="parada-ativa-container">
-            <div class="empty-state">Selecione a planilha XLSX. O app vai rastrear sua posição real para montar o circuito. Deslize para os lados para navegar.</div>
+            <div class="empty-state">Permita o acesso ao GPS do celular quando solicitado. Selecione a planilha XLSX e clique em Otimizar Circuito.</div>
         </div>
 
         <div class="global-actions" id="botoes-globais" style="display: none;">
@@ -270,25 +278,43 @@
         let indiceAtual = 0;
         let gpsLat = null;
         let gpsLng = null;
+        let primeiraCentralizacao = true;
         let deferredPrompt = null;
 
-        // Rastreamento GPS Ativo na Rua
+        // GPS Real de alta precisão ligado direto
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(position => {
                 gpsLat = position.coords.latitude;
                 gpsLng = position.coords.longitude;
                 atualizarMarcadorGPS();
+                
+                // Centraliza o mapa automaticamente na primeira leitura do GPS
+                if (primeiraCentralizacao) {
+                    map.setView([gpsLat, gpsLng], 15, { animate: true });
+                    primeiraCentralizacao = false;
+                }
             }, err => {
-                console.log("GPS pendente", err);
-            }, { enableHighAccuracy: true });
+                console.warn("Erro de GPS: ", err.message);
+                alert("Ative a localização (GPS) no seu celular para o Rota e Mato funcionar corretamente.");
+            }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+        } else {
+            alert("Seu navegador não suporta geolocalização.");
         }
 
         function atualizarMarcadorGPS() {
             if (!gpsLat || !gpsLng) return;
             if (window.gpsMarker) map.removeLayer(window.gpsMarker);
             
-            let gpsIcon = L.divIcon({ className: 'gps-user-marker', iconSize: [18, 18] });
-            window.gpsMarker = L.marker([gpsLat, gpsLng], { icon: gpsIcon }).addTo(map).bindPopup("Você está aqui");
+            let gpsIcon = L.divIcon({ className: 'gps-user-marker', iconSize: [20, 20] });
+            window.gpsMarker = L.marker([gpsLat, gpsLng], { icon: gpsIcon }).addTo(map).bindPopup("<b>Você está aqui</b>");
+        }
+
+        function centralizarNoGPS() {
+            if (gpsLat && gpsLng) {
+                map.flyTo([gpsLat, gpsLng], 16, { animate: true });
+            } else {
+                alert("Aguardando sinal do GPS...");
+            }
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -394,7 +420,7 @@
             }
 
             let tempoDeslocamentoMin = Math.round((distanciaTotalKm / 30) * 60);
-            let tempoEsperaMin = listaParadas.length * 3; // 3 min de espera por parada
+            let tempoEsperaMin = listaParadas.length * 3;
             let tempoTotalMin = tempoDeslocamentoMin + tempoEsperaMin;
 
             return {
@@ -495,34 +521,10 @@
             }
         }
 
-        // MOTOR DE OTIMIZAÇÃO EM CIRCUITO A PARTIR DO GPS REAL
         function otimizarRotaCircuito() {
-            if (listaParadas.length === 0) return;
+            if (listaParadas.length === 0) {
+                alert('Carregue uma planilha primeiro!');
+                return;
+            }
 
-            // Pega a localização atual do GPS da rua. Se o GPS estiver desligado, usa o primeiro ponto como fallback.
-            let pontoAtualLat = gpsLat !== null ? gpsLat : listaParadas[0].lat;
-            let pontoAtualLng = gpsLng !== null ? gpsLng : listaParadas[0].lng;
-
-            let naoVisitados = [...listaParadas];
-            let otimizadas = [];
-
-            // Varre todos os pacotes recalculando o laço do circuito inteiro com base em onde você está agora
-            while (naoVisitados.length > 0) {
-                let maisProximoIndex = 0;
-                let menorDistancia = Infinity;
-
-                for (let i = 0; i < naoVisitados.length; i++) {
-                    let p = naoVisitados[i];
-                    let dist = Math.pow(p.lat - pontoAtualLat, 2) + Math.pow(p.lng - pontoAtualLng, 2);
-                    if (dist < menorDistancia) {
-                        menorDistancia = dist;
-                        maisProximoIndex = i;
-                    }
-                }
-
-                let proximoPonto = naoVisitados.splice(maisProximoIndex, 1)[0];
-                otimizadas.push(proximoPonto);
-                
-                // Atualiza a âncora para o próximo cálculo do circuito
-                pontoAtualLat = proximoPonto.lat;
-                pontoAtualLng = proximoPo
+            if (!gpsLat ||
