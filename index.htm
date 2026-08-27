@@ -6,6 +6,8 @@
     <title>Rota e Mato</title>
     <!-- SheetJS para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- jsPDF para gerar o PDF otimizado -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Leaflet CSS para o Mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Leaflet JS -->
@@ -19,6 +21,7 @@
             --accent: #2563eb;
             --accent-hover: #1d4ed8;
             --success: #10b981;
+            --danger: #ef4444;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --border: #334155;
@@ -92,16 +95,10 @@
             background: var(--bg-card);
             padding: 14px 16px;
             border-radius: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             border: 1px dashed var(--border);
             text-align: center;
-            position: relative;
             cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        .upload-box:active {
-            border-color: var(--accent);
         }
 
         .upload-label {
@@ -120,16 +117,16 @@
 
         .actions-bar {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 16px;
         }
 
         .btn {
             flex: 1;
             border: none;
-            padding: 12px;
+            padding: 11px 8px;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
@@ -149,8 +146,10 @@
             box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
 
-        .btn-primary:hover {
-            background: var(--accent-hover);
+        .btn-success {
+            background: var(--success);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .stops-container {
@@ -168,7 +167,6 @@
             align-items: center;
             border: 1px solid var(--border);
             border-left: 4px solid var(--success);
-            transition: transform 0.1s;
         }
 
         .stop-info {
@@ -215,7 +213,6 @@
             font-size: 12px;
             font-weight: 600;
             white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
         }
 
         .empty-state {
@@ -251,7 +248,10 @@
         <div id="actions-wrapper" style="display: none;">
             <div class="actions-bar">
                 <button class="btn btn-primary" onclick="executarOtimizacao()">
-                    ⚡ Otimizar Rota
+                    ⚡ Otimizar
+                </button>
+                <button class="btn btn-success" onclick="gerarPDF()">
+                    📄 Gerar PDF
                 </button>
             </div>
         </div>
@@ -335,6 +335,50 @@
 
             listaGlobalParadas = otimizadas;
             renderizarParadas(listaGlobalParadas);
+        }
+
+        function gerarPDF() {
+            if (listaGlobalParadas.length === 0) {
+                alert('Nenhuma rota para exportar!');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("ROTA E MATO - Relatorio de Rota Otimizada", 14, 20);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text(`Total de Paradas: ${listaGlobalParadas.length}`, 14, 28);
+            doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 34);
+
+            let y = 45;
+            doc.setLineWidth(0.5);
+
+            listaGlobalParadas.forEach((item, index) => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+
+                doc.setFont("helvetica", "bold");
+                doc.text(`Parada ${index + 1}:`, 14, y);
+                
+                doc.setFont("helvetica", "normal");
+                doc.text(`Endereco: ${item.endereco}`, 32, y);
+                doc.text(`Pacote SPX: ${item.spx}`, 32, y + 5);
+
+                doc.setLineDash([1, 1], 0);
+                doc.line(14, y + 8, 196, y + 8);
+                doc.setLineDash([]);
+
+                y += 14;
+            });
+
+            doc.save("rota-otimizada-spx.pdf");
         }
 
         function renderizarParadas(paradas) {
