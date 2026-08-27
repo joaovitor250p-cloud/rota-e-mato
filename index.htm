@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota e Mato</title>
+    <title>Rota e Mato - SPX</title>
+    <!-- Importando a biblioteca PDF.js para ler arquivos PDF no navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configurando o worker do PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     <style>
         * {
             box-sizing: border-box;
@@ -23,7 +29,7 @@
         h1 {
             font-size: 22px;
             color: #4CAF50;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             text-align: center;
         }
         p.subtitle {
@@ -45,20 +51,14 @@
             margin-bottom: 8px;
             color: #b0b0b0;
         }
-        textarea {
+        input[type="file"] {
             width: 100%;
-            height: 120px;
             background: #2d2d2d;
             border: 1px solid #444;
             border-radius: 8px;
             color: #fff;
             padding: 10px;
             font-size: 14px;
-            resize: vertical;
-        }
-        textarea:focus {
-            outline: none;
-            border-color: #4CAF50;
         }
         button {
             width: 100%;
@@ -71,6 +71,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: background 0.2s;
+            margin-top: 12px;
         }
         button:hover {
             background: #45a049;
@@ -122,46 +123,84 @@
             font-size: 14px;
             padding: 20px;
         }
+        .loading {
+            text-align: center;
+            color: #4CAF50;
+            font-weight: bold;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Rota e Mato</h1>
-        <p class="subtitle">Otimização rápida de entregas</p>
+        <p class="subtitle">Leitor de PDF & Otimizador SPX</p>
 
         <div class="card">
-            <label for="enderecos">Cole os endereços (um por linha):</label>
-            <textarea id="enderecos" placeholder="Ex: Rua das Flores, 123&#10;Avenida Brasil, 1500&#10;Praça da Sé, 45"></textarea>
-            <button onclick="gerarRota()" style="margin-top: 12px;">Organizar Rota</button>
+            <label for="pdfFile">Selecione o PDF da SPX:</label>
+            <input type="file" id="pdfFile" accept=".pdf">
+            <button onclick="processarPDF()">Ler PDF e Gerar Rota</button>
         </div>
 
         <div class="card">
-            <label>Paradas da Rota:</label>
+            <label>Paradas Identificadas:</label>
             <div id="lista-paradas">
-                <div class="empty-state">Nenhuma rota gerada ainda. Cole os endereços acima.</div>
+                <div class="empty-state">Nenhum PDF carregado ainda.</div>
             </div>
         </div>
     </div>
 
     <script>
-        function gerarRota() {
-            const texto = document.getElementById('enderecos').value.trim();
+        async function processarPDF() {
+            const fileInput = document.getElementById('pdfFile');
             const container = document.getElementById('lista-paradas');
-            
-            if (!texto) {
-                alert('Cole pelo menos um endereço!');
+
+            if (fileInput.files.length === 0) {
+                alert('Por favor, selecione um arquivo PDF!');
                 return;
             }
 
-            // Separa os endereços por quebra de linha
-            let linhas = texto.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            const file = fileInput.files[0];
+            container.innerHTML = '<div class="loading">Lendo PDF da SPX...</div>';
 
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let textoCompleto = '';
+
+                // Extrai o texto de todas as páginas do PDF
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const textosPagina = textContent.items.map(item => item.str);
+                    textoCompleto += textosPagina.join(' ') + '\n';
+                }
+
+                // Processa o texto extraído para achar endereços ou blocos relevantes da SPX
+                gerarParadasDoTexto(textoCompleto);
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<div class="empty-state" style="color: #ff5252;">Erro ao ler o PDF. Verifique se o arquivo é válido.</div>';
+            }
+        }
+
+        function gerarParadasDoTexto(texto) {
+            const container = document.getElementById('lista-paradas');
             container.innerHTML = '';
 
+            // Limpa quebras excessivas e divide por linhas ou blocos lógicos
+            let linhas = texto.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+
+            if (linhas.length === 0) {
+                container.innerHTML = '<div class="empty-state">Nenhum endereço encontrado neste PDF.</div>';
+                return;
+            }
+
+            // Exibindo as linhas encontradas como paradas (futuramente refinaremos o filtro para focar exatamente no padrão de endereço da SPX)
             linhas.forEach((endereco, index) => {
                 const numeroParada = index + 1;
-                // Cria o link para abrir direto no Google Maps com o endereço formatado
                 const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
 
                 const itemHTML = `
