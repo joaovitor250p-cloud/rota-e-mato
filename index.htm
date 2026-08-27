@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rota e Mato</title>
+    <title>Rota e Mato - Circuit Mode</title>
     <!-- SheetJS para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- jsPDF para gerar o PDF -->
@@ -204,7 +204,6 @@
             font-size: 12px;
         }
 
-        /* Marcadores Circuit HD Ultra Limpos */
         .circuit-marker {
             background: #1e293b;
             color: white;
@@ -221,13 +220,14 @@
         }
         .circuit-marker.entregue { background: var(--success); border-color: #fff; }
         .circuit-marker.nao-entregue { background: var(--danger); border-color: #fff; }
+        
         .gps-user-marker {
             background: #2563eb;
             border: 3px solid #fff;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            box-shadow: 0 0 10px #2563eb;
+            box-shadow: 0 0 12px #2563eb;
         }
     </style>
 </head>
@@ -238,7 +238,6 @@
         <div class="route-time" id="info-tempo">GPS Buscando...</div>
     </div>
 
-    <!-- Mapa HD Limpo e Fluido (Estilo Circuit com OpenStreetMap HD) -->
     <div id="map"></div>
 
     <div class="bottom-sheet" id="painel-conteudo">
@@ -247,18 +246,17 @@
         </div>
 
         <div id="parada-ativa-container">
-            <div class="empty-state">Selecione a planilha XLSX. O app vai puxar sua localização real. Deslize para os lados para trocar de parada.</div>
+            <div class="empty-state">Selecione a planilha XLSX. O app vai rastrear sua posição real para montar o circuito. Deslize para os lados para navegar.</div>
         </div>
 
         <div class="global-actions" id="botoes-globais" style="display: none;">
-            <button class="btn-global btn-opt" onclick="otimizarRota()">⚡ Otimizar</button>
+            <button class="btn-global btn-opt" onclick="otimizarRotaCircuito()">⚡ Otimizar Circuito</button>
             <button class="btn-global btn-pdf" onclick="gerarPDF()">📄 PDF</button>
             <button class="btn-global btn-install" id="btnInstallApp" onclick="instalarApp()">📲 Instalar</button>
         </div>
     </div>
 
     <script>
-        // Mapa HD ultra limpo (Tile Layer de alta nitidez)
         let map = L.map('map', { zoomControl: false }).setView([-23.5505, -46.6333], 13);
         L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -274,27 +272,25 @@
         let gpsLng = null;
         let deferredPrompt = null;
 
-        // Pega a Localização Real do GPS do Celular
+        // Rastreamento GPS Ativo na Rua
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition(position => {
                 gpsLat = position.coords.latitude;
                 gpsLng = position.coords.longitude;
                 atualizarMarcadorGPS();
             }, err => {
-                console.log("GPS negado ou indisponível", err);
+                console.log("GPS pendente", err);
             }, { enableHighAccuracy: true });
         }
 
         function atualizarMarcadorGPS() {
             if (!gpsLat || !gpsLng) return;
-            // Remove marcador GPS anterior se houver e desenha o ponto azul da sua localização
             if (window.gpsMarker) map.removeLayer(window.gpsMarker);
             
-            let gpsIcon = L.divIcon({ className: 'gps-user-marker', iconSize: [16, 16] });
+            let gpsIcon = L.divIcon({ className: 'gps-user-marker', iconSize: [18, 18] });
             window.gpsMarker = L.marker([gpsLat, gpsLng], { icon: gpsIcon }).addTo(map).bindPopup("Você está aqui");
         }
 
-        // Suporte para instalar como App (PWA)
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -311,11 +307,10 @@
                     deferredPrompt = null;
                 });
             } else {
-                alert('Para instalar, abra o menu do seu navegador (três pontinhos) e selecione "Adicionar à tela inicial" ou "Instalar aplicativo".');
+                alert('Abra o menu do seu navegador e selecione "Adicionar à tela inicial".');
             }
         }
 
-        // Controle de Swipe (Deslizar o dedo para os lados)
         let touchStartX = 0;
         let touchEndX = 0;
         const painelEl = document.getElementById('painel-conteudo');
@@ -381,7 +376,6 @@
 
         function calcularMetricasRota() {
             let distanciaTotalKm = 0;
-            // Se tiver o GPS real, calcula a distância inicial da sua posição até a primeira parada
             let inicioLat = gpsLat || (listaParadas.length > 0 ? listaParadas[0].lat : -23.5505);
             let inicioLng = gpsLng || (listaParadas.length > 0 ? listaParadas[0].lng : -46.6333);
 
@@ -501,16 +495,18 @@
             }
         }
 
-        function otimizarRota() {
+        // MOTOR DE OTIMIZAÇÃO EM CIRCUITO A PARTIR DO GPS REAL
+        function otimizarRotaCircuito() {
             if (listaParadas.length === 0) return;
 
-            // Ponto de partida usa a localização real do GPS se disponível, senão pega a primeira parada
-            let pontoAtualLat = gpsLat || listaParadas[0].lat;
-            let pontoAtualLng = gpsLng || listaParadas[0].lng;
+            // Pega a localização atual do GPS da rua. Se o GPS estiver desligado, usa o primeiro ponto como fallback.
+            let pontoAtualLat = gpsLat !== null ? gpsLat : listaParadas[0].lat;
+            let pontoAtualLng = gpsLng !== null ? gpsLng : listaParadas[0].lng;
 
             let naoVisitados = [...listaParadas];
             let otimizadas = [];
 
+            // Varre todos os pacotes recalculando o laço do circuito inteiro com base em onde você está agora
             while (naoVisitados.length > 0) {
                 let maisProximoIndex = 0;
                 let menorDistancia = Infinity;
@@ -524,53 +520,9 @@
                     }
                 }
 
-                let proximo = naoVisitados.splice(maisProximoIndex, 1)[0];
-                otimizadas.push(proximo);
-                pontoAtualLat = proximo.lat;
-                pontoAtualLng = proximo.lng;
-            }
-
-            listaParadas = otimizadas;
-            indiceAtual = 0;
-            atualizarInterface();
-            alert('Rota otimizada com sucesso a partir da sua localização atual!');
-        }
-
-        function gerarPDF() {
-            if (listaParadas.length === 0) return;
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(16);
-            doc.text("ROTA E MATO - Relatorio de Rota Otimizada", 14, 20);
-
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(10);
-            doc.text(`Total de Paradas: ${listaParadas.length}`, 14, 28);
-            doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 14, 34);
-
-            let y = 45;
-            listaParadas.forEach((item, index) => {
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-                doc.setFont("helvetica", "bold");
-                doc.text(`Parada ${index + 1} [${item.status}]:`, 14, y);
-                doc.setFont("helvetica", "normal");
-                doc.text(`Endereco: ${item.endereco}`, 32, y);
-                doc.text(`Pacote SPX: ${item.spx}`, 32, y + 5);
-
-                doc.setLineDash([1, 1], 0);
-                doc.line(14, y + 8, 196, y + 8);
-                doc.setLineDash([]);
-                y += 14;
-            });
-
-            doc.save("rota-otimizada-spx.pdf");
-        }
-    </script>
-</body>
-</html>
+                let proximoPonto = naoVisitados.splice(maisProximoIndex, 1)[0];
+                otimizadas.push(proximoPonto);
+                
+                // Atualiza a âncora para o próximo cálculo do circuito
+                pontoAtualLat = proximoPonto.lat;
+                pontoAtualLng = proximoPo
