@@ -2,170 +2,280 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rota e Mato - Otimizador</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rota e Mato</title>
+    <!-- SheetJS para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Leaflet CSS para o Mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-card: #131c31;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
+
         body {
-            background-color: #121212;
-            color: #e0e0e0;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
             height: 100vh;
+            overflow: hidden;
         }
+
         header {
-            background: #1e1e1e;
-            padding: 12px 16px;
+            background: var(--bg-surface);
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
         }
-        h1 {
-            font-size: 18px;
-            color: #4CAF50;
+
+        .logo-area h1 {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--success);
+            letter-spacing: -0.3px;
         }
+
+        .badge-status {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
         #map {
             width: 100%;
-            height: 40vh;
-            background: #2d2d2d;
+            height: 38vh;
+            background: #1a2234;
         }
+
         .panel {
             flex: 1;
-            background: #181818;
+            background: var(--bg-surface);
             padding: 16px;
             overflow-y: auto;
-            border-top-left-radius: 16px;
-            border-top-right-radius: 16px;
-            margin-top: -10px;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            margin-top: -14px;
+            box-shadow: 0 -10px 25px rgba(0, 0, 0, 0.4);
             z-index: 1000;
+            display: flex;
+            flex-direction: column;
         }
+
         .upload-box {
-            background: #242424;
-            padding: 12px;
-            border-radius: 8px;
+            background: var(--bg-card);
+            padding: 14px 16px;
+            border-radius: 12px;
             margin-bottom: 16px;
-            border: 1px dashed #444;
-        }
-        input[type="file"] {
-            width: 100%;
-            color: #ccc;
-            font-size: 13px;
-        }
-        .btn-otimizar {
-            width: 100%;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
+            border: 1px dashed var(--border);
+            text-align: center;
+            position: relative;
             cursor: pointer;
-            margin-top: 10px;
-            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+            transition: border-color 0.2s;
         }
-        .btn-otimizar:hover {
-            background: #2563eb;
+
+        .upload-box:active {
+            border-color: var(--accent);
         }
-        .stop-card {
-            background: #222;
+
+        .upload-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        input[type="file"] {
+            font-size: 13px;
+            color: var(--text-main);
+            width: 100%;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
             padding: 12px;
             border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .stops-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .stop-card {
+            background: var(--bg-card);
+            padding: 14px;
+            border-radius: 12px;
             margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-left: 4px solid #4CAF50;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--success);
+            transition: transform 0.1s;
         }
+
         .stop-info {
             flex: 1;
+            margin-right: 12px;
+            min-width: 0;
         }
+
         .stop-num {
-            font-size: 11px;
-            color: #4CAF50;
-            font-weight: bold;
+            font-size: 10px;
+            color: var(--success);
+            font-weight: 700;
+            letter-spacing: 0.5px;
             text-transform: uppercase;
+            margin-bottom: 2px;
         }
+
         .stop-address {
-            font-size: 14px;
-            color: #fff;
-            margin-top: 2px;
+            font-size: 13px;
+            color: var(--text-main);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
         .stop-spx {
-            font-size: 12px;
-            color: #94a3b8;
+            font-size: 11px;
+            color: var(--text-muted);
             margin-top: 4px;
-            background: #2d2d2d;
+            background: rgba(255, 255, 255, 0.05);
             display: inline-block;
             padding: 2px 6px;
             border-radius: 4px;
+            font-family: monospace;
         }
+
         .nav-btn {
-            background: #4CAF50;
+            background: var(--success);
             color: white;
             text-decoration: none;
-            padding: 8px 12px;
+            padding: 8px 14px;
             border-radius: 8px;
-            font-size: 13px;
-            font-weight: bold;
+            font-size: 12px;
+            font-weight: 600;
             white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
         }
+
         .empty-state {
             text-align: center;
-            color: #666;
-            font-size: 14px;
-            padding: 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 30px 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px dashed var(--border);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Rota e Mato</h1>
-        <span id="status-paradas" style="font-size: 12px; color: #888;">0 paradas</span>
+        <div class="logo-area">
+            <h1>ROTA E MATO</h1>
+        </div>
+        <div id="status-paradas" class="badge-status">0 paradas</div>
     </header>
 
+    <!-- Mapa Interativo -->
     <div id="map"></div>
 
+    <!-- Painel Inferior Moderno -->
     <div class="panel">
         <div class="upload-box">
-            <label style="font-size: 13px; margin-bottom: 6px; display: block; color: #aaa;">Carregar Planilha de Rotas (XLSX):</label>
+            <span class="upload-label">Carregar Planilha de Rotas (.xlsx)</span>
             <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="processarExcel()">
         </div>
 
-        <div id="lista-paradas">
-            <div class="empty-state">Carregue uma planilha para ver as paradas e o mapa.</div>
+        <div id="actions-wrapper" style="display: none;">
+            <div class="actions-bar">
+                <button class="btn btn-primary" onclick="executarOtimizacao()">
+                    ⚡ Otimizar Rota
+                </button>
+            </div>
         </div>
 
-        <button class="btn-otimizar" onclick="alert('Funcionalidade de otimização inteligente sendo aplicada!')" style="display: none;" id="btnOtimizar">
-            🔄 Otimizar Rota
-        </button>
+        <div class="stops-container" id="lista-paradas">
+            <div class="empty-state">
+                Nenhuma planilha carregada.<br>Selecione o arquivo para iniciar.
+            </div>
+        </div>
     </div>
 
     <script>
-        // Inicializa o mapa focado em São Paulo por padrão
-        let map = L.map('map').setView([-23.5505, -46.6333], 13);
+        let map = L.map('map', { zoomControl: false }).setView([-23.5505, -46.6333], 13);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
         let markersLayer = L.layerGroup().addTo(map);
+        let listaGlobalParadas = [];
 
         function processarExcel() {
             const fileInput = document.getElementById('excelFile');
-            const container = document.getElementById('lista-paradas');
-
             if (fileInput.files.length === 0) return;
 
             const file = fileInput.files[0];
@@ -175,11 +285,20 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                     const jsonRows = XLSX.utils.sheet_to_json(worksheet);
 
-                    renderizarDados(jsonRows);
+                    listaGlobalParadas = jsonRows.map((row) => {
+                        const endereco = row['Destination Address'] || row['Endereco'] || row['Endereço'] || Object.values(row)[0] || 'Endereço não informado';
+                        const spx = row['SPX TN'] || row['Pacote'] || row['Código'] || 'SPX-N/A';
+                        let lat = parseFloat(row['Latitude']) || (-23.5505 + (Math.random() * 0.05 - 0.025));
+                        let lng = parseFloat(row['Longitude']) || (-46.6333 + (Math.random() * 0.05 - 0.025));
+
+                        return { endereco, spx, lat, lng };
+                    });
+
+                    renderizarParadas(listaGlobalParadas);
+                    document.getElementById('actions-wrapper').style.display = 'block';
                 } catch (error) {
                     console.error(error);
                     alert('Erro ao ler a planilha.');
@@ -188,46 +307,59 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function renderizarDados(linhas) {
+        function executarOtimizacao() {
+            if (listaGlobalParadas.length === 0) return;
+
+            let naoVisitados = [...listaGlobalParadas];
+            let otimizadas = [];
+
+            let atual = naoVisitados.shift();
+            otimizadas.push(atual);
+
+            while (naoVisitados.length > 0) {
+                let maisProximoIndex = 0;
+                let menorDistancia = Infinity;
+
+                for (let i = 0; i < naoVisitados.length; i++) {
+                    let p = naoVisitados[i];
+                    let dist = Math.pow(p.lat - atual.lat, 2) + Math.pow(p.lng - atual.lng, 2);
+                    if (dist < menorDistancia) {
+                        menorDistancia = dist;
+                        maisProximoIndex = i;
+                    }
+                }
+
+                atual = naoVisitados.splice(maisProximoIndex, 1)[0];
+                otimizadas.push(atual);
+            }
+
+            listaGlobalParadas = otimizadas;
+            renderizarParadas(listaGlobalParadas);
+        }
+
+        function renderizarParadas(paradas) {
             const container = document.getElementById('lista-paradas');
             container.innerHTML = '';
             markersLayer.clearLayers();
 
-            if (linhas.length === 0) {
-                container.innerHTML = '<div class="empty-state">Planilha vazia.</div>';
-                return;
-            }
-
-            document.getElementById('status-paradas').innerText = `${linhas.length} paradas`;
-            document.getElementById('btnOtimizar').style.display = 'block';
-
+            document.getElementById('status-paradas').innerText = `${paradas.length} paradas`;
             let bounds = [];
 
-            linhas.forEach((row, index) => {
+            paradas.forEach((item, index) => {
                 const numero = index + 1;
-                // Tenta achar colunas comuns de endereço e SPX na planilha
-                const endereco = row['Destination Address'] || row['Endereco'] || row['Endereço'] || Object.values(row)[0] || 'Endereço não informado';
-                const spx = row['SPX TN'] || row['Pacote'] || row['Código'] || 'SPX-N/A';
-                
-                // Coordenadas simuladas ou extraídas se houver na planilha
-                let lat = row['Latitude'] || -23.5505 + (Math.random() * 0.05 - 0.025);
-                let lng = row['Longitude'] || -46.6333 + (Math.random() * 0.05 - 0.025);
+                bounds.push([item.lat, item.lng]);
 
-                bounds.push([lat, lng]);
-
-                // Adiciona marcador no mapa
-                let marker = L.marker([lat, lng]).bindPopup(`<b>Parada ${numero}</b><br>${endereco}<br><small>${spx}</small>`);
+                let marker = L.marker([item.lat, item.lng]).bindPopup(`<b>Parada ${numero}</b><br>${item.endereco}<br><small>${item.spx}</small>`);
                 markersLayer.addLayer(marker);
 
-                // Monta o card na lista inferior
-                const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(endereco)}`;
+                const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.endereco)}`;
 
                 container.innerHTML += `
                     <div class="stop-card">
                         <div class="stop-info">
                             <div class="stop-num">Parada ${numero}</div>
-                            <div class="stop-address">${endereco}</div>
-                            <div class="stop-spx">📦 ${spx}</div>
+                            <div class="stop-address" title="${item.endereco}">${item.endereco}</div>
+                            <div class="stop-spx">📦 ${item.spx}</div>
                         </div>
                         <a href="${urlMaps}" target="_blank" class="nav-btn">Navegar</a>
                     </div>
@@ -235,7 +367,7 @@
             });
 
             if (bounds.length > 0) {
-                map.fitBounds(bounds);
+                map.fitBounds(bounds, { padding: [50, 50] });
             }
         }
     </script>
