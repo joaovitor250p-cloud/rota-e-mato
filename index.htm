@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rota e Mato - App</title>
+    <title>Rota e Mato - Pro</title>
     <!-- SheetJS para ler Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- jsPDF para gerar o PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Leaflet CSS para o Mapa -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -42,7 +42,6 @@
             overflow: hidden;
         }
 
-        /* Top Bar / Header estilo app */
         .top-bar {
             background: var(--surface);
             padding: 12px 16px;
@@ -51,14 +50,6 @@
             align-items: center;
             border-bottom: 1px solid var(--border);
             z-index: 10;
-        }
-
-        .menu-icon {
-            font-size: 20px;
-            cursor: pointer;
-            color: var(--text-dark);
-            background: none;
-            border: none;
         }
 
         .route-title {
@@ -71,19 +62,17 @@
             background: #f1f5f9;
             padding: 6px 10px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             color: var(--text-dark);
         }
 
-        /* Mapa */
         #map {
             width: 100%;
-            height: 45vh;
+            height: 42vh;
             background: #e2e8f0;
         }
 
-        /* Painel Inferior Estilo Card Flutuante */
         .bottom-sheet {
             flex: 1;
             background: var(--surface);
@@ -101,10 +90,10 @@
         .upload-area {
             background: #f8fafc;
             border: 2px dashed var(--border);
-            padding: 14px;
+            padding: 12px;
             border-radius: 12px;
             text-align: center;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .upload-area input {
@@ -113,30 +102,29 @@
             color: var(--text-muted);
         }
 
-        /* Informações da Parada Selecionada */
         .stop-header-info {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .stop-address-title {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 700;
             color: var(--text-dark);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .stop-meta {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             font-weight: 500;
         }
 
-        /* Barra de Ações Rápidas (Botões estilo print) */
+        /* 3 Botões de Ação Direta */
         .action-buttons-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .action-btn {
@@ -150,10 +138,9 @@
             justify-content: center;
             gap: 4px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 600;
             color: var(--text-dark);
-            transition: background 0.2s;
         }
 
         .action-btn.primary {
@@ -162,22 +149,33 @@
             border-color: var(--primary);
         }
 
+        .action-btn.success {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .action-btn.danger {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
         .action-btn span {
             font-size: 16px;
         }
 
-        /* Detalhes do Pacote (SPX / Bairro / ID) */
         .details-list {
             border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .detail-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #f1f5f9;
             font-size: 13px;
         }
@@ -198,7 +196,13 @@
             color: var(--text-dark);
         }
 
-        /* Botões Globais de Rota (Otimizar e PDF) */
+        .status-badge-tag {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
         .global-actions {
             display: flex;
             gap: 10px;
@@ -216,52 +220,57 @@
             text-align: center;
         }
 
-        .btn-opt {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-pdf {
-            background: var(--success);
-            color: white;
-        }
+        .btn-opt { background: var(--primary); color: white; }
+        .btn-pdf { background: var(--success); color: white; }
 
         .empty-state {
             text-align: center;
             color: var(--text-muted);
             padding: 20px;
-            font-size: 14px;
+            font-size: 13px;
         }
+
+        /* Marcador Circuito Customizado */
+        .circuit-marker {
+            background: #1e293b;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+        }
+        .circuit-marker.entregue { background: var(--success); }
+        .circuit-marker.nao-entregue { background: var(--danger); }
     </style>
 </head>
 <body>
 
-    <!-- Barra Superior -->
     <div class="top-bar">
-        <button class="menu-icon">☰</button>
         <div class="route-title" id="info-header-titulo">Carregue sua rota</div>
-        <div class="route-time" id="info-tempo">--:--</div>
+        <div class="route-time" id="info-tempo">-- km | -- min</div>
     </div>
 
-    <!-- Mapa -->
     <div id="map"></div>
 
-    <!-- Painel de Controle Inferior -->
     <div class="bottom-sheet" id="painel-conteudo">
-        
         <div class="upload-area">
             <input type="file" id="excelFile" accept=".xlsx, .xls" onchange="processarPlanilha()">
         </div>
 
         <div id="parada-ativa-container">
-            <div class="empty-state">Nenhuma planilha carregada. Selecione o arquivo XLSX para começar.</div>
+            <div class="empty-state">Nenhuma planilha carregada. Selecione o arquivo XLSX para começar. Deslize para os lados para navegar entre as paradas após carregar.</div>
         </div>
 
         <div class="global-actions" id="botoes-globais" style="display: none;">
-            <button class="btn-global btn-opt" onclick="otimizarRota()">⚡ Otimizar Rota</button>
+            <button class="btn-global btn-opt" onclick="otimizarRota()">⚡ Otimizar</button>
             <button class="btn-global btn-pdf" onclick="gerarPDF()">📄 Gerar PDF</button>
         </div>
-
     </div>
 
     <script>
@@ -272,9 +281,38 @@
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
-        let markersLayer = layerGroup = L.layerGroup().addTo(map);
+        let markersLayer = L.layerGroup().addTo(map);
         let listaParadas = [];
         let indiceAtual = 0;
+
+        // Controle de Swipe (Deslizar para os lados no painel)
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        const painelEl = document.getElementById('painel-conteudo');
+        painelEl.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+        painelEl.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            tratarSwipe();
+        });
+
+        function tratarSwipe() {
+            if (listaParadas.length === 0) return;
+            let diferenca = touchEndX - touchStartX;
+            if (diferenca > 50) {
+                // Deslizou para a direita -> Parada Anterior
+                if (indiceAtual > 0) {
+                    indiceAtual--;
+                    renderizarParadaAtiva();
+                }
+            } else if (diferenca < -50) {
+                // Deslizou para a esquerda -> Próxima Parada
+                if (indiceAtual < listaParadas.length - 1) {
+                    indiceAtual++;
+                    renderizarParadaAtiva();
+                }
+            }
+        }
 
         function processarPlanilha() {
             const fileInput = document.getElementById('excelFile');
@@ -296,6 +334,7 @@
                             endereco: row['Destination Address'] || row['Endereco'] || Object.values(row)[0] || 'Endereço não informado',
                             spx: row['SPX TN'] || row['Pacote'] || 'SPX-N/A',
                             bairro: row['Bairro'] || 'São Paulo',
+                            status: 'Pendente', // Pendente, Entregue, Nao Entregue
                             lat: parseFloat(row['Latitude']) || (-23.5505 + (Math.random() * 0.04 - 0.02)),
                             lng: parseFloat(row['Longitude']) || (-46.6333 + (Math.random() * 0.04 - 0.02))
                         };
@@ -312,6 +351,28 @@
             reader.readAsArrayBuffer(file);
         }
 
+        function calcularMetricasRota() {
+            let distanciaTotalKm = 0;
+            for (let i = 0; i < listaParadas.length - 1; i++) {
+                let p1 = listaParadas[i];
+                let p2 = listaParadas[i+1];
+                let dLat = (p2.lat - p1.lat) * 111;
+                let dLng = (p2.lng - p1.lng) * 111;
+                distanciaTotalKm += Math.sqrt(dLat*dLat + dLng*dLng);
+            }
+            if(distanciaTotalKm === 0 && listaParadas.length > 0) distanciaTotalKm = listaParadas.length * 1.2;
+
+            // 3 minutos de espera por parada fixa + tempo de deslocamento
+            let tempoDeslocamentoMin = Math.round((distanciaTotalKm / 30) * 60);
+            let tempoEsperaMin = listaParadas.length * 3;
+            let tempoTotalMin = tempoDeslocamentoMin + tempoEsperaMin;
+
+            return {
+                km: distanciaTotalKm.toFixed(1),
+                min: tempoTotalMin
+            };
+        }
+
         function atualizarInterface() {
             if (listaParadas.length === 0) return;
 
@@ -320,13 +381,28 @@
 
             listaParadas.forEach((p, idx) => {
                 bounds.push([p.lat, p.lng]);
-                let marker = L.marker([p.lat, p.lng]).bindPopup(`<b>Parada ${idx + 1}</b><br>${p.endereco}`);
+                
+                let className = 'circuit-marker';
+                if(p.status === 'Entregue') className += ' entregue';
+                if(p.status === 'Não Entregue') className += ' nao-entregue';
+
+                let customIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div class="${className}">${idx + 1}</div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+
+                let marker = L.marker([p.lat, p.lng], { icon: customIcon }).bindPopup(`<b>Parada ${idx + 1}</b><br>${p.endereco}`);
                 markersLayer.addLayer(marker);
             });
 
             if (bounds.length > 0) {
                 map.fitBounds(bounds, { padding: [40, 40] });
             }
+
+            let metricas = calcularMetricasRota();
+            document.getElementById('info-tempo').innerText = `${metricas.km} km | ${metricas.min} min`;
 
             renderizarParadaAtiva();
         }
@@ -336,29 +412,29 @@
             let p = listaParadas[indiceAtual];
 
             document.getElementById('info-header-titulo').innerText = `${indiceAtual + 1}/${listaParadas.length} paradas`;
-            document.getElementById('info-tempo').innerText = `${Math.floor(listaParadas.length * 4.5)} min`;
 
             const urlMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}`;
+
+            let statusHtml = `<span class="status-badge-tag" style="background:#f1f5f9; color:#64748b;">Pendente</span>`;
+            if(p.status === 'Entregue') statusHtml = `<span class="status-badge-tag" style="background:rgba(22,163,74,0.1); color:var(--success);">Entregue</span>`;
+            if(p.status === 'Não Entregue') statusHtml = `<span class="status-badge-tag" style="background:rgba(220,38,38,0.1); color:var(--danger);">Não Entregue</span>`;
 
             const container = document.getElementById('parada-ativa-container');
             container.innerHTML = `
                 <div class="stop-header-info">
                     <div class="stop-address-title">${p.endereco}</div>
-                    <div class="stop-meta">Parada ${indiceAtual + 1} de ${listaParadas.length}</div>
+                    <div class="stop-meta">Deslize 👈 👉 para alternar paradas</div>
                 </div>
 
                 <div class="action-buttons-grid">
                     <a href="${urlMaps}" target="_blank" class="action-btn primary" style="text-decoration: none;">
                         <span>🧭</span> Navegar
                     </a>
-                    <button class="action-btn" onclick="proximaParada()">
-                        <span>⏭️</span> Próxima
-                    </button>
-                    <button class="action-btn" onclick="alert('Marcado como não entregue')">
-                        <span>❌</span> Não ent.
-                    </button>
-                    <button class="action-btn" onclick="alert('Marcado como entregue!')">
+                    <button class="action-btn success" onclick="mudarStatus('Entregue')">
                         <span>✅</span> Entregue
+                    </button>
+                    <button class="action-btn danger" onclick="mudarStatus('Não Entregue')">
+                        <span>❌</span> Não ent.
                     </button>
                 </div>
 
@@ -368,24 +444,26 @@
                         <span class="detail-val">${p.spx}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">📍 Bairro</span>
-                        <span class="detail-val">${p.bairro}</span>
+                        <span class="detail-label">📌 Status</span>
+                        <span class="detail-val">${statusHtml}</span>
                     </div>
                     <div class="detail-row">
-                        <span class="detail-label">🆔 ID Parada</span>
-                        <span class="detail-val">C${indiceAtual + 1}</span>
+                        <span class="detail-label">⏱️ Espera parada</span>
+                        <span class="detail-val">3 min</span>
                     </div>
                 </div>
             `;
         }
 
-        function proximaParada() {
+        function mudarStatus(novoStatus) {
+            if (listaParadas.length === 0) return;
+            listaParadas[indiceAtual].status = novoStatus;
+            
+            // Avança automaticamente para a próxima parada se houver
             if (indiceAtual < listaParadas.length - 1) {
                 indiceAtual++;
-                renderizarParadaAtiva();
-            } else {
-                alert('Você chegou na última parada da rota!');
             }
+            atualizarInterface();
         }
 
         function otimizarRota() {
@@ -415,7 +493,6 @@
             listaParadas = otimizadas;
             indiceAtual = 0;
             atualizarInterface();
-            alert('Rota otimizada com sucesso para menor trajeto!');
         }
 
         function gerarPDF() {
@@ -440,7 +517,7 @@
                     y = 20;
                 }
                 doc.setFont("helvetica", "bold");
-                doc.text(`Parada ${index + 1}:`, 14, y);
+                doc.text(`Parada ${index + 1} [${item.status}]:`, 14, y);
                 doc.setFont("helvetica", "normal");
                 doc.text(`Endereco: ${item.endereco}`, 32, y);
                 doc.text(`Pacote SPX: ${item.spx}`, 32, y + 5);
