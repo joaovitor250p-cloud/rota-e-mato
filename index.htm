@@ -1,145 +1,1617 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vitrine de Aplicativos</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RouteFlow — Roteirização & Otimização de Entregas</title>
+  
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --bg-main: #f7f8fa;
+      --bg-surface: #ffffff;
+      --bg-hover: #f1f3f5;
+      --border-color: #e5e7eb;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #dbeafe;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --skipped: #9ca3af;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-hover: #334155;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary-light: #1e3a8a;
+      --success-light: #064e3b;
+      --warning-light: #78350f;
+      --danger-light: #7f1d1d;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      background-color: #f4f6f9;
-      color: #202124;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
       display: flex;
-      justify-content: center;
-      padding: 40px 16px;
+      flex-direction: column;
     }
 
-    .container {
-      max-width: 720px;
-      width: 100%;
-      background: #ffffff;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
-
-    .app-header {
+    header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      height: 60px;
+      padding: 0 20px;
       display: flex;
       align-items: center;
-      gap: 20px;
-      margin-bottom: 24px;
+      justify-content: space-between;
+      z-index: 1000;
+      flex-shrink: 0;
     }
 
-    .app-icon {
-      width: 80px;
-      height: 80px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #01875f, #005f43);
+    .brand {
       display: flex;
       align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 32px;
-      font-weight: bold;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--primary);
     }
+    .brand svg { width: 28px; height: 28px; fill: currentColor; }
 
-    .app-info h1 {
-      font-size: 24px;
-      margin-bottom: 4px;
-    }
-
-    .app-info p {
-      color: #5f6368;
-      font-size: 14px;
-    }
-
-    .metrics {
+    .header-actions {
       display: flex;
-      justify-content: space-around;
-      padding: 16px 0;
-      border-top: 1px solid #e0e0e0;
-      border-bottom: 1px solid #e0e0e0;
-      margin-bottom: 24px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 60px);
+      position: relative;
+    }
+
+    .sidebar {
+      width: 420px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 500;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .stats-card {
+      background: var(--bg-main);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
       text-align: center;
     }
 
-    .metric-value {
-      font-weight: bold;
-      font-size: 16px;
+    .stat-item .val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .stat-item .lbl {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
     }
 
-    .metric-label {
-      font-size: 12px;
-      color: #5f6368;
+    .progress-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--success);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .progress-txt {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
     }
 
-    .btn-action {
-      display: block;
-      width: 100%;
+    .actions-bar {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-active-panel {
+      background: var(--primary-light);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nav-active-panel.active { display: flex; }
+    .nav-stop-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .filter-bar {
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: var(--bg-surface);
+    }
+    .filter-bar select, .filter-bar input {
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      outline: none;
+    }
+    .filter-bar input { flex: 1; }
+
+    .stops-list {
+      flex: 1;
+      overflow-y: auto;
       padding: 12px;
-      background-color: #01875f;
-      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .stop-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      display: flex;
+      gap: 12px;
+      cursor: grab;
+      position: relative;
+      transition: var(--transition);
+      user-select: none;
+    }
+    .stop-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .stop-card.dragging {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+    .stop-card.active-target {
+      border: 2px solid var(--primary);
+      background: var(--primary-light);
+    }
+
+    .stop-badge {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+    .stop-badge.pending { background: var(--primary); }
+    .stop-badge.in_progress { background: var(--warning); }
+    .stop-badge.completed { background: var(--success); }
+    .stop-badge.failed { background: var(--danger); }
+    .stop-badge.skipped { background: var(--skipped); }
+
+    .stop-info { flex: 1; min-width: 0; }
+    .stop-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .priority-indicator {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .prio-urgent { background: var(--danger-light); color: var(--danger); }
+    .prio-high { background: var(--warning-light); color: var(--warning); }
+    .prio-normal { background: var(--primary-light); color: var(--primary); }
+    .prio-low { background: var(--bg-hover); color: var(--text-muted); }
+
+    .stop-address {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .stop-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    .stop-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .btn-icon {
+      background: transparent;
       border: none;
-      border-radius: 8px;
-      font-size: 16px;
+      color: var(--text-muted);
+      padding: 4px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-icon:hover { background: var(--bg-hover); color: var(--text-main); }
+
+    .map-container {
+      flex: 1;
+      position: relative;
+      background: #e5e7eb;
+    }
+    #map { width: 100%; height: 100%; }
+
+    .map-floating-controls {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1000;
+    }
+    .map-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    .map-btn:hover { background: var(--bg-hover); }
+
+    .map-legend {
+      position: absolute;
+      bottom: 24px;
+      right: 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      box-shadow: var(--shadow-md);
+      z-index: 1000;
+      display: flex;
+      gap: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .legend-item { display: flex; align-items: center; gap: 4px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      text-align: center;
-      text-decoration: none;
-      transition: background-color 0.2s;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: var(--bg-surface); border-color: var(--border-color); color: var(--text-main); }
+    .btn-outline:hover { background: var(--bg-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { filter: brightness(0.9); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .form-input, .form-select, .form-textarea {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      outline: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
     }
 
-    .btn-action:hover {
-      background-color: #006b4b;
+    .autocomplete-items {
+      position: absolute;
+      border: 1px solid var(--border-color);
+      border-top: none;
+      z-index: 99;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: var(--bg-surface);
+      border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+      max-height: 160px;
+      overflow-y: auto;
+      box-shadow: var(--shadow-md);
+    }
+    .autocomplete-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .autocomplete-item:hover { background-color: var(--bg-hover); }
+
+    #sig-canvas {
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      cursor: crosshair;
+      width: 100%;
+      height: 120px;
     }
 
-    .description {
-      margin-top: 24px;
-      line-height: 1.6;
-      color: #3c4043;
-      font-size: 14px;
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 3000;
+    }
+    .toast {
+      background: var(--bg-surface);
+      color: var(--text-main);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--primary);
+      font-size: 0.85rem;
+      font-weight: 500;
+      animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(-20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .custom-div-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .base-marker {
+      background: #111827 !important;
+      border-radius: 4px !important;
+    }
+
+    .mobile-nav {
+      display: none;
+      height: 56px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+    .mobile-nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      border: none;
+      background: transparent;
+      gap: 2px;
+    }
+    .mobile-nav-btn.active { color: var(--primary); font-weight: 700; }
+
+    @media (max-width: 868px) {
+      .app-container { flex-direction: column; }
+      .sidebar { width: 100%; height: 50%; order: 2; }
+      .map-container { height: 50%; order: 1; }
+      .mobile-nav { display: flex; }
+      .sidebar.mobile-hidden { display: none; }
+      .map-container.mobile-fullscreen { height: 100%; }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="app-header">
-      <div class="app-icon">A</div>
-      <div class="app-info">
-        <h1>Nome do Aplicativo</h1>
-        <p>Desenvolvedor / Empresa</p>
-      </div>
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      <span>RouteFlow</span>
     </div>
-
-    <div class="metrics">
-      <div>
-        <div class="metric-value">4.8 ★</div>
-        <div class="metric-label">Avaliações</div>
-      </div>
-      <div>
-        <div class="metric-value">10k+</div>
-        <div class="metric-label">Downloads</div>
-      </div>
-      <div>
-        <div class="metric-value">Livre</div>
-        <div class="metric-label">Classificação</div>
-      </div>
+    <div class="header-actions">
+      <button class="btn btn-outline btn-sm" id="btn-demo-data" title="Carregar demonstração">Demo SP</button>
+      <button class="btn btn-outline btn-sm" id="btn-import-csv">Importar CSV</button>
+      <button class="btn btn-outline btn-sm" id="btn-export-csv">Exportar</button>
+      <button class="btn btn-outline btn-sm" id="btn-theme-toggle">🌓</button>
+      <button class="btn btn-outline btn-sm" id="btn-open-settings">⚙</button>
     </div>
+  </header>
 
-    <a href="#" class="btn-action">Acessar Projeto</a>
+  <!-- Main Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      
+      <!-- Top Metrics & Action Bar -->
+      <div class="sidebar-header">
+        <div class="stats-card">
+          <div class="stat-item">
+            <div class="val" id="stat-stops">0</div>
+            <div class="lbl">Paradas</div>
+          </div>
+          <div class="stat-item">
+            <div class="val" id="stat-dist">0 km</div>
+            <div class="lbl">Distância</div>
+          </div>
+          <div class="stat-item">
+            <div class="val" id="stat-time">0h00</div>
+            <div class="lbl">Tempo Est.</div>
+          </div>
+        </div>
 
-    <div class="description">
-      <h3>Sobre este app</h3>
-      <p>Espaço para descrever as funcionalidades, tecnologias utilizadas, requisitos do sistema e novidades da versão mais recente.</p>
+        <div class="progress-box">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-bar-fill"></div>
+          </div>
+          <div class="progress-txt">
+            <span id="progress-summary">0 de 0 entregues</span>
+            <span id="progress-percent">0%</span>
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button class="btn btn-primary" style="flex: 1;" id="btn-add-stop-modal">+ Parada</button>
+          <button class="btn btn-success" style="flex: 1;" id="btn-optimize-route">⚡ Otimizar</button>
+          <button class="btn btn-outline" id="btn-toggle-route-state">▶ Iniciar</button>
+        </div>
+      </div>
+
+      <!-- Navigation Active Bar -->
+      <div class="nav-active-panel" id="nav-panel">
+        <div class="nav-stop-info">
+          <div>
+            <div style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--primary);">Próxima Parada</div>
+            <div style="font-weight:700; font-size:1rem;" id="nav-target-name">Cliente</div>
+            <div style="font-size:0.8rem; color:var(--text-muted);" id="nav-target-addr">Endereço</div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-external-nav">Navegar ↗</button>
+        </div>
+        <div style="display:flex; gap:6px; margin-top:4px;">
+          <button class="btn btn-success btn-sm" style="flex:1;" id="btn-mark-delivered">✓ Concluir</button>
+          <button class="btn btn-danger btn-sm" id="btn-mark-failed">✕ Falha</button>
+          <button class="btn btn-outline btn-sm" id="btn-mark-skip">⏭ Pular</button>
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="filter-bar">
+        <input type="text" id="search-stops" placeholder="Buscar parada ou cliente..." />
+        <select id="filter-status">
+          <option value="ALL">Todos</option>
+          <option value="pending">Pendentes</option>
+          <option value="completed">Concluídas</option>
+          <option value="failed">Falhas</option>
+        </select>
+      </div>
+
+      <!-- Stops List -->
+      <div class="stops-list" id="stops-list"></div>
+    </aside>
+
+    <!-- Interactive Map -->
+    <main class="map-container" id="map-wrap">
+      <div id="map"></div>
+
+      <!-- Floating Controls -->
+      <div class="map-floating-controls">
+        <button class="map-btn" id="btn-locate-me" title="Minha Localização">📍 Minha Posição</button>
+        <button class="map-btn" id="btn-fit-bounds" title="Ajustar Visualização">⛶ Centralizar Rota</button>
+        <button class="map-btn" id="btn-simulate-nav" title="Simular Navegação">🚗 Simulação</button>
+      </div>
+
+      <!-- Legend -->
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--primary);"></div> Pendente</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--warning);"></div> Em Rota</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--success);"></div> Concluída</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--danger);"></div> Falhou</div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mobile-nav">
+    <button class="mobile-nav-btn active" id="mnav-map">🗺 Mapa</button>
+    <button class="mobile-nav-btn" id="mnav-list">📋 Paradas (<span id="mnav-count">0</span>)</button>
+    <button class="mobile-nav-btn" id="mnav-summary">📊 Resumo</button>
+  </nav>
+
+  <!-- Add/Edit Stop Modal -->
+  <div class="modal-overlay" id="modal-stop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-stop-title">Adicionar Parada</h3>
+        <button class="btn-icon" id="btn-close-stop-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-stop-id" />
+        
+        <div class="form-group" style="position:relative;">
+          <label>Pesquisar Endereço (Nominatim)</label>
+          <input type="text" class="form-input" id="form-stop-search" placeholder="Digite endereço, rua, cidade..." autocomplete="off" />
+          <div class="autocomplete-items" id="autocomplete-results"></div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Latitude</label>
+            <input type="number" step="any" class="form-input" id="form-stop-lat" required />
+          </div>
+          <div class="form-group">
+            <label>Longitude</label>
+            <input type="number" step="any" class="form-input" id="form-stop-lng" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome do Cliente / Local</label>
+            <input type="text" class="form-input" id="form-stop-name" required />
+          </div>
+          <div class="form-group">
+            <label>Telefone</label>
+            <input type="text" class="form-input" id="form-stop-phone" placeholder="(11) 99999-9999" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Endereço Completo</label>
+          <input type="text" class="form-input" id="form-stop-address" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Janela Início</label>
+            <input type="time" class="form-input" id="form-stop-wstart" value="08:00" />
+          </div>
+          <div class="form-group">
+            <label>Janela Fim</label>
+            <input type="time" class="form-input" id="form-stop-wend" value="18:00" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prioridade</label>
+            <select class="form-select" id="form-stop-priority">
+              <option value="normal">Normal</option>
+              <option value="high">Alta</option>
+              <option value="urgent">Urgente</option>
+              <option value="low">Baixa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Duração (min)</label>
+            <input type="number" class="form-input" id="form-stop-duration" value="10" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Observações</label>
+          <textarea class="form-textarea" id="form-stop-notes" rows="2" placeholder="Ex: Deixar na portaria com Seu Jorge"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btn-cancel-stop-form">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-stop">Salvar Parada</button>
+      </div>
     </div>
   </div>
 
-</body>
-</html>
+  <!-- Delivery Proof Modal -->
+  <div class="modal-overlay" id="modal-proof">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Comprovante de Entrega</h3>
+        <button class="btn-icon" id="btn-close-proof-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="proof-stop-id" />
+        <div class="form-group">
+          <label>Status Final</label>
+          <select class="form-select" id="proof-status">
+            <option value="completed">Concluída com Sucesso</option>
+            <option value="failed">Insucesso / Falha</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nome / Documento Recebedor</label>
+          <input type="text" class="form-input" id="proof-receiver" placeholder="Ex: Maria (RG 123456)" />
+        </div>
+        <div class="form-group">
+          <label>Assinatura Digital (Desenhe abaixo)</label>
+          <canvas id="sig-canvas"></canvas>
+          <button class="btn btn-outline btn-sm" style="align-self:flex-start; margin-top:4px;" id="btn-clear-canvas">Limpar Assinatura</button>
+        </div>
+        <div class="form-group">
+          <label>Notas de Finalização</label>
+          <textarea class="form-textarea" id="proof-notes" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btn-cancel-proof">Voltar</button>
+        <button class="btn btn-success" id="btn-confirm-proof">Confirmar Conclusão</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="modal-settings">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Configurações & Origem/Destino</h3>
+        <button class="btn-icon" id="btn-close-settings">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h4 style="font-size:0.9rem; color:var(--primary);">Ponto de Partida (Base / CD)</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Latitude Base</label>
+            <input type="number" step="any" class="form-input" id="cfg-base-lat" value="-23.55052" />
+          </div>
+          <div class="form-group">
+            <label>Longitude Base</label>
+            <input type="number" step="any" class="form-input" id="cfg-base-lng" value="-46.633308" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nome / Endereço da Base</label>
+          <input type="text" class="form-input" id="cfg-base-name" value="Centro de Distribuição Central — SP" />
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border-color);" />
+        
+        <h4 style="font-size:0.9rem; color:var(--primary);">Regras de Roteirização</h4>
+        <div class="form-group">
+          <label><input type="checkbox" id="cfg-return-base" checked /> Retornar à base no final da rota</label>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Velocidade Média (km/h)</label>
+            <input type="number" class="form-input" id="cfg-speed" value="35" />
+          </div>
+          <div class="form-group">
+            <label>Horário de Saída</label>
+            <input type="time" class="form-input" id="cfg-start-time" value="08:00" />
+          </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border-color);" />
+        <button class="btn btn-danger btn-sm" id="btn-purge-storage" style="align-self:flex-start;">🗑 Limpar Todos os Dados</button>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="btn-save-settings">Salvar Preferências</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="csv-file-input" accept=".csv" style="display: none;" />
+  <div class="toast-container" id="toasts"></div>
+          <script>
+    const STORAGE_KEY = 'ROUTEFLOW_DATA_V1';
+
+    const appState = {
+      baseLocation: {
+        name: "Centro de Distribuição Central — SP",
+        lat: -23.550520,
+        lng: -46.633308
+      },
+      settings: {
+        returnToBase: true,
+        avgSpeedKmh: 35,
+        startTime: "08:00",
+        theme: "light"
+      },
+      stops: [],
+      routeGeometry: [],
+      activeStopIndex: 0,
+      routeStatus: 'idle',
+      simulationInterval: null,
+      history: []
+    };
+
+    let map = null;
+    let markersLayer = null;
+    let routePolyline = null;
+    let activeNavMarker = null;
+
+    const DEMO_STOPS = [
+      { id: "sp-1", name: "Mercado Paulista", address: "Av. Paulista, 1578 - Bela Vista, SP", lat: -23.561414, lng: -46.655881, phone: "(11) 98765-4321", priority: "high", windowStart: "08:30", windowEnd: "11:00", duration: 15, status: "pending", notes: "Entregar docas fundos" },
+      { id: "sp-2", name: "Galeria Augusta", address: "Rua Augusta, 1020 - Consolação, SP", lat: -23.553205, lng: -46.655123, phone: "(11) 97777-1234", priority: "urgent", windowStart: "09:00", windowEnd: "10:30", duration: 10, status: "pending", notes: "Urgente, cliente esperando" },
+      { id: "sp-3", name: "Livraria Madalena", address: "R. Fradique Coutinho, 1200 - Pinheiros, SP", lat: -23.558112, lng: -46.690821, phone: "(11) 98111-2233", priority: "normal", windowStart: "10:00", windowEnd: "14:00", duration: 20, status: "pending", notes: "Pedir assinatura da gerente" },
+      { id: "sp-4", name: "Empório Higienópolis", address: "R. Maria Antônia, 300 - Higienópolis, SP", lat: -23.546311, lng: -46.652199, phone: "(11) 99888-4455", priority: "normal", windowStart: "11:00", windowEnd: "15:00", duration: 15, status: "pending", notes: "Cuidado pacote frágil" },
+      { id: "sp-5", name: "Tech Moema", address: "Av. Ibirapuera, 2000 - Moema, SP", lat: -23.597811, lng: -46.657199, phone: "(11) 98888-7766", priority: "low", windowStart: "13:00", windowEnd: "18:00", duration: 10, status: "pending", notes: "Horário comercial" },
+      { id: "sp-6", name: "Boutique Jardins", address: "R. Oscar Freire, 800 - Cerqueira César, SP", lat: -23.563812, lng: -46.669812, phone: "(11) 97123-9988", priority: "high", windowStart: "09:30", windowEnd: "12:00", duration: 15, status: "pending", notes: "Estacionar na baia lateral" },
+      { id: "sp-7", name: "Café Liberdade", address: "Praça da Liberdade, 150 - Liberdade, SP", lat: -23.555212, lng: -46.635812, phone: "(11) 96123-4567", priority: "normal", windowStart: "14:00", windowEnd: "17:00", duration: 10, status: "pending", notes: "Recebimento no balcão" }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadStorage();
+      initTheme();
+      initMap();
+      setupEventListeners();
+      
+      if (appState.stops.length === 0) {
+        loadDemoData();
+      } else {
+        refreshUI();
+        calculateFullRoute();
+      }
+    });
+
+    function saveStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          baseLocation: appState.baseLocation,
+          settings: appState.settings,
+          stops: appState.stops,
+          routeStatus: appState.routeStatus,
+          activeStopIndex: appState.activeStopIndex,
+          history: appState.history
+        }));
+      } catch (e) {
+        console.error("Erro ao salvar no LocalStorage", e);
+      }
+    }
+
+    function loadStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          appState.baseLocation = parsed.baseLocation || appState.baseLocation;
+          appState.settings = { ...appState.settings, ...(parsed.settings || {}) };
+          appState.stops = parsed.stops || [];
+          appState.routeStatus = parsed.routeStatus || 'idle';
+          appState.activeStopIndex = parsed.activeStopIndex || 0;
+          appState.history = parsed.history || [];
+        }
+      } catch (e) {
+        console.error("Erro ao recuperar do LocalStorage", e);
+      }
+    }
+
+    function initMap() {
+      map = L.map('map', { zoomControl: false }).setView([appState.baseLocation.lat, appState.baseLocation.lng], 13);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    function renderMapMarkers() {
+      markersLayer.clearLayers();
+
+      const baseIcon = L.divIcon({
+        className: 'custom-div-icon base-marker',
+        html: '🏢',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      L.marker([appState.baseLocation.lat, appState.baseLocation.lng], { icon: baseIcon })
+        .bindPopup(`<b>${appState.baseLocation.name}</b><br>Ponto de Partida/Chegada`)
+        .addTo(markersLayer);
+
+      appState.stops.forEach((stop, index) => {
+        let color = '#2563eb';
+        if (stop.status === 'in_progress') color = '#f59e0b';
+        if (stop.status === 'completed') color = '#10b981';
+        if (stop.status === 'failed') color = '#ef4444';
+        if (stop.status === 'skipped') color = '#9ca3af';
+
+        const stopIcon = L.divIcon({
+          className: 'custom-div-icon',
+          html: `<div style="background-color: ${color}; width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">${index + 1}</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+
+        const marker = L.marker([stop.lat, stop.lng], { icon: stopIcon }).addTo(markersLayer);
+
+        marker.bindPopup(`
+          <div style="font-family:Inter,sans-serif; min-width:160px;">
+            <b style="color:${color}">#${index + 1} - ${stop.name}</b>
+            <div style="font-size:12px; color:#666; margin:4px 0;">${stop.address}</div>
+            <div style="font-size:11px; margin-bottom:8px;">Janela: ${stop.windowStart} - ${stop.windowEnd}</div>
+            <button onclick="window.editStopModal('${stop.id}')" style="background:#2563eb; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Editar</button>
+          </div>
+        `);
+      });
+    }
+
+    function calculateDistanceHaversine(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * (Math.PI / 180);
+      const dLon = (lon2 - lon1) * (Math.PI / 180);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    async function calculateFullRoute() {
+      if (appState.stops.length === 0) {
+        if (routePolyline) map.removeLayer(routePolyline);
+        updateStatistics(0, 0);
+        return;
+      }
+
+      const coords = [[appState.baseLocation.lng, appState.baseLocation.lat]];
+      appState.stops.forEach(s => coords.push([s.lng, s.lat]));
+      if (appState.settings.returnToBase) {
+        coords.push([appState.baseLocation.lng, appState.baseLocation.lat]);
+      }
+
+      showToast("Calculando rota na malha viária...");
+
+      try {
+        const coordString = coords.map(c => `${c[0]},${c[1]}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (!res.ok) throw new Error("Falha na rota OSRM");
+        const data = await res.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          const latLngs = route.geometry.coordinates.map(c => [c[1], c[0]]);
+          
+          drawPolyline(latLngs);
+          const distKm = route.distance / 1000;
+          const durMin = route.duration / 60;
+          updateStatistics(distKm, durMin);
+          return;
+        }
+      } catch (err) {
+        console.warn("Utilizando fallback Haversine:", err);
+        showToast("Modo Demonstração: Traçado Geodésico Ativado");
+      }
+
+      const fallbackLatLngs = [];
+      let totalDist = 0;
+      for (let i = 0; i < coords.length - 1; i++) {
+        const [lon1, lat1] = coords[i];
+        const [lon2, lat2] = coords[i+1];
+        fallbackLatLngs.push([lat1, lon1]);
+        totalDist += calculateDistanceHaversine(lat1, lon1, lat2, lon2) * 1.3;
+      }
+      fallbackLatLngs.push([coords[coords.length-1][1], coords[coords.length-1][0]]);
+      
+      drawPolyline(fallbackLatLngs);
+      const estTimeMin = (totalDist / appState.settings.avgSpeedKmh) * 60;
+      updateStatistics(totalDist, estTimeMin);
+    }
+
+    function drawPolyline(latLngs) {
+      if (routePolyline) map.removeLayer(routePolyline);
+      routePolyline = L.polyline(latLngs, {
+        color: '#2563eb',
+        weight: 5,
+        opacity: 0.8,
+        lineJoin: 'round'
+      }).addTo(map);
+      renderMapMarkers();
+    }
+
+    function optimizeRoute() {
+      if (appState.stops.length < 2) {
+        showToast("Adicione pelo menos 2 paradas para otimizar.");
+        return;
+      }
+
+      showToast("Executando otimização combinatória...");
+
+      let unvisited = [...appState.stops];
+      let currentLat = appState.baseLocation.lat;
+      let currentLng = appState.baseLocation.lng;
+      let optimized = [];
+
+      const prioWeight = { urgent: 0.5, high: 0.75, normal: 1.0, low: 1.25 };
+
+      while (unvisited.length > 0) {
+        let bestIdx = -1;
+        let bestScore = Infinity;
+
+        for (let i = 0; i < unvisited.length; i++) {
+          const s = unvisited[i];
+          const dist = calculateDistanceHaversine(currentLat, currentLng, s.lat, s.lng);
+          const weight = prioWeight[s.priority] || 1.0;
+          const score = dist * weight;
+
+          if (score < bestScore) {
+            bestScore = score;
+            bestIdx = i;
+          }
+        }
+
+        const nextStop = unvisited.splice(bestIdx, 1)[0];
+        optimized.push(nextStop);
+        currentLat = nextStop.lat;
+        currentLng = nextStop.lng;
+      }
+
+      let improved = true;
+      let iterations = 0;
+      const maxIterations = 50;
+
+      function getTotalDistance(routeArray) {
+        let d = calculateDistanceHaversine(appState.baseLocation.lat, appState.baseLocation.lng, routeArray[0].lat, routeArray[0].lng);
+        for (let i = 0; i < routeArray.length - 1; i++) {
+          d += calculateDistanceHaversine(routeArray[i].lat, routeArray[i].lng, routeArray[i+1].lat, routeArray[i+1].lng);
+        }
+        if (appState.settings.returnToBase) {
+          d += calculateDistanceHaversine(routeArray[routeArray.length - 1].lat, routeArray[routeArray.length - 1].lng, appState.baseLocation.lat, appState.baseLocation.lng);
+        }
+        return d;
+      }
+
+      while (improved && iterations < maxIterations) {
+        improved = false;
+        iterations++;
+        let bestDist = getTotalDistance(optimized);
+
+        for (let i = 0; i < optimized.length - 1; i++) {
+          for (let k = i + 1; k < optimized.length; k++) {
+            const newRoute = swap2Opt(optimized, i, k);
+            const newDist = getTotalDistance(newRoute);
+            if (newDist < bestDist - 0.01) {
+              optimized = newRoute;
+              bestDist = newDist;
+              improved = true;
+            }
+          }
+        }
+      }
+
+      appState.stops = optimized;
+      saveStorage();
+      refreshUI();
+      calculateFullRoute();
+      showToast(`Rota otimizada com sucesso! (${iterations} ciclos)`);
+    }
+
+    function swap2Opt(route, i, k) {
+      const p1 = route.slice(0, i);
+      const p2 = route.slice(i, k + 1).reverse();
+      const p3 = route.slice(k + 1);
+      return p1.concat(p2).concat(p3);
+    }
+                function refreshUI() {
+      renderStopsList();
+      renderMapMarkers();
+      updateNavigationPanel();
+      saveStorage();
+    }
+
+    function updateStatistics(distanceKm, durationMin) {
+      const totalStopDuration = appState.stops.reduce((acc, s) => acc + (parseInt(s.duration) || 0), 0);
+      const totalMinutes = durationMin + totalStopDuration;
+
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = Math.round(totalMinutes % 60);
+
+      document.getElementById('stat-stops').innerText = appState.stops.length;
+      document.getElementById('stat-dist').innerText = `${distanceKm.toFixed(1)} km`;
+      document.getElementById('stat-time').innerText = `${hours}h ${mins.toString().padStart(2, '0')}m`;
+
+      const completed = appState.stops.filter(s => s.status === 'completed' || s.status === 'failed' || s.status === 'skipped').length;
+      const total = appState.stops.length;
+      const pct = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+      document.getElementById('progress-bar-fill').style.width = `${pct}%`;
+      document.getElementById('progress-summary').innerText = `${completed} de ${total} concluídas`;
+      document.getElementById('progress-percent').innerText = `${pct}%`;
+      document.getElementById('mnav-count').innerText = total;
+    }
+
+    function renderStopsList() {
+      const container = document.getElementById('stops-list');
+      container.innerHTML = '';
+
+      const filter = document.getElementById('filter-status').value;
+      const search = document.getElementById('search-stops').value.toLowerCase();
+
+      let currentClock = parseTimeToMinutes(appState.settings.startTime);
+
+      appState.stops.forEach((stop, index) => {
+        let prevLat = index === 0 ? appState.baseLocation.lat : appState.stops[index - 1].lat;
+        let prevLng = index === 0 ? appState.baseLocation.lng : appState.stops[index - 1].lng;
+        let legDist = calculateDistanceHaversine(prevLat, prevLng, stop.lat, stop.lng) * 1.3;
+        let legDriveTime = Math.round((legDist / appState.settings.avgSpeedKmh) * 60);
+        
+        currentClock += legDriveTime;
+        const etaArrival = formatMinutesToTime(currentClock);
+        currentClock += parseInt(stop.duration) || 10;
+
+        if (filter !== 'ALL' && stop.status !== filter) return;
+        if (search && !stop.name.toLowerCase().includes(search) && !stop.address.toLowerCase().includes(search)) return;
+
+        const card = document.createElement('div');
+        card.className = `stop-card ${appState.routeStatus === 'in_progress' && appState.activeStopIndex === index ? 'active-target' : ''}`;
+        card.draggable = true;
+        card.dataset.id = stop.id;
+        card.dataset.index = index;
+
+        card.innerHTML = `
+          <div class="stop-badge ${stop.status}">${index + 1}</div>
+          <div class="stop-info">
+            <div class="stop-name">
+              ${stop.name}
+              <span class="priority-indicator prio-${stop.priority}">${stop.priority}</span>
+            </div>
+            <div class="stop-address">${stop.address}</div>
+            <div class="stop-meta">
+              <span>ETA: <b>${etaArrival}</b></span>
+              <span>Janela: ${stop.windowStart}-${stop.windowEnd}</span>
+              <span>${legDist.toFixed(1)} km</span>
+            </div>
+          </div>
+          <div class="stop-actions">
+            <button class="btn-icon" onclick="window.editStopModal('${stop.id}')" title="Editar">✏</button>
+            <button class="btn-icon" onclick="window.deleteStop('${stop.id}')" title="Excluir">🗑</button>
+          </div>
+        `;
+
+        setupDragAndDrop(card);
+        container.appendChild(card);
+      });
+    }
+
+    let draggedItem = null;
+
+    function setupDragAndDrop(el) {
+      el.addEventListener('dragstart', (e) => {
+        draggedItem = el;
+        el.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging');
+        draggedItem = null;
+      });
+
+      el.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+      });
+
+      el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (draggedItem && draggedItem !== el) {
+          const fromIdx = parseInt(draggedItem.dataset.index);
+          const toIdx = parseInt(el.dataset.index);
+
+          const moved = appState.stops.splice(fromIdx, 1)[0];
+          appState.stops.splice(toIdx, 0, moved);
+
+          saveStorage();
+          refreshUI();
+          calculateFullRoute();
+          showToast("Sequência manual recalculada.");
+        }
+      });
+    }
+
+    function toggleRouteExecution() {
+      const btn = document.getElementById('btn-toggle-route-state');
+      if (appState.routeStatus === 'idle') {
+        if (appState.stops.length === 0) return;
+        appState.routeStatus = 'in_progress';
+        appState.activeStopIndex = 0;
+        appState.stops.forEach(s => s.status = 'pending');
+        if (appState.stops[0]) appState.stops[0].status = 'in_progress';
+        btn.innerText = '⏸ Pausar';
+        btn.classList.add('btn-danger');
+        showToast("Rota iniciada! Navegando até Parada 1.");
+      } else if (appState.routeStatus === 'in_progress') {
+        appState.routeStatus = 'idle';
+        btn.innerText = '▶ Continuar';
+        btn.classList.remove('btn-danger');
+      }
+      refreshUI();
+    }
+
+    function updateNavigationPanel() {
+      const navPanel = document.getElementById('nav-panel');
+      if (appState.routeStatus === 'in_progress' && appState.stops[appState.activeStopIndex]) {
+        navPanel.classList.add('active');
+        const active = appState.stops[appState.activeStopIndex];
+        document.getElementById('nav-target-name').innerText = `#${appState.activeStopIndex + 1} ${active.name}`;
+        document.getElementById('nav-target-addr').innerText = active.address;
+      } else {
+        navPanel.classList.remove('active');
+      }
+    }
+
+    function launchExternalGPS() {
+      const target = appState.stops[appState.activeStopIndex];
+      if (!target) return;
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}`;
+      window.open(url, '_blank');
+    }
+
+    const sigCanvas = document.getElementById('sig-canvas');
+    const ctx = sigCanvas.getContext('2d');
+    let isDrawing = false;
+
+    function initCanvas() {
+      sigCanvas.width = sigCanvas.offsetWidth;
+      sigCanvas.height = 120;
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+    }
+
+    sigCanvas.addEventListener('mousedown', (e) => { isDrawing = true; ctx.beginPath(); ctx.moveTo(e.offsetX, e.offsetY); });
+    sigCanvas.addEventListener('mousemove', (e) => { if (isDrawing) { ctx.lineTo(e.offsetX, e.offsetY); ctx.stroke(); } });
+    window.addEventListener('mouseup', () => isDrawing = false);
+
+    sigCanvas.addEventListener('touchstart', (e) => {
+      isDrawing = true;
+      const rect = sigCanvas.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.moveTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+      e.preventDefault();
+    });
+    sigCanvas.addEventListener('touchmove', (e) => {
+      if (isDrawing) {
+        const rect = sigCanvas.getBoundingClientRect();
+        ctx.lineTo(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+        ctx.stroke();
+      }
+      e.preventDefault();
+    });
+    sigCanvas.addEventListener('touchend', () => isDrawing = false);
+
+    document.getElementById('btn-clear-canvas').addEventListener('click', () => {
+      ctx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    });
+
+    function openProofModal(statusType) {
+      const active = appState.stops[appState.activeStopIndex];
+      if (!active) return;
+      document.getElementById('proof-stop-id').value = active.id;
+      document.getElementById('proof-status').value = statusType;
+      document.getElementById('modal-proof').classList.add('open');
+      initCanvas();
+    }
+
+    document.getElementById('btn-confirm-proof').addEventListener('click', () => {
+      const active = appState.stops[appState.activeStopIndex];
+      if (!active) return;
+
+      active.status = document.getElementById('proof-status').value;
+      active.receiver = document.getElementById('proof-receiver').value;
+      active.proofSignature = sigCanvas.toDataURL();
+      active.proofNotes = document.getElementById('proof-notes').value;
+
+      document.getElementById('modal-proof').classList.remove('open');
+      advanceToNextStop();
+    });
+
+    function advanceToNextStop() {
+      appState.activeStopIndex++;
+      if (appState.activeStopIndex >= appState.stops.length) {
+        appState.routeStatus = 'completed';
+        showToast("🎉 Rota concluída com sucesso!");
+        document.getElementById('btn-toggle-route-state').innerText = '✓ Finalizada';
+      } else {
+        appState.stops[appState.activeStopIndex].status = 'in_progress';
+        showToast(`Indo para Parada #${appState.activeStopIndex + 1}`);
+      }
+      refreshUI();
+      calculateFullRoute();
+    }
+
+    function startSimulation() {
+      if (appState.stops.length === 0) return;
+      if (appState.simulationInterval) {
+        clearInterval(appState.simulationInterval);
+        appState.simulationInterval = null;
+        if (activeNavMarker) map.removeLayer(activeNavMarker);
+        showToast("Simulação encerrada.");
+        return;
+      }
+
+      appState.routeStatus = 'in_progress';
+      appState.activeStopIndex = 0;
+      refreshUI();
+      showToast("Iniciando motorista virtual...");
+
+      const carIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: '🚗',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      let currLat = appState.baseLocation.lat;
+      let currLng = appState.baseLocation.lng;
+      activeNavMarker = L.marker([currLat, currLng], { icon: carIcon }).addTo(map);
+
+      appState.simulationInterval = setInterval(() => {
+        if (appState.activeStopIndex >= appState.stops.length) {
+          clearInterval(appState.simulationInterval);
+          appState.simulationInterval = null;
+          showToast("Simulação da rota finalizada.");
+          return;
+        }
+
+        const target = appState.stops[appState.activeStopIndex];
+        currLat += (target.lat - currLat) * 0.25;
+        currLng += (target.lng - currLng) * 0.25;
+        activeNavMarker.setLatLng([currLat, currLng]);
+
+        if (calculateDistanceHaversine(currLat, currLng, target.lat, target.lng) < 0.2) {
+          target.status = 'completed';
+          advanceToNextStop();
+        }
+      }, 800);
+    }
+
+    let searchDebounce = null;
+    const searchInput = document.getElementById('form-stop-search');
+    const autoResults = document.getElementById('autocomplete-results');
+
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      const query = searchInput.value.trim();
+      if (query.length < 3) {
+        autoResults.innerHTML = '';
+        return;
+      }
+
+      searchDebounce = setTimeout(async () => {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=4`);
+          const items = await res.json();
+          autoResults.innerHTML = '';
+          
+          items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.innerText = item.display_name;
+            div.addEventListener('click', () => {
+              document.getElementById('form-stop-address').value = item.display_name;
+              document.getElementById('form-stop-name').value = item.display_name.split(',')[0];
+              document.getElementById('form-stop-lat').value = parseFloat(item.lat).toFixed(6);
+              document.getElementById('form-stop-lng').value = parseFloat(item.lon).toFixed(6);
+              autoResults.innerHTML = '';
+            });
+            autoResults.appendChild(div);
+          });
+        } catch (e) {
+          console.error("Geocoding falhou", e);
+        }
+      }, 400);
+    });
+
+    document.getElementById('btn-import-csv').addEventListener('click', () => document.getElementById('csv-file-input').click());
+
+    document.getElementById('csv-file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        const text = evt.target.result;
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        let added = 0;
+
+        lines.slice(1).forEach((line, idx) => {
+          const [name, address, lat, lng, phone, priority, wstart, wend] = line.split(',');
+          if (lat && lng) {
+            appState.stops.push({
+              id: `csv-${Date.now()}-${idx}`,
+              name: name || `Cliente ${idx+1}`,
+              address: address || 'Endereço Importado',
+              lat: parseFloat(lat),
+              lng: parseFloat(lng),
+              phone: phone || '',
+              priority: priority || 'normal',
+              windowStart: wstart || '08:00',
+              windowEnd: wend || '18:00',
+              duration: 10,
+              status: 'pending',
+              notes: 'Importado via CSV'
+            });
+            added++;
+          }
+        });
+
+        saveStorage();
+        refreshUI();
+        calculateFullRoute();
+        showToast(`${added} paradas importadas do CSV.`);
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      if (appState.stops.length === 0) return showToast("Sem dados para exportar.");
+      let csv = "Ordem,Cliente,Endereco,Latitude,Longitude,Status,Prioridade\n";
+      appState.stops.forEach((s, idx) => {
+        csv += `${idx+1},"${s.name}","${s.address}",${s.lat},${s.lng},${s.status},${s.priority}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `routeflow_export_${new Date().toISOString().slice(0,10)}.csv`;
+      link.click();
+    });
+
+    function setupEventListeners() {
+      document.getElementById('btn-add-stop-modal').addEventListener('click', () => openStopModal());
+      document.getElementById('btn-close-stop-modal').addEventListener('click', () => document.getElementById('modal-stop').classList.remove('open'));
+      document.getElementById('btn-cancel-stop-form').addEventListener('click', () => document.getElementById('modal-stop').classList.remove('open'));
+      document.getElementById('btn-save-stop').addEventListener('click', saveStopForm);
+
+      document.getElementById('btn-close-proof-modal').addEventListener('click', () => document.getElementById('modal-proof').classList.remove('open'));
+      document.getElementById('btn-cancel-proof').addEventListener('click', () => document.getElementById('modal-proof').classList.remove('open'));
+
+      document.getElementById('btn-open-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.add('open'));
+      document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('modal-settings').classList.remove('open'));
+      document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
+
+      document.getElementById('btn-purge-storage').addEventListener('click', () => {
+        if (confirm("Deseja apagar todas as paradas e configurações salvas?")) {
+          localStorage.removeItem(STORAGE_KEY);
+          location.reload();
+        }
+      });
+
+      document.getElementById('btn-optimize-route').addEventListener('click', optimizeRoute);
+      document.getElementById('btn-toggle-route-state').addEventListener('click', toggleRouteExecution);
+      document.getElementById('btn-external-nav').addEventListener('click', launchExternalGPS);
+      document.getElementById('btn-mark-delivered').addEventListener('click', () => openProofModal('completed'));
+      document.getElementById('btn-mark-failed').addEventListener('click', () => openProofModal('failed'));
+      document.getElementById('btn-mark-skip').addEventListener('click', () => {
+        if (appState.stops[appState.activeStopIndex]) {
+          appState.stops[appState.activeStopIndex].status = 'skipped';
+          advanceToNextStop();
+        }
+      });
+
+      document.getElementById('btn-locate-me').addEventListener('click', handleUserLocation);
+      document.getElementById('btn-fit-bounds').addEventListener('click', () => {
+        if (routePolyline) map.fitBounds(routePolyline.getBounds(), { padding: [40, 40] });
+      });
+      document.getElementById('btn-simulate-nav').addEventListener('click', startSimulation);
+      document.getElementById('btn-demo-data').addEventListener('click', loadDemoData);
+
+      document.getElementById('filter-status').addEventListener('change', renderStopsList);
+      document.getElementById('search-stops').addEventListener('input', renderStopsList);
+
+      document.getElementById('mnav-map').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.add('mobile-hidden');
+        document.getElementById('map-wrap').classList.add('mobile-fullscreen');
+      });
+      document.getElementById('mnav-list').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('mobile-hidden');
+        document.getElementById('map-wrap').classList.remove('mobile-fullscreen');
+      });
+    }
+
+    function openStopModal(stopId = null) {
+      document.getElementById('modal-stop-title').innerText = stopId ? "Editar Parada" : "Adicionar Parada";
+      document.getElementById('form-stop-id').value = stopId || '';
+      
+      if (stopId) {
+        const s = appState.stops.find(x => x.id === stopId);
+        document.getElementById('form-stop-name').value = s.name;
+        document.getElementById('form-stop-address').value = s.address;
+        document.getElementById('form-stop-lat').value = s.lat;
+        document.getElementById('form-stop-lng').value = s.lng;
+        document.getElementById('form-stop-phone').value = s.phone || '';
+        document.getElementById('form-stop-priority').value = s.priority || 'normal';
+        document.getElementById('form-stop-wstart').value = s.windowStart || '08:00';
+        document.getElementById('form-stop-wend').value = s.windowEnd || '18:00';
+        document.getElementById('form-stop-duration').value = s.duration || 10;
+        document.getElementById('form-stop-notes').value = s.notes || '';
+      } else {
+        document.getElementById('form-stop-name').value = '';
+        document.getElementById('form-stop-address').value = '';
+        document.getElementById('form-stop-lat').value = '';
+        document.getElementById('form-stop-lng').value = '';
+        document.getElementById('form-stop-notes').value = '';
+      }
+      document.getElementById('modal-stop').classList.add('open');
+    }
+
+    window.editStopModal = (id) => openStopModal(id);
+    window.deleteStop = (id) => {
+      if (confirm("Excluir esta parada?")) {
+        appState.stops = appState.stops.filter(s => s.id !== id);
+        saveStorage();
+        refreshUI();
+        calculateFullRoute();
+      }
+    };
+
+    function saveStopForm() {
+      const id = document.getElementById('form-stop-id').value || `stop-${Date.now()}`;
+      const lat = parseFloat(document.getElementById('form-stop-lat').value);
+      const lng = parseFloat(document.getElementById('form-stop-lng').value);
+      const name = document.getElementById('form-stop-name').value;
+      const address = document.getElementById('form-stop-address').value;
+
+      if (!lat || !lng || !name || !address) {
+        show
