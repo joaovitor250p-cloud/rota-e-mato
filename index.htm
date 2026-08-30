@@ -2,19 +2,21 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>RotaPro - Otimizador e Executor de Rotas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>RotaPro - Otimizador e Roteirizador Mobile & Web</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
     :root {
       --primary: #2563eb;
       --primary-hover: #1d4ed8;
-      --primary-light: #dbeafe;
+      --primary-light: #eff6ff;
       --bg-main: #f8fafc;
       --surface: #ffffff;
       --border: #e2e8f0;
@@ -23,13 +25,13 @@
       
       /* Status Colors */
       --status-pending: #eab308;
-      --status-next: #3b82f6;
-      --status-progress: #f97316;
-      --status-delivered: #22c55e;
-      --status-failed: #ef4444;
-      --status-canceled: #64748b;
+      --status-next: #2563eb;
+      --status-delivered: #16a34a;
+      --status-failed: #dc2626;
       
-      --sidebar-width: 440px;
+      --sidebar-width: 420px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
     }
 
     * {
@@ -40,8 +42,9 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    body, html {
+    html, body {
       height: 100%;
+      height: 100dvh;
       width: 100vw;
       overflow: hidden;
       background-color: var(--bg-main);
@@ -50,7 +53,8 @@
 
     #app-layout {
       display: flex;
-      height: 100vh;
+      height: 100%;
+      height: 100dvh;
       width: 100vw;
       position: relative;
     }
@@ -69,7 +73,7 @@
       z-index: 1;
     }
 
-    /* SIDEBAR */
+    /* SIDEBAR (Desktop: Painel lateral | Mobile: Bottom Sheet Gaveta) */
     #sidebar {
       width: var(--sidebar-width);
       height: 100%;
@@ -77,42 +81,45 @@
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      z-index: 10;
-      box-shadow: 4px 0 16px rgba(0,0,0,0.06);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.06);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), height 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     /* HEADER */
     .app-header {
-      padding: 16px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border);
       background: #fff;
+      flex-shrink: 0;
     }
 
     .brand-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .brand-title {
-      font-size: 1.25rem;
-      font-weight: 700;
+      font-size: 1.15rem;
+      font-weight: 800;
       color: var(--primary);
       display: flex;
       align-items: center;
       gap: 8px;
+      letter-spacing: -0.5px;
     }
 
     .status-badge-live {
-      font-size: 0.75rem;
-      padding: 3px 8px;
+      font-size: 0.72rem;
+      padding: 4px 10px;
       border-radius: 999px;
-      font-weight: 600;
-      display: flex;
+      font-weight: 700;
+      display: inline-flex;
       align-items: center;
       gap: 5px;
+      cursor: pointer;
     }
     .status-live-real { background: #dcfce7; color: #15803d; }
     .status-live-demo { background: #fef3c7; color: #b45309; }
@@ -122,22 +129,25 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-top: 10px;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 10px 14px;
+      gap: 7px;
+      padding: 10px 12px;
       border-radius: 8px;
       border: 1px solid transparent;
-      font-size: 0.875rem;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.15s ease;
+      min-height: 42px;
+      touch-action: manipulation;
+      transition: background 0.15s ease, transform 0.05s ease;
     }
+    .btn:active { transform: scale(0.98); }
 
     .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: var(--primary-hover); }
@@ -145,11 +155,9 @@
     .btn-outline:hover { background: var(--bg-main); }
     .btn-success { background: var(--status-delivered); color: white; }
     .btn-danger { background: var(--status-failed); color: white; }
-    .btn-warning { background: var(--status-pending); color: #000; }
-    .btn-block { width: 100%; grid-column: span 2; }
-    .btn-sm { padding: 6px 10px; font-size: 0.75rem; }
+    .btn-sm { padding: 6px 10px; font-size: 0.75rem; min-height: 32px; }
 
-    /* METRICS / STATS CARD */
+    /* METRICS / STATS */
     .metrics-bar {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -158,20 +166,19 @@
       border-radius: 8px;
       gap: 4px;
       text-align: center;
-      margin-bottom: 10px;
     }
 
     .metric-box .val {
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: var(--text-main);
     }
 
     .metric-box .lbl {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       color: var(--text-muted);
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .progress-container {
@@ -192,22 +199,21 @@
     .progress-meta {
       display: flex;
       justify-content: space-between;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-muted);
       margin-top: 4px;
-      font-weight: 500;
+      font-weight: 600;
     }
 
-    /* COMPARISON CARD */
     .comparison-banner {
       display: none;
       background: #ecfdf5;
       border: 1px solid #a7f3d0;
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 6px;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: #065f46;
-      margin-bottom: 8px;
+      margin-top: 8px;
     }
 
     /* CURRENT DELIVERY (ACTIVE DRIVE) */
@@ -215,17 +221,17 @@
       background: #eff6ff;
       border: 2px solid var(--primary);
       border-radius: 10px;
-      padding: 14px;
-      margin: 12px 16px 4px 16px;
+      padding: 12px;
+      margin: 10px 16px 4px 16px;
       display: none;
-      box-shadow: 0 4px 12px rgba(37,99,235,0.08);
+      flex-shrink: 0;
     }
     .active-card-badge {
-      font-size: 0.7rem;
-      font-weight: 700;
+      font-size: 0.68rem;
+      font-weight: 800;
       background: var(--primary);
       color: white;
-      padding: 2px 8px;
+      padding: 3px 6px;
       border-radius: 4px;
       text-transform: uppercase;
     }
@@ -233,14 +239,16 @@
     /* FILTERS */
     .filter-tabs {
       display: flex;
-      padding: 6px 16px;
+      padding: 8px 16px;
       gap: 6px;
       overflow-x: auto;
       border-bottom: 1px solid var(--border);
       background: #fff;
+      flex-shrink: 0;
+      -webkit-overflow-scrolling: touch;
     }
     .filter-tab {
-      padding: 4px 10px;
+      padding: 6px 12px;
       font-size: 0.75rem;
       background: none;
       border: 1px solid var(--border);
@@ -248,7 +256,8 @@
       color: var(--text-muted);
       cursor: pointer;
       white-space: nowrap;
-      font-weight: 500;
+      font-weight: 600;
+      min-height: 32px;
     }
     .filter-tab.active {
       background: var(--primary-light);
@@ -265,29 +274,19 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      -webkit-overflow-scrolling: touch;
     }
 
     .stop-card {
       background: white;
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 12px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       position: relative;
-      cursor: grab;
-      user-select: none;
       box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .stop-card.dragging {
-      opacity: 0.4;
-      border-style: dashed;
-    }
-    .stop-card.drag-over {
-      border-top: 3px solid var(--primary);
-    }
-
     .stop-index-badge {
       width: 32px;
       height: 32px;
@@ -313,34 +312,34 @@
     .stop-header-row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: flex-start;
+      gap: 6px;
     }
     .stop-name {
-      font-weight: 600;
-      font-size: 0.92rem;
+      font-weight: 700;
+      font-size: 0.9rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .stop-address {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-muted);
-      margin: 2px 0 6px 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      margin: 3px 0 6px 0;
+      line-height: 1.3;
+      word-break: break-word;
     }
     .stop-badges {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
       align-items: center;
     }
     .badge {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       padding: 2px 6px;
       border-radius: 4px;
-      font-weight: 600;
+      font-weight: 700;
     }
     .badge-priority-alta { background: #fee2e2; color: #b91c1c; }
     .badge-priority-normal { background: #f1f5f9; color: #475569; }
@@ -351,17 +350,22 @@
     .stop-actions-menu {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
     }
     .btn-icon {
       background: none;
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
+      padding: 6px;
+      border-radius: 6px;
+      min-width: 30px;
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .btn-icon:hover {
+    .btn-icon:hover, .btn-icon:active {
       background: #f1f5f9;
       color: var(--text-main);
     }
@@ -369,9 +373,9 @@
     /* FLOATING MAP CONTROLS */
     .map-overlay-controls {
       position: absolute;
-      top: 16px;
-      right: 16px;
-      z-index: 1000;
+      top: calc(14px + var(--safe-top));
+      right: 14px;
+      z-index: 500;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -379,55 +383,54 @@
     .map-btn {
       background: white;
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      font-size: 1rem;
+      border-radius: 10px;
+      width: 44px;
+      height: 44px;
+      font-size: 1.05rem;
       color: var(--text-main);
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 42px;
-      height: 42px;
     }
-    .map-btn:hover { background: #f8fafc; }
+    .map-btn:active { background: #f1f5f9; }
 
     /* DEMO CONTROLS FLOATING BAR */
     .demo-bar {
       position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1000;
-      background: rgba(15, 23, 42, 0.9);
+      top: calc(14px + var(--safe-top));
+      left: 14px;
+      z-index: 500;
+      background: rgba(15, 23, 42, 0.92);
       backdrop-filter: blur(8px);
-      padding: 10px 16px;
+      padding: 6px 12px;
       border-radius: 30px;
       display: none;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       color: white;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
     }
     .demo-btn {
-      background: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.2);
       border: none;
       color: white;
       padding: 6px 12px;
       border-radius: 20px;
       cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 0.78rem;
+      font-weight: 700;
+      min-height: 32px;
     }
-    .demo-btn:hover { background: rgba(255,255,255,0.3); }
 
     /* MODALS */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.5);
+      background: rgba(15, 23, 42, 0.6);
       backdrop-filter: blur(4px);
-      z-index: 2000;
+      z-index: 3000;
       display: none;
       align-items: center;
       justify-content: center;
@@ -435,19 +438,17 @@
     }
     .modal {
       background: white;
-      border-radius: 12px;
-      max-width: 480px;
+      border-radius: 14px;
+      max-width: 460px;
       width: 100%;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+      max-height: 85vh;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
-      animation: modalIn 0.2s ease-out;
-    }
-    @keyframes modalIn {
-      from { transform: scale(0.95); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
     }
     .modal-header {
-      padding: 16px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
@@ -456,8 +457,8 @@
     }
     .modal-body {
       padding: 16px;
-      max-height: 75vh;
       overflow-y: auto;
+      flex: 1;
     }
     .modal-footer {
       padding: 12px 16px;
@@ -472,22 +473,21 @@
     }
     .form-group label {
       display: block;
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 0.78rem;
+      font-weight: 700;
       color: var(--text-muted);
       margin-bottom: 4px;
     }
     .form-control {
       width: 100%;
-      padding: 9px 12px;
+      padding: 10px 12px;
       border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.875rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
       outline: none;
+      background: #fff;
     }
-    .form-control:focus {
-      border-color: var(--primary);
-    }
+    .form-control:focus { border-color: var(--primary); }
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -502,51 +502,97 @@
       border-radius: 50%;
       border: 2px solid #ffffff;
       color: #ffffff;
-      font-weight: 700;
-      font-size: 13px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      font-weight: 800;
+      font-size: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
     }
     .marker-pendente { background: #eab308; }
-    .marker-proxima { background: #2563eb; transform: scale(1.2); }
-    .marker-entregue { background: #22c55e; }
-    .marker-negada { background: #ef4444; }
+    .marker-proxima { background: #2563eb; transform: scale(1.15); box-shadow: 0 0 10px rgba(37,99,235,0.6); }
+    .marker-entregue { background: #16a34a; }
+    .marker-negada { background: #dc2626; }
     .driver-marker {
       background: #0f172a;
       border: 3px solid #60a5fa;
       width: 22px;
       height: 22px;
       border-radius: 50%;
-      box-shadow: 0 0 15px rgba(37,99,235,0.6);
+      box-shadow: 0 0 12px rgba(37,99,235,0.8);
     }
 
-    /* MOBILE DRAWER / RESPONSIVENESS */
-    .drawer-handle {
+    /* MOBILE BOTTOM SHEET & DRAWER */
+    .drawer-handle-bar {
       display: none;
-      width: 40px;
-      height: 4px;
+      width: 100%;
+      padding: 8px 0 4px 0;
+      background: #fff;
+      cursor: grab;
+      text-align: center;
+      border-radius: 18px 18px 0 0;
+    }
+    .drawer-pill {
+      width: 44px;
+      height: 5px;
       background: #cbd5e1;
-      border-radius: 2px;
-      margin: 8px auto;
-      cursor: pointer;
+      border-radius: 10px;
+      margin: 0 auto;
     }
 
+    /* ESTILOS ESPECÍFICOS PARA CELULAR */
     @media (max-width: 860px) {
       #app-layout {
-        flex-direction: column-reverse;
+        flex-direction: column;
       }
+      
+      #map-container {
+        width: 100vw;
+        height: 100%;
+        position: absolute;
+        inset: 0;
+      }
+
       #sidebar {
-        width: 100%;
-        height: 60vh;
+        width: 100vw;
         position: absolute;
         bottom: 0;
         left: 0;
-        border-radius: 16px 16px 0 0;
+        right: 0;
+        height: 55vh; /* Posição intermediária padrão */
+        max-height: calc(100dvh - 30px);
+        border-radius: 20px 20px 0 0;
         border-right: none;
         border-top: 1px solid var(--border);
+        box-shadow: 0 -8px 25px rgba(0,0,0,0.18);
+        padding-bottom: var(--safe-bottom);
       }
-      .drawer-handle { display: block; }
-      #map-container {
-        height: 45vh;
+
+      .drawer-handle-bar {
+        display: block;
+      }
+
+      .app-header {
+        padding: 8px 14px 12px 14px;
+      }
+
+      .brand-title {
+        font-size: 1.05rem;
+      }
+
+      .stops-wrapper {
+        padding: 8px 14px 20px 14px;
+      }
+
+      .active-card {
+        margin: 8px 14px 4px 14px;
+      }
+
+      .map-overlay-controls {
+        top: calc(12px + var(--safe-top));
+        right: 12px;
+      }
+
+      .demo-bar {
+        top: calc(12px + var(--safe-top));
+        left: 12px;
       }
     }
   </style>
@@ -554,15 +600,37 @@
 <body>
 
   <div id="app-layout">
+    <main id="map-container">
+      <div id="map"></div>
+
+      <div class="map-overlay-controls">
+        <button class="map-btn" id="btn-recenter" title="Centralizar Rota">
+          <i class="fa-solid fa-crosshairs"></i>
+        </button>
+        <button class="map-btn" id="btn-toggle-demo" title="Alternar GPS / Demonstração">
+          <i class="fa-solid fa-satellite-dish"></i>
+        </button>
+      </div>
+
+      <div class="demo-bar" id="demo-bar">
+        <span style="font-size:0.75rem; font-weight:800;"><i class="fa-solid fa-car-side"></i> DEMO</span>
+        <button class="demo-btn" id="demo-btn-play"><i class="fa-solid fa-play"></i> Play</button>
+        <button class="demo-btn" id="demo-btn-speed">1x</button>
+        <button class="demo-btn" id="demo-btn-reset"><i class="fa-solid fa-rotate-left"></i></button>
+      </div>
+    </main>
+
     <aside id="sidebar">
-      <div class="drawer-handle" id="drawer-toggle"></div>
+      <div class="drawer-handle-bar" id="drawer-pill-toggle">
+        <div class="drawer-pill"></div>
+      </div>
       
       <div class="app-header">
         <div class="brand-bar">
           <div class="brand-title">
             <i class="fa-solid fa-route"></i> RotaPro
           </div>
-          <span id="gps-mode-badge" class="status-badge-live status-live-demo">
+          <span id="gps-mode-badge" class="status-badge-live status-live-demo" onclick="LocationManager.toggleDemoMode()">
             <i class="fa-solid fa-flask"></i> Modo DEMO
           </span>
         </div>
@@ -596,41 +664,39 @@
           </div>
         </div>
 
-        <div class="comparison-banner" id="opt-comparison">
-          <i class="fa-solid fa-bolt"></i> Otimização economizou <b>14.2 km</b> (~32 min)
-        </div>
+        <div class="comparison-banner" id="opt-comparison"></div>
 
-        <div class="action-grid" style="margin-top: 12px;">
+        <div class="action-grid">
           <button class="btn btn-outline" id="btn-modal-add">
             <i class="fa-solid fa-plus"></i> Parada
           </button>
           <button class="btn btn-outline" id="btn-modal-import">
-            <i class="fa-solid fa-file-import"></i> Importar
+            <i class="fa-solid fa-file-excel"></i> Importar
           </button>
           <button class="btn btn-primary" id="btn-optimize">
             <i class="fa-solid fa-wand-magic-sparkles"></i> Otimizar
           </button>
           <button class="btn btn-success" id="btn-start-route">
-            <i class="fa-solid fa-play"></i> Iniciar Rota
+            <i class="fa-solid fa-play"></i> Iniciar
           </button>
         </div>
       </div>
 
       <div class="active-card" id="active-stop-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 4px;">
           <span class="active-card-badge">PRÓXIMA PARADA</span>
-          <span style="font-weight:700; color:var(--primary); font-size:0.85rem;" id="active-eta">ETA --:--</span>
+          <span style="font-weight:800; color:var(--primary); font-size:0.85rem;" id="active-eta">ETA --:--</span>
         </div>
-        <h3 id="active-client" style="font-size: 1.05rem; margin-bottom: 2px;">Nome do Cliente</h3>
-        <p id="active-address" style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Endereço de destino</p>
-        <div style="display:flex; gap: 8px; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">
+        <h3 id="active-client" style="font-size: 0.95rem; margin-bottom: 2px;">Nome do Cliente</h3>
+        <p id="active-address" style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">Endereço de destino</p>
+        <div style="display:flex; gap: 10px; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 10px; flex-wrap: wrap;">
           <span id="active-dist"><i class="fa-solid fa-location-arrow"></i> 0.0 km</span>
           <span id="active-duration"><i class="fa-regular fa-clock"></i> 0 min</span>
-          <span id="active-window"><i class="fa-solid fa-business-time"></i> Qualquer horário</span>
+          <span id="active-window"><i class="fa-solid fa-business-time"></i> Horário Livre</span>
         </div>
-        <div class="action-grid" style="margin-bottom:0;">
+        <div class="action-grid" style="margin-top:0;">
           <button class="btn btn-outline" id="btn-nav-external" style="grid-column: span 2;">
-            <i class="fa-solid fa-diamond-turn-right"></i> Navegar com Maps/Waze
+            <i class="fa-solid fa-diamond-turn-right"></i> Abrir no Waze / Maps
           </button>
           <button class="btn btn-success" id="btn-mark-delivered">
             <i class="fa-solid fa-check"></i> Entregue
@@ -651,38 +717,18 @@
       <div class="stops-wrapper" id="stops-list-container">
         </div>
     </aside>
-
-    <main id="map-container">
-      <div id="map"></div>
-
-      <div class="map-overlay-controls">
-        <button class="map-btn" id="btn-recenter" title="Centralizar em mim">
-          <i class="fa-solid fa-crosshairs"></i>
-        </button>
-        <button class="map-btn" id="btn-toggle-demo" title="Alternar Modo DEMO / GPS Real">
-          <i class="fa-solid fa-satellite-dish"></i>
-        </button>
-      </div>
-
-      <div class="demo-bar" id="demo-bar">
-        <span style="font-size:0.8rem; font-weight:700;"><i class="fa-solid fa-car-side"></i> SIMULADOR</span>
-        <button class="demo-btn" id="demo-btn-play"><i class="fa-solid fa-play"></i> Play</button>
-        <button class="demo-btn" id="demo-btn-speed">1x</button>
-        <button class="demo-btn" id="demo-btn-reset"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-      </div>
-    </main>
   </div>
 
   <div class="modal-backdrop" id="modal-add-stop">
     <div class="modal">
       <div class="modal-header">
-        <span>Adicionar Parada</span>
+        <span>Nova Parada</span>
         <button class="btn-icon" onclick="UIManager.closeModals()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Nome do Cliente / Destinatário</label>
-          <input type="text" id="add-client" class="form-control" placeholder="Ex: Farmácia São Paulo" />
+          <label>Nome / Destinatário</label>
+          <input type="text" id="add-client" class="form-control" placeholder="Ex: Farmácia Central" />
         </div>
         <div class="form-group">
           <label>Endereço Completo</label>
@@ -698,17 +744,17 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Tempo Atendimento (min)</label>
+            <label>Atendimento (min)</label>
             <input type="number" id="add-duration" class="form-control" value="5" min="1" />
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Janela Início</label>
+            <label>Horário Mínimo</label>
             <input type="time" id="add-time-start" class="form-control" />
           </div>
           <div class="form-group">
-            <label>Janela Fim</label>
+            <label>Horário Máximo</label>
             <input type="time" id="add-time-end" class="form-control" />
           </div>
         </div>
@@ -723,18 +769,24 @@
   <div class="modal-backdrop" id="modal-import">
     <div class="modal">
       <div class="modal-header">
-        <span>Importar Lista de Paradas</span>
+        <span>Importar Paradas</span>
         <button class="btn-icon" onclick="UIManager.closeModals()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
-          Cole uma lista de endereços (1 por linha) ou envie um JSON estruturado.
-        </p>
-        <textarea id="import-text" class="form-control" rows="8" placeholder="Av. Paulista, 1000, São Paulo&#10;Rua Augusta, 500, São Paulo&#10;Av. Brigadeiro Faria Lima, 1500, São Paulo"></textarea>
+        <div class="form-group">
+          <label><i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> Selecionar Planilha Excel (.xlsx / .xls / .csv)</label>
+          <input type="file" id="import-excel-file" class="form-control" accept=".xlsx, .xls, .csv" />
+        </div>
+        <div style="text-align: center; margin: 10px 0; font-size: 0.75rem; color: var(--text-muted); font-weight:700;">OU COLE UMA LISTA MANUAL</div>
+        <div class="form-group">
+          <label>Endereços (1 por linha)</label>
+          <textarea id="import-text" class="form-control" rows="4" placeholder="Av. Paulista, 1000, São Paulo
+Rua Augusta, 500, São Paulo"></textarea>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline" onclick="UIManager.closeModals()">Cancelar</button>
-        <button class="btn btn-primary" id="btn-process-import">Processar Importação</button>
+        <button class="btn btn-primary" id="btn-process-import">Processar e Carregar</button>
       </div>
     </div>
   </div>
@@ -742,12 +794,12 @@
   <div class="modal-backdrop" id="modal-fail-stop">
     <div class="modal">
       <div class="modal-header">
-        <span>Por que a entrega foi negada?</span>
+        <span>Motivo da Não Entrega</span>
         <button class="btn-icon" onclick="UIManager.closeModals()"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label>Motivo do Insucesso</label>
+          <label>Selecione o motivo</label>
           <select id="fail-reason-select" class="form-control">
             <option value="Cliente ausente">Cliente ausente</option>
             <option value="Cliente recusou">Cliente recusou o pedido</option>
@@ -758,63 +810,38 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Observação adicional (Opcional)</label>
-          <input type="text" id="fail-note" class="form-control" placeholder="Detalhes adicionais..." />
+          <label>Observação (Opcional)</label>
+          <input type="text" id="fail-note" class="form-control" placeholder="Detalhes..." />
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-outline" onclick="UIManager.closeModals()">Cancelar</button>
+        <button class="btn btn-outline" onclick="UIManager.closeModals()">Voltar</button>
         <button class="btn btn-danger" id="btn-confirm-fail">Confirmar Insucesso</button>
       </div>
     </div>
   </div>
 
   <script>
-    /**
-     * RotaPro Architecture
-     * - StorageManager: Persistência local (LocalStorage)
-     * - RoutingService: Conexão OSRM / Motores Externos e Fallback Haversine
-     * - OptimizationEngine: Algoritmo 2-Opt + Heurística de Janela e Prioridades
-     * - MapManager: Leaflet layers, marcadores, polylines
-     * - LocationManager: GPS Navigator e fallback fictício
-     * - DeliveryManager: Fluxo de paradas, status e re-cálculos
-     * - DemoManager: Simulação de trânsito em tempo real com reprodução
-     * - UIManager: Eventos, DOM e Modais
-     */
-
-    // --- CONFIGURAÇÃO & CHAVES DE API EXTERNAS ---
     const CONFIG = {
-      // Deixe null para usar o servidor público OSRM (DEMO/OSM) ou insira a URL da sua API de roteamento
-      // Ex: Mapbox, GraphHopper ou Google Routes via backend proxy
-      ROUTING_API_KEY: null,
       OSRM_API_URL: 'https://router.project-osrm.org',
       NOMINATIM_GEOCODE_URL: 'https://nominatim.openstreetmap.org/search',
-      DEFAULT_COORDS: { lat: -23.550520, lng: -46.633308 } // São Paulo Centro
+      DEFAULT_COORDS: { lat: -23.550520, lng: -46.633308 } // Centro SP
     };
 
     /* ==========================================================================
-       1. STORAGE MANAGER
+       STORAGE MANAGER
        ========================================================================== */
     const StorageManager = {
-      KEY_STOPS: 'rotapro_stops',
-      KEY_CONFIG: 'rotapro_config',
-
-      saveStops(stops) {
-        localStorage.setItem(this.KEY_STOPS, JSON.stringify(stops));
-      },
-
-      loadStops() {
-        const data = localStorage.getItem(this.KEY_STOPS);
-        return data ? JSON.parse(data) : null;
-      },
-
-      clear() {
-        localStorage.removeItem(this.KEY_STOPS);
+      KEY: 'rotapro_v2_stops',
+      save(stops) { localStorage.setItem(this.KEY, JSON.stringify(stops)); },
+      load() {
+        const d = localStorage.getItem(this.KEY);
+        return d ? JSON.parse(d) : null;
       }
     };
 
     /* ==========================================================================
-       2. LOCATION MANAGER (GPS & LOCALIZAÇÃO)
+       LOCATION MANAGER (GPS & DEMO)
        ========================================================================== */
     const LocationManager = {
       currentPosition: { ...CONFIG.DEFAULT_COORDS },
@@ -823,24 +850,19 @@
       listeners: [],
 
       init() {
-        // Tentar obter localização real; se falhar, assume DEMO
         if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              this.currentPosition = {
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude
-              };
+              this.currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
               this.isDemo = false;
               this.startWatching();
               this.notify();
             },
-            (err) => {
-              console.warn("GPS não acessível ou permissão negada. Entrando em Modo Demo.", err.message);
+            () => {
               this.isDemo = true;
               this.notify();
             },
-            { enableHighAccuracy: true, timeout: 5000 }
+            { enableHighAccuracy: true, timeout: 4000 }
           );
         } else {
           this.isDemo = true;
@@ -852,13 +874,10 @@
         if (!this.isDemo && navigator.geolocation) {
           this.watchId = navigator.geolocation.watchPosition(
             (pos) => {
-              this.currentPosition = {
-                lat: pos.coords.latitude,
-                lng: pos.coords.longitude
-              };
+              this.currentPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
               this.notify();
             },
-            (err) => console.error(err),
+            null,
             { enableHighAccuracy: true }
           );
         }
@@ -880,83 +899,64 @@
         this.notify();
       },
 
-      onChange(callback) {
-        this.listeners.push(callback);
-      },
-
-      notify() {
-        this.listeners.forEach(cb => cb(this.currentPosition, this.isDemo));
-      }
+      onChange(cb) { this.listeners.push(cb); },
+      notify() { this.listeners.forEach(cb => cb(this.currentPosition, this.isDemo)); }
     };
 
     /* ==========================================================================
-       3. ROUTING SERVICE (OSRM / OPEN SOURCE / HAVERSINE FALLBACK)
+       ROUTING SERVICE (OSRM + HAVERSINE + GEOCODING)
        ========================================================================== */
     const RoutingService = {
-      /**
-       * Calcula a rota geométrica e tempos reais entre múltiplos pontos
-       */
       async calculateRoute(points) {
         if (!points || points.length < 2) return null;
-
-        // Monta string de coordenadas OSRM: lon,lat;lon,lat...
-        const coordString = points.map(p => `${p.lng},${p.lat}`).join(';');
-        const url = `${CONFIG.OSRM_API_URL}/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+        const coordsStr = points.map(p => `${p.lng},${p.lat}`).join(';');
+        const url = `${CONFIG.OSRM_API_URL}/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`;
 
         try {
           const res = await fetch(url);
-          if (!res.ok) throw new Error("OSRM API indisponível");
-          const data = await res.json();
-
-          if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-            const route = data.routes[0];
-            return {
-              coordinates: route.geometry.coordinates.map(c => [c[1], c[0]]), // Inverter para [lat, lng]
-              distanceKm: (route.distance / 1000),
-              durationMin: Math.round(route.duration / 60)
-            };
+          if (res.ok) {
+            const data = await res.json();
+            if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+              const r = data.routes[0];
+              return {
+                coordinates: r.geometry.coordinates.map(c => [c[1], c[0]]),
+                distanceKm: (r.distance / 1000),
+                durationMin: Math.round(r.duration / 60)
+              };
+            }
           }
-        } catch (e) {
-          console.warn("Falha no serviço de roteamento externo. Usando cálculo euclidiano/haversine.", e);
-        }
+        } catch (e) {}
 
-        // Fallback local caso sem internet ou sem API Key
-        return this.calculateFallbackRoute(points);
+        return this.fallbackRoute(points);
       },
 
-      calculateFallbackRoute(points) {
-        let totalDist = 0;
+      fallbackRoute(points) {
+        let total = 0;
         const coords = [];
         for (let i = 0; i < points.length - 1; i++) {
-          const p1 = points[i];
-          const p2 = points[i + 1];
-          coords.push([p1.lat, p1.lng]);
-          totalDist += this.haversineDistance(p1.lat, p1.lng, p2.lat, p2.lng);
+          coords.push([points[i].lat, points[i].lng]);
+          total += this.haversine(points[i].lat, points[i].lng, points[i+1].lat, points[i+1].lng);
         }
         coords.push([points[points.length - 1].lat, points[points.length - 1].lng]);
-
         return {
           coordinates: coords,
-          distanceKm: totalDist,
-          durationMin: Math.round(totalDist * 2.5) // estimativa média 25-30 km/h cidade
+          distanceKm: total,
+          durationMin: Math.round(total * 2.4)
         };
       },
 
-      haversineDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // Raio da Terra em km
+      haversine(lat1, lon1, lat2, lon2) {
+        const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
       },
 
-      async geocodeAddress(query) {
-        const url = `${CONFIG.NOMINATIM_GEOCODE_URL}?format=json&q=${encodeURIComponent(query)}&limit=1`;
+      async geocode(query) {
         try {
-          const res = await fetch(url, { headers: { 'User-Agent': 'RotaPro-App' } });
+          const url = `${CONFIG.NOMINATIM_GEOCODE_URL}?format=json&q=${encodeURIComponent(query)}&limit=1`;
+          const res = await fetch(url, { headers: { 'User-Agent': 'RotaProMobile' } });
           const data = await res.json();
           if (data && data.length > 0) {
             return {
@@ -965,32 +965,28 @@
               displayName: data[0].display_name
             };
           }
-        } catch (e) {
-          console.error("Erro geocodificando endereço", e);
-        }
-        // Retorna ponto aleatório próximo em caso de falha de geocodificação
+        } catch (e) {}
+        
+        // Offset simulado caso não encontre
         return {
-          lat: LocationManager.currentPosition.lat + (Math.random() - 0.5) * 0.05,
-          lng: LocationManager.currentPosition.lng + (Math.random() - 0.5) * 0.05,
+          lat: LocationManager.currentPosition.lat + (Math.random() - 0.5) * 0.04,
+          lng: LocationManager.currentPosition.lng + (Math.random() - 0.5) * 0.04,
           displayName: query
         };
       }
     };
 
     /* ==========================================================================
-       4. OPTIMIZATION ENGINE (TSP HEURÍSTICA + 2-OPT + JANELAS + PRIORIDADES)
+       OPTIMIZATION ENGINE (TSP + 2-OPT)
        ========================================================================== */
     const OptimizationEngine = {
-      optimize(startLocation, stops) {
-        if (!stops || stops.length <= 1) return [...stops];
+      optimize(start, stops) {
+        const active = stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
+        const finished = stops.filter(s => s.status === 'entregue' || s.status === 'negada');
+        if (active.length <= 1) return stops;
 
-        // Filtra apenas paradas ainda ativas / pendentes
-        const activeStops = stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
-        const closedStops = stops.filter(s => s.status === 'entregue' || s.status === 'negada' || s.status === 'cancelada');
-
-        // Algoritmo Nearest Neighbor com Peso de Prioridade e Janela
-        let unvisited = [...activeStops];
-        let currentPos = startLocation;
+        let unvisited = [...active];
+        let curr = start;
         let route = [];
 
         while (unvisited.length > 0) {
@@ -998,15 +994,10 @@
           let bestScore = Infinity;
 
           for (let i = 0; i < unvisited.length; i++) {
-            const stop = unvisited[i];
-            const dist = RoutingService.haversineDistance(currentPos.lat, currentPos.lng, stop.latitude, stop.longitude);
-            
-            // Fatores de penalidade/bônus de peso
-            let priorityFactor = 1.0;
-            if (stop.prioridade === 'alta') priorityFactor = 0.5; // Alta prioridade atrai antes
-            if (stop.prioridade === 'baixa') priorityFactor = 1.3;
-
-            let score = dist * priorityFactor;
+            const st = unvisited[i];
+            const dist = RoutingService.haversine(curr.lat, curr.lng, st.latitude, st.longitude);
+            let factor = st.prioridade === 'alta' ? 0.6 : (st.prioridade === 'baixa' ? 1.3 : 1.0);
+            let score = dist * factor;
 
             if (score < bestScore) {
               bestScore = score;
@@ -1016,237 +1007,267 @@
 
           const chosen = unvisited.splice(bestIdx, 1)[0];
           route.push(chosen);
-          currentPos = { lat: chosen.latitude, lng: chosen.longitude };
+          curr = { lat: chosen.latitude, lng: chosen.longitude };
         }
 
-        // 2-Opt Otimização Fina de Cruzamento de Linhas
-        route = this.twoOpt(startLocation, route);
-
-        return [...closedStops, ...route];
+        // 2-Opt refinement
+        route = this.twoOpt(start, route);
+        return [...finished, ...route];
       },
 
       twoOpt(start, route) {
-        let existing = [...route];
+        let r = [...route];
         let improved = true;
-        let iterations = 0;
+        let count = 0;
+        const d = (p1, p2) => RoutingService.haversine(p1.lat || p1.latitude, p1.lng || p1.longitude, p2.lat || p2.latitude, p2.lng || p2.longitude);
 
-        const getDist = (p1, p2) => RoutingService.haversineDistance(p1.lat || p1.latitude, p1.lng || p1.longitude, p2.lat || p2.latitude, p2.lng || p2.longitude);
-
-        while (improved && iterations < 50) {
+        while (improved && count < 30) {
           improved = false;
-          iterations++;
+          count++;
+          for (let i = 0; i < r.length - 1; i++) {
+            for (let k = i + 1; k < r.length; k++) {
+              const pA = i === 0 ? start : r[i - 1];
+              const pB = r[i];
+              const pC = r[k];
+              const pD = k + 1 < r.length ? r[k + 1] : null;
 
-          for (let i = 0; i < existing.length - 1; i++) {
-            for (let k = i + 1; k < existing.length; k++) {
-              const pA = (i === 0) ? start : existing[i - 1];
-              const pB = existing[i];
-              const pC = existing[k];
-              const pD = (k + 1 < existing.length) ? existing[k + 1] : null;
+              const dCurrent = d(pA, pB) + (pD ? d(pC, pD) : 0);
+              const dNew = d(pA, pC) + (pD ? d(pB, pD) : 0);
 
-              const currentDist = getDist(pA, pB) + (pD ? getDist(pC, pD) : 0);
-              const newDist = getDist(pA, pC) + (pD ? getDist(pB, pD) : 0);
-
-              if (newDist < currentDist - 0.01) {
-                // Reverter trecho entre i e k
-                const segment = existing.slice(i, k + 1).reverse();
-                existing.splice(i, k - i + 1, ...segment);
+              if (dNew < dCurrent - 0.01) {
+                const seg = r.slice(i, k + 1).reverse();
+                r.splice(i, k - i + 1, ...seg);
                 improved = true;
               }
             }
           }
         }
-        return existing;
+        return r;
       }
     };
 
     /* ==========================================================================
-       5. MAP MANAGER (LEAFLET CONTROLLER)
+       MAP MANAGER (LEAFLET & MARKERS)
        ========================================================================== */
     const MapManager = {
       map: null,
       markersGroup: null,
       routePolyline: null,
-      completedPolyline: null,
       driverMarker: null,
 
       init() {
         this.map = L.map('map', {
-          zoomControl: false
+          zoomControl: false,
+          tapTolerance: 15
         }).setView([CONFIG.DEFAULT_COORDS.lat, CONFIG.DEFAULT_COORDS.lng], 13);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
-          attribution: '&copy; OpenStreetMap & CartoDB'
+          attribution: '© OpenStreetMap'
         }).addTo(this.map);
-
-        L.control.zoom({ position: 'topright' }).addTo(this.map);
 
         this.markersGroup = L.layerGroup().addTo(this.map);
       },
 
-      updateDriverLocation(coords) {
+      updateDriver(coords) {
         if (!this.driverMarker) {
-          const icon = L.divIcon({
-            className: 'driver-marker',
-            iconSize: [22, 22],
-            iconAnchor: [11, 11]
-          });
+          const icon = L.divIcon({ className: 'driver-marker', iconSize: [22, 22], iconAnchor: [11, 11] });
           this.driverMarker = L.marker([coords.lat, coords.lng], { icon }).addTo(this.map);
         } else {
           this.driverMarker.setLatLng([coords.lat, coords.lng]);
         }
       },
 
-      renderStops(stops, activeStopId) {
+      renderStops(stops, activeId) {
         this.markersGroup.clearLayers();
-
-        let indexCounter = 1;
-        stops.forEach(stop => {
-          let statusClass = `marker-${stop.status}`;
-          let label = indexCounter;
-
-          if (stop.status === 'entregue') label = '✓';
-          if (stop.status === 'negada') label = '✕';
+        let idx = 1;
+        stops.forEach(s => {
+          let label = idx;
+          if (s.status === 'entregue') label = '✓';
+          if (s.status === 'negada') label = '✕';
 
           const icon = L.divIcon({
-            className: `custom-marker ${statusClass}`,
+            className: `custom-marker marker-${s.status}`,
             html: `<span>${label}</span>`,
-            iconSize: stop.id === activeStopId ? [34, 34] : [26, 26],
-            iconAnchor: stop.id === activeStopId ? [17, 17] : [13, 13]
+            iconSize: s.id === activeId ? [32, 32] : [24, 24],
+            iconAnchor: s.id === activeId ? [16, 16] : [12, 12]
           });
 
-          const marker = L.marker([stop.latitude, stop.longitude], { icon })
-            .bindPopup(`<b>#${indexCounter} ${stop.cliente}</b><br>${stop.endereco}<br><small>Status: ${stop.status.toUpperCase()}</small>`);
+          const m = L.marker([s.latitude, s.longitude], { icon })
+            .bindPopup(`<b>#${idx} ${s.cliente}</b><br>${s.endereco}`);
           
-          this.markersGroup.addLayer(marker);
-          indexCounter++;
+          this.markersGroup.addLayer(m);
+          idx++;
         });
       },
 
-      drawRoute(coordinates) {
+      drawRoute(coords) {
         if (this.routePolyline) this.map.removeLayer(this.routePolyline);
-        if (!coordinates || coordinates.length === 0) return;
-
-        this.routePolyline = L.polyline(coordinates, {
+        if (!coords || coords.length === 0) return;
+        this.routePolyline = L.polyline(coords, {
           color: '#2563eb',
           weight: 5,
-          opacity: 0.85,
-          smoothFactor: 1
+          opacity: 0.85
         }).addTo(this.map);
       },
 
-      fitBounds(stops, driverPos) {
-        const points = [];
-        if (driverPos) points.push([driverPos.lat, driverPos.lng]);
-        stops.forEach(s => points.push([s.latitude, s.longitude]));
-        if (points.length > 0) {
-          this.map.fitBounds(points, { padding: [40, 40], maxZoom: 15 });
+      fit(stops, driver) {
+        const pts = [];
+        if (driver) pts.push([driver.lat, driver.lng]);
+        stops.forEach(s => pts.push([s.latitude, s.longitude]));
+        if (pts.length > 0) {
+          this.map.fitBounds(pts, { padding: [30, 30], maxZoom: 15 });
         }
       }
     };
 
     /* ==========================================================================
-       6. DELIVERY MANAGER (STATE & WORKFLOW)
+       DELIVERY MANAGER & EXCEL PROCESSOR
        ========================================================================== */
     const DeliveryManager = {
       stops: [],
       isRouteActive: false,
       activeStop: null,
-      stats: {
-        totalStops: 0,
-        completedStops: 0,
-        failedStops: 0,
-        totalKm: 0,
-        remainingKm: 0,
-        totalMin: 0,
-        remainingMin: 0,
-        eta: '--:--'
-      },
 
       async init() {
-        const saved = StorageManager.loadStops();
+        const saved = StorageManager.load();
         if (saved && saved.length > 0) {
           this.stops = saved;
         } else {
-          this.loadDefaultDemoData();
+          this.loadDefaultData();
         }
         await this.refresh();
       },
 
-      loadDefaultDemoData() {
+      loadDefaultData() {
         const base = LocationManager.currentPosition;
         this.stops = [
-          { id: 1, cliente: "Mercado Central", endereco: "Rua Cantareira, 306", latitude: base.lat + 0.012, longitude: base.lng + 0.008, status: "pendente", prioridade: "alta", tempoAtendimento: 6, janelaInicio: "08:00", janelaFim: "12:00" },
-          { id: 2, cliente: "Farmácia Boa Saúde", endereco: "Av. Brigadeiro Luís Antônio, 800", latitude: base.lat - 0.015, longitude: base.lng - 0.005, status: "pendente", prioridade: "normal", tempoAtendimento: 4, janelaInicio: null, janelaFim: null },
-          { id: 3, cliente: "Padaria Bella Vista", endereco: "Rua Treze de Maio, 450", latitude: base.lat - 0.008, longitude: base.lng - 0.018, status: "pendente", prioridade: "normal", tempoAtendimento: 5, janelaInicio: null, janelaFim: null },
-          { id: 4, cliente: "Restaurante Sabor & Arte", endereco: "Rua Augusta, 1200", latitude: base.lat + 0.005, longitude: base.lng - 0.022, status: "pendente", prioridade: "normal", tempoAtendimento: 8, janelaInicio: "11:30", janelaFim: "14:00" },
-          { id: 5, cliente: "Tech Store Informática", endereco: "Rua Santa Ifigênia, 200", latitude: base.lat + 0.018, longitude: base.lng - 0.002, status: "pendente", prioridade: "baixa", tempoAtendimento: 5, janelaInicio: null, janelaFim: null },
-          { id: 6, cliente: "Livraria Cultura", endereco: "Av. Paulista, 2072", latitude: base.lat - 0.018, longitude: base.lng - 0.028, status: "pendente", prioridade: "alta", tempoAtendimento: 5, janelaInicio: "13:00", janelaFim: "17:00" }
+          { id: 1, cliente: "Farmácia Central", endereco: "Rua Cantareira, 306, Centro", latitude: base.lat + 0.010, longitude: base.lng + 0.007, status: "pendente", prioridade: "alta", tempoAtendimento: 5, janelaInicio: "08:00", janelaFim: "12:00" },
+          { id: 2, cliente: "Padaria Bella Vista", endereco: "Rua Treze de Maio, 450, Bela Vista", latitude: base.lat - 0.009, longitude: base.lng - 0.015, status: "pendente", prioridade: "normal", tempoAtendimento: 4, janelaInicio: null, janelaFim: null },
+          { id: 3, cliente: "Restaurante Sabor", endereco: "Rua Augusta, 1200, Consolação", latitude: base.lat + 0.004, longitude: base.lng - 0.019, status: "pendente", prioridade: "normal", tempoAtendimento: 7, janelaInicio: "11:30", janelaFim: "14:00" },
+          { id: 4, cliente: "Livraria Paulista", endereco: "Av. Paulista, 2072, Bela Vista", latitude: base.lat - 0.016, longitude: base.lng - 0.025, status: "pendente", prioridade: "baixa", tempoAtendimento: 5, janelaInicio: null, janelaFim: null }
         ];
-        StorageManager.saveStops(this.stops);
+        StorageManager.save(this.stops);
       },
 
-      async addStop(stopData) {
-        const geocoded = await RoutingService.geocodeAddress(stopData.endereco);
+      async addStop(item) {
+        let lat = item.latitude;
+        let lng = item.longitude;
+        let addr = item.endereco;
+
+        if (!lat || !lng) {
+          const geo = await RoutingService.geocode(item.endereco);
+          lat = geo.lat;
+          lng = geo.lng;
+          addr = geo.displayName;
+        }
+
         const newStop = {
-          id: Date.now(),
-          cliente: stopData.cliente || "Cliente Sem Nome",
-          endereco: geocoded.displayName,
-          latitude: geocoded.lat,
-          longitude: geocoded.lng,
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          cliente: item.cliente || `Parada #${this.stops.length + 1}`,
+          endereco: addr || "Endereço não especificado",
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng),
           status: "pendente",
-          prioridade: stopData.prioridade || "normal",
-          tempoAtendimento: parseInt(stopData.tempoAtendimento) || 5,
-          janelaInicio: stopData.janelaInicio || null,
-          janelaFim: stopData.janelaFim || null
+          prioridade: (item.prioridade || 'normal').toLowerCase(),
+          tempoAtendimento: parseInt(item.tempoAtendimento) || 5,
+          janelaInicio: item.janelaInicio || null,
+          janelaFim: item.janelaFim || null
         };
+
         this.stops.push(newStop);
-        StorageManager.saveStops(this.stops);
+        StorageManager.save(this.stops);
         await this.refresh();
       },
 
-      async importStops(rawText) {
-        const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        for (let line of lines) {
-          // Checar se é JSON ou linha de texto simples
-          if (line.startsWith('{') && line.endsWith('}')) {
+      /**
+       * Leitor e processador universal de planilhas Excel (.xlsx / .xls)
+       */
+      async processExcelFile(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
             try {
-              const obj = JSON.parse(line);
-              await this.addStop(obj);
-              continue;
-            } catch (e) {}
-          }
-          await this.addStop({ cliente: `Parada #${this.stops.length + 1}`, endereco: line });
-        }
+              const data = new Uint8Array(e.target.result);
+              const workbook = XLSX.read(data, { type: 'array' });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+              if (!json || json.length === 0) {
+                alert("A planilha selecionada está vazia!");
+                return resolve();
+              }
+
+              let count = 0;
+              for (const row of json) {
+                // Mapeamento flexível de colunas (ignora maiúsculas/minúsculas e acentos)
+                const keys = Object.keys(row);
+                const getKey = (names) => keys.find(k => names.includes(k.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")));
+
+                const kCliente = getKey(["cliente", "nome", "destinatario", "razao social"]);
+                const kEndereco = getKey(["endereco", "rua", "logradouro", "address", "local"]);
+                const kLat = getKey(["latitude", "lat"]);
+                const kLng = getKey(["longitude", "lng", "lon", "long"]);
+                const kPrioridade = getKey(["prioridade", "priority"]);
+                const kTempo = getKey(["tempo", "tempoatendimento", "duracao"]);
+                const kInicio = getKey(["janelainicio", "inicio", "hora_min"]);
+                const kFim = getKey(["janelafim", "fim", "hora_max"]);
+
+                const endereco = kEndereco ? row[kEndereco] : (keys.length > 1 ? row[keys[1]] : row[keys[0]]);
+                if (!endereco) continue;
+
+                await this.addStop({
+                  cliente: kCliente ? row[kCliente] : (keys.length > 0 ? row[keys[0]] : "Cliente"),
+                  endereco: endereco,
+                  latitude: kLat ? row[kLat] : null,
+                  longitude: kLng ? row[kLng] : null,
+                  prioridade: kPrioridade ? row[kPrioridade] : 'normal',
+                  tempoAtendimento: kTempo ? row[kTempo] : 5,
+                  janelaInicio: kInicio ? row[kInicio] : null,
+                  janelaFim: kFim ? row[kFim] : null
+                });
+                count++;
+              }
+
+              alert(`Sucesso! ${count} paradas foram importadas da planilha.`);
+              resolve();
+            } catch (err) {
+              console.error(err);
+              alert("Erro ao ler arquivo Excel: " + err.message);
+              reject(err);
+            }
+          };
+          reader.readAsArrayBuffer(file);
+        });
       },
 
       async optimizeSequence() {
-        const oldRoutePoints = [LocationManager.currentPosition, ...this.stops.map(s => ({ lat: s.latitude, lng: s.longitude }))];
-        const prevCalc = await RoutingService.calculateRoute(oldRoutePoints);
+        const oldPoints = [LocationManager.currentPosition, ...this.stops.map(s => ({ lat: s.latitude, lng: s.longitude }))];
+        const prevRoute = await RoutingService.calculateRoute(oldPoints);
 
         this.stops = OptimizationEngine.optimize(LocationManager.currentPosition, this.stops);
-        StorageManager.saveStops(this.stops);
-        
+        StorageManager.save(this.stops);
         await this.refresh();
 
-        // Mostrar Banner de Comparação
-        const newRoutePoints = [LocationManager.currentPosition, ...this.stops.filter(s => s.status === 'pendente' || s.status === 'proxima').map(s => ({ lat: s.latitude, lng: s.longitude }))];
-        const newCalc = await RoutingService.calculateRoute(newRoutePoints);
+        const activeStops = this.stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
+        const newPoints = [LocationManager.currentPosition, ...activeStops.map(s => ({ lat: s.latitude, lng: s.longitude }))];
+        const newRoute = await RoutingService.calculateRoute(newPoints);
 
-        if (prevCalc && newCalc && prevCalc.distanceKm > newCalc.distanceKm) {
-          const savedKm = (prevCalc.distanceKm - newCalc.distanceKm).toFixed(1);
-          const savedMin = Math.max(1, prevCalc.durationMin - newCalc.durationMin);
-          UIManager.showOptimizationComparison(savedKm, savedMin);
+        if (prevRoute && newRoute && prevRoute.distanceKm > newRoute.distanceKm) {
+          const diffKm = (prevRoute.distanceKm - newRoute.distanceKm).toFixed(1);
+          const diffMin = Math.max(1, prevRoute.durationMin - newRoute.durationMin);
+          UIManager.showComparison(diffKm, diffMin);
         }
       },
 
-      async startRoute() {
+      startRoute() {
         this.isRouteActive = true;
-        this.updateActiveStop();
-        await this.refresh();
+        this.updateActive();
+        this.refresh();
       },
 
-      updateActiveStop() {
+      updateActive() {
         const pending = this.stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
         if (pending.length > 0) {
           this.stops.forEach(s => { if (s.status === 'proxima') s.status = 'pendente'; });
@@ -1258,63 +1279,61 @@
         }
       },
 
-      async markAsDelivered(stopId) {
-        const stop = this.stops.find(s => s.id === stopId);
-        if (stop) {
-          stop.status = 'entregue';
-          stop.finishedAt = new Date().toISOString();
-          StorageManager.saveStops(this.stops);
-          this.updateActiveStop();
+      async markDelivered(id) {
+        const s = this.stops.find(x => x.id === id);
+        if (s) {
+          s.status = 'entregue';
+          StorageManager.save(this.stops);
+          this.updateActive();
           await this.refresh();
         }
       },
 
-      async markAsFailed(stopId, reason, note) {
-        const stop = this.stops.find(s => s.id === stopId);
-        if (stop) {
-          stop.status = 'negada';
-          stop.failReason = reason;
-          stop.failNote = note;
-          stop.finishedAt = new Date().toISOString();
-          StorageManager.saveStops(this.stops);
-          this.updateActiveStop();
+      async markFailed(id, reason, note) {
+        const s = this.stops.find(x => x.id === id);
+        if (s) {
+          s.status = 'negada';
+          s.failReason = reason;
+          s.failNote = note;
+          StorageManager.save(this.stops);
+          this.updateActive();
           await this.refresh();
         }
       },
 
-      reorderStops(fromIndex, toIndex) {
-        const [moved] = this.stops.splice(fromIndex, 1);
-        this.stops.splice(toIndex, 0, moved);
-        StorageManager.saveStops(this.stops);
+      moveStop(index, direction) {
+        const target = index + direction;
+        if (target < 0 || target >= this.stops.length) return;
+        const temp = this.stops[index];
+        this.stops[index] = this.stops[target];
+        this.stops[target] = temp;
+        StorageManager.save(this.stops);
         this.refresh();
       },
 
       deleteStop(id) {
         this.stops = this.stops.filter(s => s.id !== id);
-        StorageManager.saveStops(this.stops);
+        StorageManager.save(this.stops);
         this.refresh();
       },
 
       async refresh() {
-        // 1. Filtrar pontos para desenho da rota
-        const activeStops = this.stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
-        const points = [LocationManager.currentPosition, ...activeStops.map(s => ({ lat: s.latitude, lng: s.longitude }))];
+        const active = this.stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
+        const points = [LocationManager.currentPosition, ...active.map(s => ({ lat: s.latitude, lng: s.longitude }))];
 
-        // 2. Calcular rota via RoutingService
         let routeData = null;
         if (points.length >= 2) {
           routeData = await RoutingService.calculateRoute(points);
         }
 
-        // 3. Atualizar Estatísticas e Métricas
         const totalKm = routeData ? routeData.distanceKm : 0;
-        const totalDurationMin = (routeData ? routeData.durationMin : 0) + activeStops.reduce((acc, s) => acc + (s.tempoAtendimento || 5), 0);
+        const totalDurationMin = (routeData ? routeData.durationMin : 0) + active.reduce((acc, s) => acc + (s.tempoAtendimento || 5), 0);
 
         const now = new Date();
         const etaDate = new Date(now.getTime() + totalDurationMin * 60000);
         const etaStr = `${String(etaDate.getHours()).padStart(2, '0')}:${String(etaDate.getMinutes()).padStart(2, '0')}`;
 
-        this.stats = {
+        const stats = {
           totalStops: this.stops.length,
           completedStops: this.stops.filter(s => s.status === 'entregue').length,
           failedStops: this.stops.filter(s => s.status === 'negada').length,
@@ -1323,47 +1342,41 @@
           eta: etaStr
         };
 
-        // 4. Renderizar UI e Mapa
         MapManager.renderStops(this.stops, this.activeStop ? this.activeStop.id : null);
-        if (routeData) {
-          MapManager.drawRoute(routeData.coordinates);
-        } else {
-          MapManager.drawRoute([]);
-        }
-        UIManager.renderDashboard(this.stops, this.stats, this.activeStop, this.isRouteActive);
+        MapManager.drawRoute(routeData ? routeData.coordinates : []);
+        UIManager.render(this.stops, stats, this.activeStop, this.isRouteActive);
       }
     };
 
     /* ==========================================================================
-       7. DEMO MANAGER (SIMULADOR DE ROTA COM VEÍCULO EM MOVIMENTO)
+       DEMO MANAGER (SIMULADOR DE ROTA)
        ========================================================================== */
     const DemoManager = {
       isPlaying: false,
       speed: 1,
       timer: null,
       currentStep: 0,
-      pathPoints: [],
+      path: [],
 
       start() {
         document.getElementById('demo-bar').style.display = 'flex';
-        this.buildSimulationPath();
+        this.buildPath();
       },
 
-      buildSimulationPath() {
-        const activeStops = DeliveryManager.stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
-        if (activeStops.length === 0) return;
+      buildPath() {
+        const active = DeliveryManager.stops.filter(s => s.status === 'pendente' || s.status === 'proxima');
+        this.path = [];
+        let cur = LocationManager.currentPosition;
 
-        this.pathPoints = [];
-        let start = LocationManager.currentPosition;
-        
-        activeStops.forEach(stop => {
-          // Interpola 15 subpontos entre cada parada para movimento fluido
-          for (let step = 0; step <= 15; step++) {
-            const lat = start.lat + (stop.latitude - start.lat) * (step / 15);
-            const lng = start.lng + (stop.longitude - start.lng) * (step / 15);
-            this.pathPoints.push({ lat, lng, targetStopId: step === 15 ? stop.id : null });
+        active.forEach(st => {
+          for (let i = 0; i <= 10; i++) {
+            this.path.push({
+              lat: cur.lat + (st.latitude - cur.lat) * (i / 10),
+              lng: cur.lng + (st.longitude - cur.lng) * (i / 10),
+              targetStopId: i === 10 ? st.id : null
+            });
           }
-          start = { lat: stop.latitude, lng: stop.longitude };
+          cur = { lat: st.latitude, lng: st.longitude };
         });
       },
 
@@ -1371,35 +1384,29 @@
         this.isPlaying = !this.isPlaying;
         const btn = document.getElementById('demo-btn-play');
         if (this.isPlaying) {
-          btn.innerHTML = `<i class="fa-solid fa-pause"></i> Pausar`;
+          btn.innerHTML = `<i class="fa-solid fa-pause"></i>`;
           this.loop();
         } else {
-          btn.innerHTML = `<i class="fa-solid fa-play"></i> Play`;
+          btn.innerHTML = `<i class="fa-solid fa-play"></i>`;
           clearTimeout(this.timer);
         }
       },
 
       loop() {
         if (!this.isPlaying) return;
-
-        if (this.currentStep < this.pathPoints.length) {
-          const pt = this.pathPoints[this.currentStep];
+        if (this.currentStep < this.path.length) {
+          const pt = this.path[this.currentStep];
           LocationManager.setDemoPosition(pt.lat, pt.lng);
-          MapManager.updateDriverLocation(pt);
+          MapManager.updateDriver(pt);
 
-          // Se chegou em uma parada durante o percurso simulado
           if (pt.targetStopId) {
-            // Pequeno delay simulando parada de atendimento
-            setTimeout(() => {
-              DeliveryManager.markAsDelivered(pt.targetStopId);
-            }, 500);
+            DeliveryManager.markDelivered(pt.targetStopId);
           }
-
           this.currentStep++;
           this.timer = setTimeout(() => this.loop(), 600 / this.speed);
         } else {
           this.togglePlay();
-          alert("🎉 Demonstração da rota concluída com sucesso!");
+          alert("🏁 Demonstração finalizada!");
         }
       },
 
@@ -1411,45 +1418,75 @@
       reset() {
         this.isPlaying = false;
         clearTimeout(this.timer);
-        document.getElementById('demo-btn-play').innerHTML = `<i class="fa-solid fa-play"></i> Play`;
+        document.getElementById('demo-btn-play').innerHTML = `<i class="fa-solid fa-play"></i>`;
         this.currentStep = 0;
-        DeliveryManager.loadDefaultDemoData();
+        DeliveryManager.loadDefaultData();
         DeliveryManager.refresh();
       }
     };
 
     /* ==========================================================================
-       8. UI MANAGER (DOM CONTROLLER, DRAG & DROP & EVENT LISTENERS)
+       UI MANAGER (DOM, MOBILE DRAWER & EVENTOS)
        ========================================================================== */
     const UIManager = {
-      currentFilter: 'all',
-      draggedIndex: null,
+      filter: 'all',
+      drawerState: 1, // 0: Baixo (recolhido), 1: Médio, 2: Alto (expandido)
 
       init() {
         this.bindEvents();
-        LocationManager.onChange((coords, isDemo) => {
-          MapManager.updateDriverLocation(coords);
-          const badge = document.getElementById('gps-mode-badge');
+        this.setupMobileDrawer();
+
+        LocationManager.onChange((pos, isDemo) => {
+          MapManager.updateDriver(pos);
+          const b = document.getElementById('gps-mode-badge');
           if (isDemo) {
-            badge.className = "status-badge-live status-live-demo";
-            badge.innerHTML = `<i class="fa-solid fa-flask"></i> Modo DEMO`;
+            b.className = "status-badge-live status-live-demo";
+            b.innerHTML = `<i class="fa-solid fa-flask"></i> Modo DEMO`;
           } else {
-            badge.className = "status-badge-live status-live-real";
-            badge.innerHTML = `<i class="fa-solid fa-satellite"></i> GPS Real Ativo`;
+            b.className = "status-badge-live status-live-real";
+            b.innerHTML = `<i class="fa-solid fa-satellite"></i> GPS Real`;
           }
         });
       },
 
+      setupMobileDrawer() {
+        const sidebar = document.getElementById('sidebar');
+        const handle = document.getElementById('drawer-pill-toggle');
+
+        const applyState = (state) => {
+          this.drawerState = state;
+          if (window.innerWidth <= 860) {
+            if (state === 0) sidebar.style.height = '140px';
+            else if (state === 1) sidebar.style.height = '52vh';
+            else if (state === 2) sidebar.style.height = 'calc(100dvh - 30px)';
+          } else {
+            sidebar.style.height = '100%';
+          }
+        };
+
+        handle.addEventListener('click', () => {
+          let next = this.drawerState + 1;
+          if (next > 2) next = 0;
+          applyState(next);
+        });
+
+        // Touch drag swipe simples para celular
+        let startY = 0;
+        handle.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; }, { passive: true });
+        handle.addEventListener('touchend', (e) => {
+          const endY = e.changedTouches[0].clientY;
+          if (startY - endY > 40) applyState(Math.min(2, this.drawerState + 1)); // Arrastou para cima
+          if (endY - startY > 40) applyState(Math.max(0, this.drawerState - 1)); // Arrastou para baixo
+        }, { passive: true });
+      },
+
       bindEvents() {
-        // Modais
         document.getElementById('btn-modal-add').onclick = () => this.openModal('modal-add-stop');
         document.getElementById('btn-modal-import').onclick = () => this.openModal('modal-import');
-        
-        // Ações de Roteamento
         document.getElementById('btn-optimize').onclick = () => DeliveryManager.optimizeSequence();
         document.getElementById('btn-start-route').onclick = () => DeliveryManager.startRoute();
 
-        // Salvar Nova Parada
+        // Salvar parada manual
         document.getElementById('btn-save-stop').onclick = async () => {
           const cliente = document.getElementById('add-client').value;
           const endereco = document.getElementById('add-address').value;
@@ -1458,118 +1495,107 @@
           const janelaInicio = document.getElementById('add-time-start').value;
           const janelaFim = document.getElementById('add-time-end').value;
 
-          if (!endereco) return alert("Por favor insira um endereço válido.");
-
+          if (!endereco) return alert("Digite o endereço completo!");
           await DeliveryManager.addStop({ cliente, endereco, prioridade, tempoAtendimento, janelaInicio, janelaFim });
           this.closeModals();
-          // Limpar form
           document.getElementById('add-client').value = '';
           document.getElementById('add-address').value = '';
         };
 
-        // Processar Importação
+        // Processar importação (Excel ou Texto)
         document.getElementById('btn-process-import').onclick = async () => {
-          const text = document.getElementById('import-text').value;
-          if (!text.trim()) return;
-          await DeliveryManager.importStops(text);
-          this.closeModals();
-          document.getElementById('import-text').value = '';
-        };
+          const fileInput = document.getElementById('import-excel-file');
+          const textInput = document.getElementById('import-text').value;
 
-        // Entregue / Negada no Card Ativo
-        document.getElementById('btn-mark-delivered').onclick = () => {
-          if (DeliveryManager.activeStop) DeliveryManager.markAsDelivered(DeliveryManager.activeStop.id);
-        };
-        document.getElementById('btn-mark-failed').onclick = () => {
-          this.openModal('modal-fail-stop');
-        };
-        document.getElementById('btn-confirm-fail').onclick = () => {
-          const reason = document.getElementById('fail-reason-select').value;
-          const note = document.getElementById('fail-note').value;
-          if (DeliveryManager.activeStop) {
-            DeliveryManager.markAsFailed(DeliveryManager.activeStop.id, reason, note);
+          if (fileInput.files && fileInput.files.length > 0) {
+            await DeliveryManager.processExcelFile(fileInput.files[0]);
+            fileInput.value = '';
+          } else if (textInput.trim().length > 0) {
+            const lines = textInput.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            for (const line of lines) {
+              await DeliveryManager.addStop({ endereco: line });
+            }
+            document.getElementById('import-text').value = '';
           }
           this.closeModals();
         };
 
-        // Abrir App Externo (Google Maps / Waze)
+        // Ações da Entrega Ativa
+        document.getElementById('btn-mark-delivered').onclick = () => {
+          if (DeliveryManager.activeStop) DeliveryManager.markDelivered(DeliveryManager.activeStop.id);
+        };
+        document.getElementById('btn-mark-failed').onclick = () => this.openModal('modal-fail-stop');
+        document.getElementById('btn-confirm-fail').onclick = () => {
+          const r = document.getElementById('fail-reason-select').value;
+          const n = document.getElementById('fail-note').value;
+          if (DeliveryManager.activeStop) DeliveryManager.markFailed(DeliveryManager.activeStop.id, r, n);
+          this.closeModals();
+        };
+
+        // Abrir app de GPS externo
         document.getElementById('btn-nav-external').onclick = () => {
           if (!DeliveryManager.activeStop) return;
-          const stop = DeliveryManager.activeStop;
-          const url = `https://www.google.com/maps/dir/?api=1&destination=${stop.latitude},${stop.longitude}`;
+          const s = DeliveryManager.activeStop;
+          const url = `https://www.google.com/maps/dir/?api=1&destination=${s.latitude},${s.longitude}`;
           window.open(url, '_blank');
         };
 
-        // Controles de Mapa
-        document.getElementById('btn-recenter').onclick = () => {
-          MapManager.fitBounds(DeliveryManager.stops, LocationManager.currentPosition);
-        };
-        document.getElementById('btn-toggle-demo').onclick = () => {
-          LocationManager.toggleDemoMode();
-        };
+        // Botões do Mapa
+        document.getElementById('btn-recenter').onclick = () => MapManager.fit(DeliveryManager.stops, LocationManager.currentPosition);
+        document.getElementById('btn-toggle-demo').onclick = () => LocationManager.toggleDemoMode();
 
-        // Demo Simulator Controls
+        // Controles Demo
         document.getElementById('demo-btn-play').onclick = () => DemoManager.togglePlay();
         document.getElementById('demo-btn-speed').onclick = () => DemoManager.cycleSpeed();
         document.getElementById('demo-btn-reset').onclick = () => DemoManager.reset();
 
         // Filtros
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-          tab.onclick = (e) => {
-            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            this.currentFilter = tab.dataset.filter;
+        document.querySelectorAll('.filter-tab').forEach(t => {
+          t.onclick = () => {
+            document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+            t.classList.add('active');
+            this.filter = t.dataset.filter;
             this.renderStopsList(DeliveryManager.stops);
           };
         });
-
-        // Mobile drawer toggle
-        document.getElementById('drawer-toggle').onclick = () => {
-          const sb = document.getElementById('sidebar');
-          sb.style.height = sb.style.height === '80vh' ? '30vh' : '80vh';
-        };
       },
 
       openModal(id) { document.getElementById(id).style.display = 'flex'; },
       closeModals() { document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none'); },
 
-      showOptimizationComparison(savedKm, savedMin) {
-        const banner = document.getElementById('opt-comparison');
-        banner.style.display = 'block';
-        banner.innerHTML = `<i class="fa-solid fa-bolt"></i> Otimização economizou <b>${savedKm} km</b> (~${savedMin} min)`;
-        setTimeout(() => { banner.style.display = 'none'; }, 8000);
+      showComparison(km, min) {
+        const b = document.getElementById('opt-comparison');
+        b.style.display = 'block';
+        b.innerHTML = `<i class="fa-solid fa-bolt"></i> Otimização economizou <b>${km} km</b> (~${min} min)`;
+        setTimeout(() => { b.style.display = 'none'; }, 7000);
       },
 
-      renderDashboard(stops, stats, activeStop, isRouteActive) {
-        // Estatísticas Cabeçalho
+      render(stops, stats, activeStop, isActive) {
         document.getElementById('stat-stops').innerText = stats.totalStops;
         document.getElementById('stat-km').innerText = `${stats.totalKm} km`;
         document.getElementById('stat-time').innerText = `${stats.totalMin}m`;
         document.getElementById('stat-eta').innerText = stats.eta;
 
-        // Filtros contadores
         document.getElementById('count-all').innerText = stops.length;
         document.getElementById('count-pending').innerText = stops.filter(s => s.status === 'pendente' || s.status === 'proxima').length;
         document.getElementById('count-delivered').innerText = stats.completedStops;
         document.getElementById('count-failed').innerText = stats.failedStops;
 
-        // Barra de Progresso
         const done = stats.completedStops + stats.failedStops;
-        const percent = stats.totalStops > 0 ? Math.round((done / stats.totalStops) * 100) : 0;
-        document.getElementById('route-progress-bar').style.width = `${percent}%`;
-        document.getElementById('progress-percent').innerText = `${percent}% concluído`;
+        const p = stats.totalStops > 0 ? Math.round((done / stats.totalStops) * 100) : 0;
+        document.getElementById('route-progress-bar').style.width = `${p}%`;
+        document.getElementById('progress-percent').innerText = `${p}% concluído`;
         document.getElementById('stat-remaining-km').innerText = `${stats.totalKm} km restantes`;
 
-        // Card de Entrega Ativa
         const activeCard = document.getElementById('active-stop-card');
-        if (isRouteActive && activeStop) {
+        if (isActive && activeStop) {
           activeCard.style.display = 'block';
           document.getElementById('active-client').innerText = activeStop.cliente;
           document.getElementById('active-address').innerText = activeStop.endereco;
-          const dist = RoutingService.haversineDistance(LocationManager.currentPosition.lat, LocationManager.currentPosition.lng, activeStop.latitude, activeStop.longitude);
+          const dist = RoutingService.haversine(LocationManager.currentPosition.lat, LocationManager.currentPosition.lng, activeStop.latitude, activeStop.longitude);
           document.getElementById('active-dist').innerHTML = `<i class="fa-solid fa-location-arrow"></i> ${dist.toFixed(1)} km`;
-          document.getElementById('active-duration').innerHTML = `<i class="fa-regular fa-clock"></i> ~${Math.round(dist * 2.5)} min`;
-          document.getElementById('active-window').innerHTML = activeStop.janelaInicio ? `<i class="fa-solid fa-business-time"></i> ${activeStop.janelaInicio} - ${activeStop.janelaFim}` : `<i class="fa-solid fa-clock"></i> Sem janela`;
+          document.getElementById('active-duration').innerHTML = `<i class="fa-regular fa-clock"></i> ~${Math.round(dist * 2.4)} min`;
+          document.getElementById('active-window').innerHTML = activeStop.janelaInicio ? `<i class="fa-solid fa-business-time"></i> ${activeStop.janelaInicio} - ${activeStop.janelaFim}` : `Horário Livre`;
         } else {
           activeCard.style.display = 'none';
         }
@@ -1578,68 +1604,47 @@
       },
 
       renderStopsList(stops) {
-        const container = document.getElementById('stops-list-container');
-        container.innerHTML = '';
+        const c = document.getElementById('stops-list-container');
+        c.innerHTML = '';
 
-        const filtered = stops.filter(s => {
-          if (this.currentFilter === 'all') return true;
-          return s.status === this.currentFilter;
-        });
+        const list = stops.filter(s => this.filter === 'all' || s.status === this.filter);
 
-        filtered.forEach((stop, index) => {
+        list.forEach((s, idx) => {
           const card = document.createElement('div');
-          card.className = `stop-card status-${stop.status}`;
-          card.draggable = true;
-          card.dataset.index = index;
-
-          // Drag & Drop Listeners
-          card.ondragstart = (e) => {
-            this.draggedIndex = index;
-            card.classList.add('dragging');
-          };
-          card.ondragend = () => card.classList.remove('dragging');
-          card.ondragover = (e) => { e.preventDefault(); card.classList.add('drag-over'); };
-          card.ondragleave = () => card.classList.remove('drag-over');
-          card.ondrop = (e) => {
-            e.preventDefault();
-            card.classList.remove('drag-over');
-            if (this.draggedIndex !== null && this.draggedIndex !== index) {
-              DeliveryManager.reorderStops(this.draggedIndex, index);
-            }
-          };
+          card.className = `stop-card status-${s.status}`;
 
           card.innerHTML = `
-            <div class="stop-index-badge">${index + 1}</div>
+            <div class="stop-index-badge">${idx + 1}</div>
             <div class="stop-info">
               <div class="stop-header-row">
-                <div class="stop-name">${stop.cliente}</div>
+                <div class="stop-name">${s.cliente}</div>
                 <div class="stop-actions-menu">
-                  <button class="btn-icon" title="Excluir" onclick="DeliveryManager.deleteStop(${stop.id})"><i class="fa-solid fa-trash"></i></button>
+                  <button class="btn-icon" onclick="DeliveryManager.moveStop(${idx}, -1)" title="Subir"><i class="fa-solid fa-chevron-up"></i></button>
+                  <button class="btn-icon" onclick="DeliveryManager.moveStop(${idx}, 1)" title="Descer"><i class="fa-solid fa-chevron-down"></i></button>
+                  <button class="btn-icon" onclick="DeliveryManager.deleteStop(${s.id})" title="Excluir"><i class="fa-solid fa-trash"></i></button>
                 </div>
               </div>
-              <div class="stop-address">${stop.endereco}</div>
+              <div class="stop-address">${s.endereco}</div>
               <div class="stop-badges">
-                <span class="badge badge-priority-${stop.prioridade}">${stop.prioridade.toUpperCase()}</span>
-                <span class="badge badge-time"><i class="fa-regular fa-clock"></i> ${stop.tempoAtendimento || 5} min</span>
-                ${stop.janelaInicio ? `<span class="badge badge-warning"><i class="fa-solid fa-business-time"></i> ${stop.janelaInicio} - ${stop.janelaFim}</span>` : ''}
-                ${stop.failReason ? `<span class="badge badge-priority-alta">${stop.failReason}</span>` : ''}
+                <span class="badge badge-priority-${s.prioridade}">${s.prioridade.toUpperCase()}</span>
+                <span class="badge badge-time"><i class="fa-regular fa-clock"></i> ${s.tempoAtendimento || 5} min</span>
+                ${s.janelaInicio ? `<span class="badge badge-warning"><i class="fa-solid fa-business-time"></i> ${s.janelaInicio} - ${s.janelaFim}</span>` : ''}
+                ${s.failReason ? `<span class="badge badge-priority-alta">${s.failReason}</span>` : ''}
               </div>
             </div>
           `;
-          container.appendChild(card);
+          c.appendChild(card);
         });
       }
     };
 
-    /* ==========================================================================
-       INICIALIZAÇÃO DO APLICATIVO
-       ========================================================================== */
+    /* INICIALIZAÇÃO */
     window.addEventListener('DOMContentLoaded', () => {
       MapManager.init();
       LocationManager.init();
       DeliveryManager.init();
       UIManager.init();
-      DemoManager.start(); // Habilita barra demo pronta para uso
+      DemoManager.start();
     });
   </script>
 </body>
