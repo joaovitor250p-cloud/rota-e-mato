@@ -3,36 +3,35 @@ html_code = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>RotaPro - Navegação em Primeira Pessoa & Roteirizador</title>
+  <title>RotaPro - Navegação 3D & Roteirizador</title>
 
-  <!-- Leaflet CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  
-  <!-- Leaflet Rotate Plugin (permite rotação fluida da câmera como Waze/Google Maps) -->
-  <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+  <!-- MapLibre GL CSS & JS (Motor Vetorial Nativo com Pitch/3D Real de Condução e Rotação Fluida) -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+  <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
 
   <!-- SheetJS (Leitor de Planilhas .XLSX / .XLS / .CSV) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome Icons & Google Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --primary: #2563eb;
+      --primary: #3b82f6;
       --primary-dark: #1d4ed8;
-      --primary-light: #eff6ff;
-      --accent: #059669;
-      --bg-body: #0b1120;
-      --surface: #ffffff;
-      --surface-subtle: #f8fafc;
-      --border: #e2e8f0;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --success: #16a34a;
-      --danger: #dc2626;
-      --warning: #eab308;
+      --primary-glow: rgba(59, 130, 246, 0.4);
+      --accent-cyan: #06b6d4;
+      --surface-dark: #0f172a;
+      --surface-card: rgba(15, 23, 42, 0.92);
+      --border-glow: rgba(255, 255, 255, 0.12);
+      --text-white: #ffffff;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --danger: #f43f5e;
+      --warning: #f59e0b;
       
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -43,7 +42,7 @@ html_code = """<!DOCTYPE html>
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
     }
@@ -57,8 +56,8 @@ html_code = """<!DOCTYPE html>
       height: 100dvh;
       width: 100vw;
       overflow: hidden;
-      background: var(--bg-body);
-      color: var(--text-main);
+      background: #090d16;
+      color: var(--text-white);
     }
 
     #app-root {
@@ -69,92 +68,86 @@ html_code = """<!DOCTYPE html>
       position: relative;
     }
 
-    /* MAP CONTAINER COM PERSPECTIVA 3D DE DIREÇÃO (1ª PESSOA) */
+    /* MAP CONTAINER FULL 3D NATIVO */
     #map-wrapper {
       flex: 1;
       height: 100%;
       position: relative;
-      background: #0f172a;
+      background: #090d16;
       overflow: hidden;
-      perspective: 900px;
     }
 
     #map {
       width: 100%;
       height: 100%;
       z-index: 1;
-      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    /* MODO CONDUÇÃO EM 1ª PESSOA: Inclina o mapa em 54 graus para frente como Waze/Maps */
-    .first-person-driving #map {
-      transform: rotateX(54deg) scale(1.32) translateY(18%);
-      transform-origin: center 82%;
     }
 
     /* CONTROLES FLUTUANTES NO MAPA (MODO NORMAL) */
     .map-controls-floating {
       position: absolute;
-      top: calc(14px + var(--safe-top));
-      right: 14px;
+      top: calc(16px + var(--safe-top));
+      right: 16px;
       z-index: 400;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       transition: opacity 0.3s ease;
     }
 
     .fab-btn {
-      width: 46px;
-      height: 46px;
-      border-radius: 12px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      color: var(--text-main);
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glow);
+      color: var(--text-white);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.15rem;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      font-size: 1.2rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
-    .fab-btn:active { transform: scale(0.92); background: #f1f5f9; }
+    .fab-btn:active { transform: scale(0.92); background: rgba(59, 130, 246, 0.3); }
 
-    /* GPS INFO PILL NO TOPO */
+    /* GPS PILL NO TOPO */
     .gps-status-pill {
       position: absolute;
-      top: calc(14px + var(--safe-top));
-      left: 14px;
+      top: calc(16px + var(--safe-top));
+      left: 16px;
       z-index: 400;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(8px);
-      padding: 6px 14px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glow);
+      padding: 8px 16px;
       border-radius: 30px;
       color: #ffffff;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       font-weight: 700;
       display: flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.35);
     }
     .gps-dot {
-      width: 8px;
-      height: 8px;
+      width: 9px;
+      height: 9px;
       border-radius: 50%;
       background: var(--success);
-      box-shadow: 0 0 8px var(--success);
+      box-shadow: 0 0 10px var(--success);
       animation: pulse 1.8s infinite;
     }
-    .gps-dot.searching { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+    .gps-dot.searching { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
     @keyframes pulse {
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.4); opacity: 0.6; }
     }
 
     /* ==========================================================================
-       MODO DE NAVEGAÇÃO EM 1ª PESSOA (HUD WAZE/GOOGLE MAPS)
+       MODO DE NAVEGAÇÃO 3D REAL (HUD WAZE/GOOGLE MAPS PREMIUM)
        ========================================================================== */
     #nav-hud-layer {
       position: absolute;
@@ -164,23 +157,24 @@ html_code = """<!DOCTYPE html>
       display: none;
       flex-direction: column;
       justify-content: space-between;
-      padding: calc(12px + var(--safe-top)) 14px calc(14px + var(--safe-bottom)) 14px;
+      padding: calc(12px + var(--safe-top)) 16px calc(14px + var(--safe-bottom)) 16px;
       transition: all 0.3s ease;
     }
 
-    /* TOP BANNER: MANOBRA E CURVAS (CURVA À ESQUERDA/DIREITA/FRENTE) */
+    /* CARD DE MANOBRA SUPERIOR */
     .nav-maneuver-card {
       pointer-events: auto;
-      background: #0f172a;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(16px);
       color: #ffffff;
-      border-radius: 18px;
-      padding: 14px 18px;
+      border-radius: 20px;
+      padding: 16px 18px;
       display: flex;
       align-items: center;
       gap: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.6);
       border: 1px solid rgba(255,255,255,0.15);
-      animation: slideDown 0.3s ease-out;
+      animation: slideDown 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     @keyframes slideDown {
       from { transform: translateY(-30px); opacity: 0; }
@@ -188,17 +182,17 @@ html_code = """<!DOCTYPE html>
     }
 
     .maneuver-icon-box {
-      width: 58px;
-      height: 58px;
-      background: #2563eb;
-      border-radius: 16px;
+      width: 62px;
+      height: 62px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.2rem;
+      font-size: 2.3rem;
       color: #ffffff;
       flex-shrink: 0;
-      box-shadow: 0 4px 14px rgba(37,99,235,0.5);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.45);
     }
 
     .maneuver-details {
@@ -206,7 +200,7 @@ html_code = """<!DOCTYPE html>
       min-width: 0;
     }
     .maneuver-distance {
-      font-size: 1.65rem;
+      font-size: 1.8rem;
       font-weight: 900;
       letter-spacing: -0.5px;
       color: #ffffff;
@@ -216,13 +210,13 @@ html_code = """<!DOCTYPE html>
       font-size: 0.95rem;
       font-weight: 700;
       color: #94a3b8;
-      margin-top: 2px;
+      margin-top: 3px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .maneuver-street-name {
-      font-size: 0.85rem;
+      font-size: 0.88rem;
       color: #38bdf8;
       font-weight: 800;
       margin-top: 2px;
@@ -231,23 +225,24 @@ html_code = """<!DOCTYPE html>
       text-overflow: ellipsis;
     }
 
-    /* BOTÃO RECENTRALIZAR ESTILO WAZE (APARECE QUANDO ARRASTA O MAPA) */
+    /* BOTÃO RECENTRALIZAR ESTILO WAZE */
     #nav-btn-recenter-float {
       position: absolute;
-      bottom: 185px;
-      right: 14px;
+      bottom: 200px;
+      right: 16px;
       pointer-events: auto;
-      background: #ffffff;
-      color: var(--primary);
-      border: 2px solid var(--primary);
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(12px);
+      color: #38bdf8;
+      border: 1.5px solid rgba(56, 189, 248, 0.4);
       border-radius: 30px;
-      padding: 10px 18px;
+      padding: 12px 20px;
       font-size: 0.85rem;
       font-weight: 800;
       display: none;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       cursor: pointer;
       animation: pulseBtn 1.8s infinite;
     }
@@ -260,25 +255,26 @@ html_code = """<!DOCTYPE html>
     /* BOTÕES FLUTUANTES LATERAIS DA NAVEGAÇÃO */
     .nav-floating-actions {
       position: absolute;
-      top: calc(112px + var(--safe-top));
-      right: 14px;
+      top: calc(125px + var(--safe-top));
+      right: 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       pointer-events: auto;
     }
     .nav-btn-action {
-      width: 46px;
-      height: 46px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      color: var(--text-main);
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-glow);
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      font-size: 1.15rem;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.35);
       cursor: pointer;
     }
     .nav-btn-action:active { transform: scale(0.92); }
@@ -286,32 +282,34 @@ html_code = """<!DOCTYPE html>
     /* VELOCÍMETRO */
     .nav-speed-pill {
       position: absolute;
-      top: calc(112px + var(--safe-top));
-      left: 14px;
+      top: calc(125px + var(--safe-top));
+      left: 16px;
       background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
       color: #ffffff;
-      border: 2px solid #334155;
+      border: 2px solid rgba(255,255,255,0.15);
       border-radius: 50%;
-      width: 52px;
-      height: 52px;
+      width: 56px;
+      height: 56px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
-    .speed-val { font-size: 1.15rem; font-weight: 800; line-height: 1; }
-    .speed-unit { font-size: 0.55rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+    .speed-val { font-size: 1.25rem; font-weight: 900; line-height: 1; }
+    .speed-unit { font-size: 0.55rem; color: #94a3b8; font-weight: 800; text-transform: uppercase; }
 
-    /* CARTÃO INFERIOR DA PARADA NA NAVEGAÇÃO */
+    /* CARTÃO INFERIOR DA PARADA NA NAVEGAÇÃO (DESIGN MODERNO & ELEGANTE) */
     .nav-bottom-card {
       pointer-events: auto;
-      background: #ffffff;
-      border-radius: 20px;
-      padding: 16px;
-      box-shadow: 0 -4px 30px rgba(0,0,0,0.3);
-      border: 1px solid var(--border);
-      animation: slideUp 0.3s ease-out;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 18px 20px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.15);
+      animation: slideUp 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     @keyframes slideUp {
       from { transform: translateY(40px); opacity: 0; }
@@ -321,50 +319,50 @@ html_code = """<!DOCTYPE html>
     .nav-stop-index-title {
       font-size: 0.8rem;
       font-weight: 800;
-      color: var(--primary);
+      color: #38bdf8;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       margin-bottom: 2px;
     }
     .nav-stop-package-number {
-      font-size: 1.2rem;
+      font-size: 1.35rem;
       font-weight: 900;
-      color: var(--text-main);
+      color: #ffffff;
       margin-bottom: 3px;
     }
     .nav-stop-real-address {
-      font-size: 0.88rem;
-      color: #334155;
+      font-size: 0.92rem;
+      color: #cbd5e1;
       font-weight: 600;
       margin-bottom: 6px;
       line-height: 1.35;
       word-break: break-word;
     }
     .nav-stop-metrics-line {
-      font-size: 0.82rem;
+      font-size: 0.85rem;
       font-weight: 700;
-      color: var(--text-muted);
-      margin-bottom: 12px;
+      color: #94a3b8;
+      margin-bottom: 14px;
     }
 
     .nav-action-buttons-row {
       display: grid;
-      grid-template-columns: 0.9fr 1.3fr 1.4fr;
-      gap: 8px;
+      grid-template-columns: 0.9fr 1.3fr 1.5fr;
+      gap: 10px;
     }
 
     /* ==========================================================================
-       SIDEBAR / DRAWER GAVETA (MODO GERENCIAMENTO E OTIMIZAÇÃO)
+       SIDEBAR / DRAWER GAVETA (MODO NORMAL DE GERENCIAMENTO)
        ========================================================================== */
     #sidebar {
       width: var(--sidebar-width);
       height: 100%;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
+      background: #0f172a;
+      border-right: 1px solid rgba(255,255,255,0.08);
       display: flex;
       flex-direction: column;
       z-index: 500;
-      box-shadow: 4px 0 25px rgba(0,0,0,0.08);
+      box-shadow: 4px 0 35px rgba(0,0,0,0.4);
       transition: height 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), transform 0.3s ease;
     }
 
@@ -374,22 +372,22 @@ html_code = """<!DOCTYPE html>
       padding: 10px 0 6px 0;
       text-align: center;
       cursor: grab;
-      background: #ffffff;
+      background: #0f172a;
       border-radius: 20px 20px 0 0;
     }
     .drawer-bar-pill {
       width: 48px;
       height: 5px;
-      background: #cbd5e1;
+      background: #334155;
       border-radius: 10px;
       margin: 0 auto;
     }
 
     /* HEADER & STATS */
     .panel-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #0f172a;
       flex-shrink: 0;
     }
 
@@ -397,25 +395,25 @@ html_code = """<!DOCTYPE html>
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .app-title {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--primary);
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #38bdf8;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .nav-selector-badge {
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 5px 10px;
-      border-radius: 8px;
-      background: var(--surface-subtle);
-      border: 1px solid var(--border);
-      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text-white);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -426,46 +424,46 @@ html_code = """<!DOCTYPE html>
     .metrics-dashboard {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      background: var(--surface-subtle);
-      border-radius: 10px;
-      padding: 10px 6px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 14px;
+      padding: 12px 8px;
       gap: 4px;
       text-align: center;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,255,255,0.08);
     }
     .metric-item .val {
-      font-size: 0.92rem;
+      font-size: 0.95rem;
       font-weight: 800;
-      color: var(--text-main);
+      color: #ffffff;
     }
     .metric-item .lbl {
       font-size: 0.65rem;
       text-transform: uppercase;
       font-weight: 700;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 3px;
     }
 
     /* BANNER DE ECONOMIA REAL */
     .economy-alert-card {
       display: none;
-      background: #ecfdf5;
-      border: 1px solid #6ee7b7;
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin-top: 10px;
-      font-size: 0.78rem;
-      color: #065f46;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: #34d399;
       line-height: 1.4;
     }
-    .economy-alert-card b { color: #047857; }
+    .economy-alert-card b { color: #10b981; }
 
     /* BOTÕES PRINCIPAIS */
     .main-actions-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-top: 10px;
+      gap: 10px;
+      margin-top: 12px;
     }
 
     .btn {
@@ -473,95 +471,95 @@ html_code = """<!DOCTYPE html>
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.85rem;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 0.88rem;
       font-weight: 700;
       border: 1px solid transparent;
       cursor: pointer;
-      min-height: 44px;
+      min-height: 46px;
       touch-action: manipulation;
-      transition: all 0.15s ease;
+      transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
-    .btn:active { transform: scale(0.97); }
-    .btn-primary { background: var(--primary); color: #ffffff; }
-    .btn-primary:hover { background: var(--primary-dark); }
-    .btn-outline { background: #ffffff; border-color: var(--border); color: var(--text-main); }
-    .btn-outline:hover { background: var(--surface-subtle); }
-    .btn-success { background: var(--success); color: #ffffff; }
-    .btn-danger { background: var(--danger); color: #ffffff; }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #ffffff; box-shadow: 0 4px 15px rgba(59,130,246,0.3); }
+    .btn-outline { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); color: #ffffff; }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+    .btn-danger { background: linear-gradient(135deg, #f43f5e, #e11d48); color: #ffffff; }
 
     /* FILTROS */
     .filter-bar {
       display: flex;
-      padding: 8px 16px;
-      gap: 6px;
+      padding: 10px 18px;
+      gap: 8px;
       overflow-x: auto;
-      border-bottom: 1px solid var(--border);
-      background: #ffffff;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #0f172a;
       flex-shrink: 0;
     }
     .filter-chip {
-      padding: 6px 12px;
-      font-size: 0.75rem;
+      padding: 6px 14px;
+      font-size: 0.78rem;
       font-weight: 700;
       border-radius: 20px;
-      border: 1px solid var(--border);
-      background: #ffffff;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
       color: var(--text-muted);
       cursor: pointer;
       white-space: nowrap;
-      min-height: 34px;
+      min-height: 36px;
     }
     .filter-chip.active {
-      background: var(--primary-light);
-      color: var(--primary);
-      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.18);
+      color: #38bdf8;
+      border-color: #38bdf8;
     }
 
     /* LISTA DE PARADAS */
     .stops-scroll-area {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 16px;
+      padding: 14px 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       -webkit-overflow-scrolling: touch;
     }
 
     .stop-item-card {
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px;
       display: flex;
       gap: 12px;
       align-items: flex-start;
-      transition: border 0.2s;
+      transition: all 0.2s ease;
     }
     .stop-item-card.is-active {
-      border-color: var(--primary);
-      box-shadow: 0 2px 8px rgba(37,99,235,0.15);
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.15);
     }
 
     .stop-badge-number {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: #f1f5f9;
-      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 0.88rem;
+      font-size: 0.9rem;
       flex-shrink: 0;
     }
-    .stop-item-card.status-pendente .stop-badge-number { background: #fef08a; color: #854d0e; }
-    .stop-item-card.status-proxima .stop-badge-number { background: var(--primary); color: #ffffff; }
-    .stop-item-card.status-entregue .stop-badge-number { background: #dcfce7; color: #166534; }
-    .stop-item-card.status-negada .stop-badge-number { background: #fee2e2; color: #991b1b; }
+    .stop-item-card.status-pendente .stop-badge-number { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .stop-item-card.status-proxima .stop-badge-number { background: #3b82f6; color: #ffffff; }
+    .stop-item-card.status-entregue .stop-badge-number { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .stop-item-card.status-negada .stop-badge-number { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
 
     .stop-content {
       flex: 1;
@@ -575,16 +573,16 @@ html_code = """<!DOCTYPE html>
     }
     .stop-name {
       font-weight: 800;
-      font-size: 0.95rem;
-      color: var(--text-main);
+      font-size: 0.98rem;
+      color: #ffffff;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .stop-street {
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       color: var(--text-muted);
-      margin: 4px 0 6px 0;
+      margin: 4px 0 8px 0;
       line-height: 1.35;
       word-break: break-word;
     }
@@ -595,15 +593,15 @@ html_code = """<!DOCTYPE html>
       align-items: center;
     }
     .tag {
-      font-size: 0.68rem;
+      font-size: 0.7rem;
       font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
     }
-    .tag-p-alta { background: #fee2e2; color: #b91c1c; }
-    .tag-p-normal { background: #f1f5f9; color: #475569; }
-    .tag-p-baixa { background: #e0f2fe; color: #0369a1; }
-    .tag-time { background: #f8fafc; border: 1px solid var(--border); color: #334155; }
+    .tag-p-alta { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
+    .tag-p-normal { background: rgba(255, 255, 255, 0.08); color: #94a3b8; }
+    .tag-p-baixa { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .tag-time { background: rgba(255, 255, 255, 0.05); color: #cbd5e1; }
 
     .stop-order-actions {
       display: flex;
@@ -623,14 +621,14 @@ html_code = """<!DOCTYPE html>
       align-items: center;
       justify-content: center;
     }
-    .icon-btn:active { background: #f1f5f9; color: var(--text-main); }
+    .icon-btn:active { background: rgba(255,255,255,0.1); color: #ffffff; }
 
     /* MODAIS */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.65);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
       z-index: 2000;
       display: none;
       align-items: center;
@@ -638,132 +636,140 @@ html_code = """<!DOCTYPE html>
       padding: 16px;
     }
     .modal-box {
-      background: #ffffff;
-      border-radius: 16px;
+      background: #0f172a;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
       width: 100%;
       max-width: 480px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      box-shadow: 0 25px 30px -5px rgba(0,0,0,0.3);
+      box-shadow: 0 25px 40px rgba(0,0,0,0.6);
     }
     .modal-head {
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-weight: 800;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
+      color: #ffffff;
     }
     .modal-body {
-      padding: 16px;
+      padding: 18px 20px;
       overflow-y: auto;
       flex: 1;
     }
     .modal-foot {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border);
+      padding: 14px 20px;
+      border-top: 1px solid rgba(255,255,255,0.08);
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
-      background: var(--surface-subtle);
+      gap: 10px;
+      background: rgba(0,0,0,0.2);
     }
 
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
     .form-group label {
       display: block;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       font-weight: 700;
       color: var(--text-muted);
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
     .form-control {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.9rem;
+      padding: 12px 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      font-size: 0.92rem;
       outline: none;
-      background: #ffffff;
+      background: rgba(255,255,255,0.05);
+      color: #ffffff;
     }
-    .form-control:focus { border-color: var(--primary); }
+    .form-control:focus { border-color: #38bdf8; }
 
     .nav-option-btn {
       width: 100%;
-      padding: 14px;
-      border-radius: 10px;
-      border: 2px solid var(--border);
-      background: #ffffff;
+      padding: 16px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
       display: flex;
       align-items: center;
       gap: 14px;
       cursor: pointer;
       margin-bottom: 10px;
       text-align: left;
-      transition: border 0.15s ease;
+      transition: all 0.2s ease;
+      color: #ffffff;
     }
     .nav-option-btn.selected {
-      border-color: var(--primary);
-      background: var(--primary-light);
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
     }
-    .nav-option-btn i { font-size: 1.4rem; }
+    .nav-option-btn i { font-size: 1.5rem; }
 
-    /* CUSTOM LEAFLET ICONS (SETA 3D DE NAVEGAÇÃO EM 1ª PESSOA) */
-    .leaflet-driver-container {
+    /* CUSTOM 3D CAR / ARROW MARKER */
+    .driver-3d-marker {
+      width: 56px;
+      height: 56px;
       position: relative;
-      width: 52px;
-      height: 52px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .leaflet-driver-halo {
+    .driver-3d-halo {
       position: absolute;
-      width: 52px;
-      height: 52px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
-      background: rgba(37, 99, 235, 0.3);
+      background: rgba(56, 189, 248, 0.35);
       animation: pulseHalo 2s infinite;
     }
     @keyframes pulseHalo {
-      0% { transform: scale(0.6); opacity: 0.8; }
-      100% { transform: scale(1.4); opacity: 0; }
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(1.5); opacity: 0; }
     }
-    .leaflet-driver-arrow {
-      width: 40px;
-      height: 40px;
+    .driver-3d-arrow {
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      background: #2563eb;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
       border: 3.5px solid #ffffff;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+      box-shadow: 0 8px 25px rgba(2, 132, 199, 0.8);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #ffffff;
       font-size: 20px;
-      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
       z-index: 2;
+      transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    .leaflet-stop-marker {
+    /* CUSTOM STOP MARKER 3D */
+    .stop-maplibre-marker {
       border-radius: 50%;
-      border: 2.5px solid #ffffff;
+      border: 3px solid #ffffff;
       color: #ffffff;
-      font-weight: 800;
-      font-size: 12px;
+      font-weight: 900;
+      font-size: 13px;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+      width: 30px;
+      height: 30px;
+      transition: transform 0.3s ease;
     }
-    .l-marker-pendente { background: #eab308; }
-    .l-marker-proxima { background: #2563eb; transform: scale(1.3); box-shadow: 0 0 16px rgba(37,99,235,0.8); }
-    .l-marker-entregue { background: #16a34a; }
-    .l-marker-negada { background: #dc2626; }
+    .ml-marker-pendente { background: #f59e0b; }
+    .ml-marker-proxima { background: #3b82f6; width: 42px; height: 42px; font-size: 15px; box-shadow: 0 0 20px rgba(59, 130, 246, 0.9); }
+    .ml-marker-entregue { background: #10b981; }
+    .ml-marker-negada { background: #f43f5e; }
 
     /* RESPONSIVIDADE MOBILE */
     @media (max-width: 860px) {
@@ -784,28 +790,28 @@ html_code = """<!DOCTYPE html>
         right: 0;
         height: 48vh;
         max-height: calc(100dvh - 25px);
-        border-radius: 20px 20px 0 0;
+        border-radius: 24px 24px 0 0;
         border-right: none;
-        border-top: 1px solid var(--border);
-        box-shadow: 0 -8px 30px rgba(0,0,0,0.22);
+        border-top: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
         padding-bottom: var(--safe-bottom);
       }
       .drawer-handle-zone {
         display: block;
       }
       .panel-header {
-        padding: 6px 14px 10px 14px;
+        padding: 8px 16px 12px 16px;
       }
       .stops-scroll-area {
-        padding: 8px 14px 24px 14px;
+        padding: 8px 16px 24px 16px;
       }
       .map-controls-floating {
-        top: calc(10px + var(--safe-top));
-        right: 10px;
+        top: calc(12px + var(--safe-top));
+        right: 12px;
       }
       .gps-status-pill {
-        top: calc(10px + var(--safe-top));
-        left: 10px;
+        top: calc(12px + var(--safe-top));
+        left: 12px;
       }
     }
   </style>
@@ -814,11 +820,11 @@ html_code = """<!DOCTYPE html>
 
   <div id="app-root">
     
-    <!-- MAPA -->
+    <!-- MAPA 3D -->
     <section id="map-wrapper">
       <div id="map"></div>
 
-      <!-- GPS Indicator Top Pill (Modo Normal) -->
+      <!-- GPS Indicator Top Pill -->
       <div class="gps-status-pill" id="gps-status">
         <div class="gps-dot searching" id="gps-dot"></div>
         <span id="gps-text">Iniciando GPS...</span>
@@ -832,7 +838,7 @@ html_code = """<!DOCTYPE html>
       </div>
 
       <!-- =========================================================
-           HUD FLUTUANTE DO MODO DE NAVEGAÇÃO EM 1ª PESSOA (WAZE-LIKE)
+           HUD FLUTUANTE DO MODO DE NAVEGAÇÃO 3D REAL (WAZE-LIKE)
            ========================================================= -->
       <div id="nav-hud-layer">
         
@@ -854,7 +860,7 @@ html_code = """<!DOCTYPE html>
           <span class="speed-unit">km/h</span>
         </div>
 
-        <!-- BOTÃO FLUTUANTE RECENTRALIZAR (APARECE QUANDO O USUÁRIO ARRASTA O MAPA) -->
+        <!-- BOTÃO FLUTUANTE RECENTRALIZAR ESTILO WAZE -->
         <button id="nav-btn-recenter-float">
           <i class="fa-solid fa-location-crosshairs"></i> RECENTRALIZAR
         </button>
@@ -862,14 +868,14 @@ html_code = """<!DOCTYPE html>
         <!-- BOTÕES LATERAIS DO MODO NAVEGAÇÃO -->
         <div class="nav-floating-actions">
           <button class="nav-btn-action" id="btn-nav-external" title="Abrir no Waze/Google Maps">
-            <i class="fa-solid fa-diamond-turn-right" style="color:#0284c7;"></i>
+            <i class="fa-solid fa-diamond-turn-right" style="color:#38bdf8;"></i>
           </button>
-          <button class="nav-btn-action" id="btn-nav-exit" title="Sair do Modo Navegação" style="background:#fee2e2; color:#b91c1c;">
+          <button class="nav-btn-action" id="btn-nav-exit" title="Sair do Modo Navegação" style="background:rgba(244,63,94,0.25); color:#fb7185; border-color:rgba(244,63,94,0.4);">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
-        <!-- PAINEL INFERIOR DA PARADA ATIVA NA NAVEGAÇÃO COM NÚMERO DO PACOTE -->
+        <!-- PAINEL INFERIOR DA PARADA ATIVA NA NAVEGAÇÃO -->
         <div class="nav-bottom-card">
           <div class="nav-stop-index-title" id="nav-stop-index-label">PARADA #1 DE 38</div>
           <div class="nav-stop-package-number" id="nav-stop-package-name">PACOTE #123456</div>
@@ -877,13 +883,13 @@ html_code = """<!DOCTYPE html>
           <div class="nav-stop-metrics-line" id="nav-stop-metrics">2,4 km • 7 min • Chegada 14:35</div>
 
           <div class="nav-action-buttons-row">
-            <button class="btn btn-outline" id="btn-nav-details" style="font-size:0.8rem; padding:8px 10px;">
+            <button class="btn btn-outline" id="btn-nav-details" style="font-size:0.82rem; padding:8px 10px;">
               <i class="fa-solid fa-list-ul"></i> Lista
             </button>
-            <button class="btn btn-danger" id="btn-nav-fail" style="font-size:0.8rem; padding:8px 10px;">
+            <button class="btn btn-danger" id="btn-nav-fail" style="font-size:0.82rem; padding:8px 10px;">
               <i class="fa-solid fa-xmark"></i> NÃO ENTREGUE
             </button>
-            <button class="btn btn-success" id="btn-nav-complete" style="font-size:0.85rem; padding:8px 10px; font-weight:800;">
+            <button class="btn btn-success" id="btn-nav-complete" style="font-size:0.9rem; padding:8px 10px; font-weight:900; letter-spacing:0.5px;">
               <i class="fa-solid fa-check"></i> ENTREGUE
             </button>
           </div>
@@ -892,7 +898,7 @@ html_code = """<!DOCTYPE html>
       </div>
     </section>
 
-    <!-- SIDEBAR / MOBILE BOTTOM SHEET (MODO NORMAL DE GERENCIAMENTO E OTIMIZAÇÃO) -->
+    <!-- SIDEBAR / MOBILE BOTTOM SHEET -->
     <aside id="sidebar">
       
       <!-- Puxador Celular -->
@@ -907,8 +913,8 @@ html_code = """<!DOCTYPE html>
             <i class="fa-solid fa-route"></i> RotaPro
           </div>
           <div class="nav-selector-badge" id="btn-choose-map">
-            <i class="fa-solid fa-map-location-dot" style="color:var(--primary);"></i>
-            <span id="label-active-map">Navegação Integrada</span>
+            <i class="fa-solid fa-compass" style="color:#38bdf8;"></i>
+            <span id="label-active-map">Navegação 3D Real</span>
             <i class="fa-solid fa-chevron-down" style="font-size:0.65rem; color:var(--text-muted);"></i>
           </div>
         </div>
@@ -934,14 +940,14 @@ html_code = """<!DOCTYPE html>
 
         <!-- Banner de Economia Real -->
         <div class="economy-alert-card" id="economy-card">
-          <i class="fa-solid fa-bolt" style="color:#059669; margin-right:4px;"></i>
+          <i class="fa-solid fa-bolt" style="color:#10b981; margin-right:4px;"></i>
           <span><b>Otimização Concluída!</b> De <span id="eco-before">0</span> km para <span id="eco-after">0</span> km. Economia de <b><span id="eco-km">0</span> km (<span id="eco-percent">0%</span>)</b>.</span>
         </div>
 
         <!-- Botões de Ação Principais -->
         <div class="main-actions-grid">
           <button class="btn btn-outline" id="btn-open-import">
-            <i class="fa-solid fa-file-excel" style="color:#16a34a;"></i> Importar XLSX
+            <i class="fa-solid fa-file-excel" style="color:#10b981;"></i> Importar XLSX
           </button>
           <button class="btn btn-outline" id="btn-open-add">
             <i class="fa-solid fa-plus"></i> Nova Parada
@@ -977,10 +983,10 @@ html_code = """<!DOCTYPE html>
       </div>
       <div class="modal-body">
         <div class="nav-option-btn" data-nav="internal">
-          <i class="fa-solid fa-compass" style="color:var(--primary);"></i>
+          <i class="fa-solid fa-compass" style="color:#38bdf8;"></i>
           <div>
-            <div style="font-weight:800; font-size:0.95rem;">Modo Navegação em 1ª Pessoa (Integrado)</div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">Câmera acompanha e gira na direção do veículo com visão das vias e avanço automático</div>
+            <div style="font-weight:800; font-size:0.95rem;">Modo Navegação 3D Real (Integrado)</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Câmera em 1ª pessoa com inclinação e rotação nativas estilo Waze/Google Maps</div>
           </div>
         </div>
         <div class="nav-option-btn" data-nav="waze">
@@ -1113,7 +1119,7 @@ html_code = """<!DOCTYPE html>
     };
 
     /* ==========================================================================
-       LOCATION ENGINE
+       LOCATION ENGINE (GPS WATCHPOSITION & TELEMETRIA)
        ========================================================================== */
     const LocationEngine = {
       currentPosition: { ...CONFIG.DEFAULT_POS },
@@ -1224,11 +1230,11 @@ html_code = """<!DOCTYPE html>
                 name: s.name || destination.endereco || 'Via local',
                 distance: s.distance,
                 duration: s.duration,
-                location: [s.maneuver.location[1], s.maneuver.location[0]]
+                location: [s.maneuver.location[0], s.maneuver.location[1]]
               }));
 
               return {
-                coordinates: r.geometry.coordinates.map(c => [c[1], c[0]]),
+                coordinates: r.geometry.coordinates, // [lng, lat] para MapLibre
                 distanceKm: r.distance / 1000,
                 durationMin: Math.round(r.duration / 60),
                 steps: steps
@@ -1239,7 +1245,7 @@ html_code = """<!DOCTYPE html>
 
         const dist = GeoUtils.haversineDistance(origin.lat, origin.lng, destination.lat, destination.lng);
         return {
-          coordinates: [[origin.lat, origin.lng], [destination.lat, destination.lng]],
+          coordinates: [[origin.lng, origin.lat], [destination.lng, destination.lat]],
           distanceKm: dist * 1.25,
           durationMin: Math.round(dist * 2.5),
           steps: [{
@@ -1249,7 +1255,7 @@ html_code = """<!DOCTYPE html>
             name: destination.endereco || 'Destino',
             distance: dist * 1000,
             duration: dist * 150,
-            location: [destination.lat, destination.lng]
+            location: [destination.lng, destination.lat]
           }]
         };
       },
@@ -1277,7 +1283,7 @@ html_code = """<!DOCTYPE html>
                 const r = data.routes[0];
                 totalDistanceMeters += r.distance;
                 totalDurationSeconds += r.duration;
-                fullCoordinates.push(...r.geometry.coordinates.map(c => [c[1], c[0]]));
+                fullCoordinates.push(...r.geometry.coordinates);
                 continue;
               }
             }
@@ -1289,7 +1295,7 @@ html_code = """<!DOCTYPE html>
             const d = GeoUtils.haversineDistance(p1.lat, p1.lng, p2.lat, p2.lng);
             totalDistanceMeters += d * 1000 * 1.25;
             totalDurationSeconds += d * 180;
-            fullCoordinates.push([p1.lat, p1.lng], [p2.lat, p2.lng]);
+            fullCoordinates.push([p1.lng, p1.lat], [p2.lng, p2.lat]);
           }
         }
 
@@ -1371,33 +1377,84 @@ html_code = """<!DOCTYPE html>
     };
 
     /* ==========================================================================
-       MAP LEAFLET CONTROLLER COM PERSPECTIVA 1ª PESSOA
+       MAPLIBRE GL CONTROLLER COM CÂMERA 3D REAL, PITCH (INCLINAÇÃO) E BEARING NATIVOS
        ========================================================================== */
     const MapController = {
       map: null,
       driverMarker: null,
-      stopsGroup: null,
-      fullRoutePolyline: null,
-      remainingRoutePolyline: null,
+      stopMarkers: [],
       currentHeading: 0,
+      isLoaded: false,
 
       init() {
-        this.map = L.map('map', {
-          zoomControl: false,
-          tapTolerance: 15,
-          rotate: true,
-          bearing: 0,
-          touchRotate: false
-        }).setView([CONFIG.DEFAULT_POS.lat, CONFIG.DEFAULT_POS.lng], 13);
+        this.map = new maplibregl.Map({
+          container: 'map',
+          style: {
+            version: 8,
+            sources: {
+              'osm-tiles': {
+                type: 'raster',
+                tiles: [
+                  'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+                  'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png'
+                ],
+                tileSize: 256
+              }
+            },
+            layers: [{
+              id: 'osm-layer',
+              type: 'raster',
+              source: 'osm-tiles',
+              minzoom: 0,
+              maxzoom: 20
+            }]
+          },
+          center: [CONFIG.DEFAULT_POS.lng, CONFIG.DEFAULT_POS.lat],
+          zoom: 13,
+          pitch: 0,
+          bearing: 0
+        });
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-          attribution: '© OpenStreetMap'
-        }).addTo(this.map);
+        this.map.on('load', () => {
+          this.isLoaded = true;
 
-        this.stopsGroup = L.layerGroup().addTo(this.map);
+          // Layer de Rota Completa (Planejamento)
+          this.map.addSource('full-route', {
+            type: 'geojson',
+            data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } }
+          });
+          this.map.addLayer({
+            id: 'full-route-layer',
+            type: 'line',
+            source: 'full-route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#2563eb', 'line-width': 6, 'line-opacity': 0.8 }
+          });
 
-        // DETECÇÃO DE EXPLORAÇÃO MANUAL: quando o usuário arrasta, pausa o seguimento automático
+          // Layer de Rota Restante em 1ª Pessoa (Caminho Azul Brilhante / Waze-like)
+          this.map.addSource('active-route', {
+            type: 'geojson',
+            data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } }
+          });
+          this.map.addLayer({
+            id: 'active-route-casing',
+            type: 'line',
+            source: 'active-route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#0369a1', 'line-width': 10, 'line-opacity': 0.9 }
+          });
+          this.map.addLayer({
+            id: 'active-route-layer',
+            type: 'line',
+            source: 'active-route',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': '#38bdf8', 'line-width': 6, 'line-opacity': 1 }
+          });
+
+          App.syncAndRecalculate();
+        });
+
+        // Detecção de exploração manual
         this.map.on('dragstart', () => {
           if (LocationEngine.isFollowing) {
             LocationEngine.isFollowing = false;
@@ -1410,109 +1467,102 @@ html_code = """<!DOCTYPE html>
         this.currentHeading = heading;
 
         if (!this.driverMarker) {
-          const icon = L.divIcon({
-            className: 'driver-div-marker',
-            html: `
-              <div class="leaflet-driver-container">
-                <div class="leaflet-driver-halo"></div>
-                <div class="leaflet-driver-arrow" id="driver-arrow-icon" style="transform: rotate(${heading}deg);">
-                  <i class="fa-solid fa-location-arrow"></i>
-                </div>
-              </div>
-            `,
-            iconSize: [52, 52],
-            iconAnchor: [26, 26]
-          });
-          this.driverMarker = L.marker([pos.lat, pos.lng], { icon, zIndexOffset: 1000 }).addTo(this.map);
+          const el = document.createElement('div');
+          el.className = 'driver-3d-marker';
+          el.innerHTML = `
+            <div class="driver-3d-halo"></div>
+            <div class="driver-3d-arrow" id="driver-3d-arrow-icon" style="transform: rotate(${heading}deg);">
+              <i class="fa-solid fa-location-arrow"></i>
+            </div>
+          `;
+          this.driverMarker = new maplibregl.Marker({ element: el })
+            .setLngLat([pos.lng, pos.lat])
+            .addTo(this.map);
         } else {
-          this.driverMarker.setLatLng([pos.lat, pos.lng]);
-          const arrow = document.getElementById('driver-arrow-icon');
+          this.driverMarker.setLngLat([pos.lng, pos.lat]);
+          const arrow = document.getElementById('driver-3d-arrow-icon');
           if (arrow) arrow.style.transform = `rotate(${heading}deg)`;
         }
 
-        // Câmera dinâmica em 1ª pessoa
-        if (LocationEngine.isFollowing) {
+        // Câmera 3D em 1ª pessoa no modo de navegação
+        if (LocationEngine.isFollowing && this.isLoaded) {
           if (App.isNavigationActive) {
-            if (this.map.setBearing) {
-              this.map.setBearing(-heading);
-            }
-            this.map.setView([pos.lat, pos.lng], 17, { animate: true, duration: 0.35 });
+            this.map.easeTo({
+              center: [pos.lng, pos.lat],
+              zoom: 17.5,
+              pitch: 62, // Inclinação 3D autêntica
+              bearing: heading, // Gira o mapa em direção à rua
+              duration: 350
+            });
           } else {
-            this.map.setView([pos.lat, pos.lng], this.map.getZoom(), { animate: true, duration: 0.35 });
+            this.map.easeTo({
+              center: [pos.lng, pos.lat],
+              duration: 350
+            });
           }
         }
       },
 
       renderStops(stops, activeId) {
-        this.stopsGroup.clearLayers();
-        let displayIndex = 1;
+        this.stopMarkers.forEach(m => m.remove());
+        this.stopMarkers = [];
 
+        let displayIndex = 1;
         stops.forEach(s => {
           let label = displayIndex;
           if (s.status === 'entregue') label = '✓';
           if (s.status === 'negada') label = '✕';
 
           const isNext = s.id === activeId;
-          const size = isNext ? 36 : 24;
+          const el = document.createElement('div');
+          el.className = `stop-maplibre-marker ml-marker-${s.status} ${isNext ? 'ml-marker-proxima' : ''}`;
+          el.innerText = label;
 
-          const icon = L.divIcon({
-            className: 'stop-custom-div',
-            html: `<div class="leaflet-stop-marker l-marker-${s.status}" style="width:${size}px; height:${size}px;">${label}</div>`,
-            iconSize: [size, size],
-            iconAnchor: [size/2, size/2]
-          });
+          const marker = new maplibregl.Marker({ element: el })
+            .setLngLat([s.longitude, s.latitude])
+            .setPopup(new maplibregl.Popup({ offset: 25 }).setHTML(`<b>#${displayIndex} - ${s.cliente}</b><br>${s.endereco}`))
+            .addTo(this.map);
 
-          const m = L.marker([s.latitude, s.longitude], { icon })
-            .bindPopup(`<b>#${displayIndex} - ${s.cliente}</b><br>${s.endereco}`);
-
-          this.stopsGroup.addLayer(m);
+          this.stopMarkers.push(marker);
           displayIndex++;
         });
       },
 
       drawFullRoute(coordinates) {
-        if (this.fullRoutePolyline) {
-          this.map.removeLayer(this.fullRoutePolyline);
-          this.fullRoutePolyline = null;
-        }
-
-        if (coordinates && coordinates.length > 0) {
-          this.fullRoutePolyline = L.polyline(coordinates, {
-            color: '#2563eb',
-            weight: 5,
-            opacity: 0.85
-          }).addTo(this.map);
+        if (!this.isLoaded) return;
+        const source = this.map.getSource('full-route');
+        if (source) {
+          source.setData({
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: coordinates || [] }
+          });
         }
       },
 
-      // Desenha o caminho restante em destaque azul
       drawRemainingRoute(coordinates) {
-        if (this.remainingRoutePolyline) {
-          this.map.removeLayer(this.remainingRoutePolyline);
-          this.remainingRoutePolyline = null;
-        }
-
-        if (coordinates && coordinates.length > 0) {
-          this.remainingRoutePolyline = L.polyline(coordinates, {
-            color: '#0284c7',
-            weight: 7,
-            opacity: 0.95
-          }).addTo(this.map);
+        if (!this.isLoaded) return;
+        const source = this.map.getSource('active-route');
+        if (source) {
+          source.setData({
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: coordinates || [] }
+          });
         }
       },
 
       fitAll(stops, driverPos) {
-        const bounds = [];
-        if (driverPos) bounds.push([driverPos.lat, driverPos.lng]);
-        stops.forEach(s => bounds.push([s.latitude, s.longitude]));
-        if (bounds.length > 0) {
-          this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        if (!this.isLoaded) return;
+        const bounds = new maplibregl.LngLatBounds();
+        if (driverPos) bounds.extend([driverPos.lng, driverPos.lat]);
+        stops.forEach(s => bounds.extend([s.longitude, s.latitude]));
+        if (!bounds.isEmpty()) {
+          this.map.fitBounds(bounds, { padding: 50, pitch: 0, bearing: 0 });
         }
       }
     };
 
     /* ==========================================================================
-       APP CORE & DELIVERY STORE
+       APP CORE & DELIVERY STORE (RECONHECE XLSX E AVANÇA AUTOMATICAMENTE)
        ========================================================================== */
     const App = {
       stops: [],
@@ -1522,7 +1572,7 @@ html_code = """<!DOCTYPE html>
       selectedMapEngine: localStorage.getItem('rotapro_map_engine') || 'internal',
 
       async init() {
-        const local = localStorage.getItem('rotapro_saved_stops_v5');
+        const local = localStorage.getItem('rotapro_saved_stops_v6');
         if (local) {
           try { this.stops = JSON.parse(local); } catch (e) { this.stops = []; }
         }
@@ -1547,7 +1597,7 @@ html_code = """<!DOCTYPE html>
       },
 
       persist() {
-        localStorage.setItem('rotapro_saved_stops_v5', JSON.stringify(this.stops));
+        localStorage.setItem('rotapro_saved_stops_v6', JSON.stringify(this.stops));
       },
 
       async handleXLSXFile(file) {
@@ -1675,7 +1725,7 @@ html_code = """<!DOCTYPE html>
       },
 
       /* ========================================================================
-         MODO DE NAVEGAÇÃO EM 1ª PESSOA
+         MODO DE NAVEGAÇÃO 3D EM 1ª PESSOA
          ======================================================================== */
       async startNavigationMode() {
         if (!this.activeStop) {
@@ -1700,14 +1750,7 @@ html_code = """<!DOCTYPE html>
         document.getElementById('nav-hud-layer').style.display = 'flex';
         document.getElementById('nav-btn-recenter-float').style.display = 'none';
 
-        document.getElementById('map-wrapper').classList.add('first-person-driving');
-
-        if (MapController.fullRoutePolyline) {
-          MapController.map.removeLayer(MapController.fullRoutePolyline);
-          MapController.fullRoutePolyline = null;
-        }
-
-        MapController.map.setView([LocationEngine.currentPosition.lat, LocationEngine.currentPosition.lng], 17);
+        MapController.drawFullRoute([]); // Limpa a linha cheia no modo navegação
 
         await this.updateNavigationHUD();
       },
@@ -1718,17 +1761,9 @@ html_code = """<!DOCTYPE html>
         document.getElementById('sidebar').style.display = 'flex';
         document.getElementById('map-floating-controls').style.display = 'flex';
         document.getElementById('gps-status').style.display = 'flex';
-        
-        document.getElementById('map-wrapper').classList.remove('first-person-driving');
 
-        if (MapController.map.setBearing) {
-          MapController.map.setBearing(0);
-        }
-
-        if (MapController.remainingRoutePolyline) {
-          MapController.map.removeLayer(MapController.remainingRoutePolyline);
-          MapController.remainingRoutePolyline = null;
-        }
+        MapController.map.easeTo({ pitch: 0, bearing: 0, duration: 400 });
+        MapController.drawRemainingRoute([]);
 
         this.syncAndRecalculate();
       },
@@ -1782,7 +1817,7 @@ html_code = """<!DOCTYPE html>
         document.getElementById('nav-stop-metrics').innerText = `${kmStr} • ${minStr} • Chegada ${etaStr}`;
       },
 
-      /* AO CLICAR EM "ENTREGUE" -> AVANÇA AUTOMATICAMENTE */
+      /* AO CLICAR EM "ENTREGUE" -> PULA IMEDIATAMENTE PARA A PRÓXIMA PARADA */
       async markDelivered(id) {
         const st = this.stops.find(s => s.id === id);
         if (st) {
@@ -1799,7 +1834,7 @@ html_code = """<!DOCTYPE html>
         }
       },
 
-      /* AO CLICAR EM "NÃO ENTREGUE" -> REGISTRA E AVANÇA */
+      /* AO CLICAR EM "NÃO ENTREGUE" -> REGISTRA E PULA PARA A PRÓXIMA */
       async markFailed(id, reason) {
         const st = this.stops.find(s => s.id === id);
         if (st) {
@@ -1948,14 +1983,17 @@ html_code = """<!DOCTYPE html>
         // INICIAR MODO NAVEGAÇÃO
         document.getElementById('btn-start-navigation-mode').onclick = () => App.startNavigationMode();
 
-        // BOTÃO RECENTRALIZAR
+        // BOTÃO RECENTRALIZAR ESTILO WAZE
         document.getElementById('nav-btn-recenter-float').onclick = () => {
           LocationEngine.isFollowing = true;
           document.getElementById('nav-btn-recenter-float').style.display = 'none';
-          if (MapController.map.setBearing) {
-            MapController.map.setBearing(-MapController.currentHeading);
-          }
-          MapController.map.setView([LocationEngine.currentPosition.lat, LocationEngine.currentPosition.lng], 17);
+          MapController.map.easeTo({
+            center: [LocationEngine.currentPosition.lng, LocationEngine.currentPosition.lat],
+            zoom: 17.5,
+            pitch: 62,
+            bearing: MapController.currentHeading,
+            duration: 400
+          });
         };
 
         document.getElementById('btn-nav-exit').onclick = () => App.stopNavigationMode();
@@ -1964,12 +2002,12 @@ html_code = """<!DOCTYPE html>
           window.open(`https://www.google.com/maps/dir/?api=1&destination=${App.activeStop.latitude},${App.activeStop.longitude}&travelmode=driving`, '_blank');
         };
 
-        // ENTREGUE (AVANÇA AUTOMATICAMENTE)
+        // ENTREGUE (PULA AUTOMATICAMENTE)
         document.getElementById('btn-nav-complete').onclick = () => {
           if (App.activeStop) App.markDelivered(App.activeStop.id);
         };
 
-        // NÃO ENTREGUE (REGISTRA E AVANÇA)
+        // NÃO ENTREGUE (PULA AUTOMATICAMENTE)
         document.getElementById('btn-nav-fail').onclick = () => this.openModal('modal-fail');
         document.getElementById('btn-confirm-fail-action').onclick = () => {
           const reason = document.getElementById('fail-reason-sel').value;
@@ -2081,7 +2119,7 @@ html_code = """<!DOCTYPE html>
         } else if (App.selectedMapEngine === 'gmaps') {
           lbl.innerText = "Google Maps";
         } else {
-          lbl.innerText = "Navegação Integrada";
+          lbl.innerText = "Navegação 3D Real";
         }
       },
 
@@ -2121,9 +2159,9 @@ html_code = """<!DOCTYPE html>
           item.className = `stop-item-card status-${s.status} ${App.activeStop && App.activeStop.id === s.id ? 'is-active' : ''}`;
 
           let statusTag = '';
-          if (s.status === 'entregue') statusTag = '<span class="tag" style="background:#dcfce7; color:#166534;">✓ Entregue</span>';
-          else if (s.status === 'negada') statusTag = `<span class="tag" style="background:#fee2e2; color:#991b1b;">✕ Não Entregue (${s.motivoInsucesso || 'Insucesso'})</span>`;
-          else statusTag = '<span class="tag" style="background:#fef9c3; color:#854d0e;">○ Pendente</span>';
+          if (s.status === 'entregue') statusTag = '<span class="tag" style="background:rgba(16,185,129,0.2); color:#34d399;">✓ Entregue</span>';
+          else if (s.status === 'negada') statusTag = `<span class="tag" style="background:rgba(244,63,94,0.2); color:#fb7185;">✕ Não Entregue (${s.motivoInsucesso || 'Insucesso'})</span>`;
+          else statusTag = '<span class="tag" style="background:rgba(245,158,11,0.2); color:#fbbf24;">○ Pendente</span>';
 
           item.innerHTML = `
             <div class="stop-badge-number">${idx + 1}</div>
@@ -2164,4 +2202,4 @@ html_code = """<!DOCTYPE html>
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html_code)
 
-print("index.html atualizado com sucesso!")
+print("index.html atualizado com motor 3D e visual premium!")
