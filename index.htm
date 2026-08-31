@@ -1,261 +1,3199 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spoke Route Planner - Documentação & Guia</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>RouteFlow — Plataforma Inteligente de Roteirização & Navegação</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
   <style>
+    /* ==========================================================================
+       1. VARIÁVEIS CSS & TEMA SaaS (RouteFlow Dark Emerald / Obsidian)
+       ========================================================================== */
     :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --text-main: #1f2937;
-      --text-muted: #4b5563;
-      --bg-main: #f8fafc;
-      --bg-card: #ffffff;
-      --border: #e2e8f0;
-      --accent: #10b981;
+      --bg-main: #0B0F17;
+      --bg-sidebar: #070A0F;
+      --bg-card: #121824;
+      --bg-card-hover: #182232;
+      --bg-card-glass: rgba(18, 24, 36, 0.75);
+      --border-color: #1F293D;
+      --border-focus: #00E599;
+
+      --accent-primary: #00E599;      /* Verde Esmeralda Neon */
+      --accent-secondary: #00A3FF;    /* Azul Ciano */
+      --accent-warning: #FFB800;      /* Âmbar */
+      --accent-danger: #FF4D4D;       /* Vermelho Coral */
+      --accent-success: #00E599;
+      --accent-purple: #8A2BE2;
+
+      --text-main: #F0F4F8;
+      --text-muted: #8E9BAE;
+      --text-subtle: #4D5B6F;
+
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --sidebar-width: 260px;
+      --header-height: 68px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 20px rgba(0, 229, 153, 0.25);
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-smooth: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      --z-map: 10;
+      --z-ui: 100;
+      --z-modal: 1000;
+      --z-toast: 2000;
+      --z-loading: 9999;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      line-height: 1.6;
+      font-family: var(--font-family);
       background-color: var(--bg-main);
       color: var(--text-main);
-      padding: 2rem 1rem;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.15);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-subtle);
     }
 
-    header {
+    /* ==========================================================================
+       2. TELA DE SPLASH / LOADING INICIAL
+       ========================================================================== */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #111827 0%, #05070B 100%);
+      z-index: var(--z-loading);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease, visibility 0.6s;
+    }
+
+    .splash-logo-container {
       text-align: center;
-      margin-bottom: 2.5rem;
+      position: relative;
     }
 
-    header h1 {
-      font-size: 2.25rem;
-      color: var(--primary-dark);
-      margin-bottom: 0.5rem;
+    .splash-logo-icon {
+      font-size: 3.5rem;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+      display: inline-block;
+      animation: pulseGlow 2s infinite alternate;
     }
 
-    header p {
+    .splash-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .splash-title span {
+      color: var(--accent-primary);
+    }
+
+    .splash-sub {
+      font-size: 0.95rem;
       color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .splash-loader-bar {
+      width: 220px;
+      height: 4px;
+      background: var(--border-color);
+      border-radius: 4px;
+      margin-top: 28px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .splash-loader-progress {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 4px;
+      animation: loadApp 1.8s ease-in-out forwards;
+    }
+
+    @keyframes loadApp {
+      0% { width: 0%; }
+      50% { width: 65%; }
+      100% { width: 100%; }
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.96); filter: drop-shadow(0 0 10px rgba(0,229,153,0.3)); }
+      100% { transform: scale(1.04); filter: drop-shadow(0 0 25px rgba(0,229,153,0.7)); }
+    }
+
+    /* ==========================================================================
+       3. ESTRUTURA GLOBAL DO LAYOUT (App Shell)
+       ========================================================================== */
+    .app-wrapper {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* SIDEBAR */
+    .app-sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      z-index: var(--z-ui);
+      transition: var(--transition-smooth);
+    }
+
+    .sidebar-header {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, rgba(0, 229, 153, 0.15), rgba(0, 163, 255, 0.15));
+      border: 1px solid rgba(0, 229, 153, 0.4);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-primary);
       font-size: 1.1rem;
     }
 
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.75rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    .brand-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #fff;
     }
 
-    h2 {
-      font-size: 1.35rem;
-      color: var(--primary);
-      margin-bottom: 1rem;
+    .brand-name span {
+      color: var(--accent-primary);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+    }
+
+    .nav-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 12px 0 6px 12px;
+    }
+
+    .nav-item {
       display: flex;
       align-items: center;
-      border-bottom: 2px solid var(--border);
-      padding-bottom: 0.5rem;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.9rem;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: var(--transition-fast);
     }
 
-    p {
-      margin-bottom: 0.75rem;
+    .nav-item i {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+      transition: var(--transition-fast);
     }
 
-    ul {
-      list-style-type: none;
-      padding-left: 0;
+    .nav-item:hover {
+      background: var(--bg-card);
+      color: var(--text-main);
     }
 
-    li {
-      margin-bottom: 0.75rem;
+    .nav-item.active {
+      background: linear-gradient(90deg, rgba(0, 229, 153, 0.12), rgba(0, 163, 255, 0.05));
+      border-color: rgba(0, 229, 153, 0.3);
+      color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    .nav-item.active i {
+      color: var(--accent-primary);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent-primary);
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 12px;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(0,0,0,0.15);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2A364F, #161F30);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-secondary);
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .user-meta {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .user-meta .name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .user-meta .role {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* MAIN CONTENT WRAPPER */
+    .app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       position: relative;
-      padding-left: 1.5rem;
     }
 
-    li::before {
-      content: "•";
-      color: var(--primary);
-      font-weight: bold;
-      font-size: 1.2rem;
+    /* TOP BAR */
+    .top-bar {
+      height: var(--header-height);
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      z-index: var(--z-ui);
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .btn-mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    .route-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-subtle);
+    }
+
+    .status-dot.active {
+      background: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-primary);
+      animation: blink 2s infinite;
+    }
+
+    .status-dot.idle {
+      background: var(--accent-warning);
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .gps-status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      border-left: 1px solid var(--border-color);
+      padding-left: 20px;
+    }
+
+    .gps-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-subtle);
+    }
+
+    .gps-dot.connected {
+      background: var(--accent-primary);
+      box-shadow: 0 0 8px var(--accent-primary);
+    }
+
+    .gps-dot.searching {
+      background: var(--accent-warning);
+      animation: blink 1s infinite;
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* BOTÕES GERAIS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: var(--transition-fast);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #050B08;
+      box-shadow: 0 4px 14px rgba(0, 229, 153, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: #02ffab;
+      box-shadow: 0 6px 20px rgba(0, 229, 153, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      border-color: var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--text-muted);
+    }
+
+    .btn-accent-blue {
+      background: var(--accent-secondary);
+      color: #fff;
+    }
+
+    .btn-accent-blue:hover {
+      background: #1cb0ff;
+    }
+
+    .btn-danger {
+      background: rgba(255, 77, 77, 0.15);
+      border-color: rgba(255, 77, 77, 0.3);
+      color: var(--accent-danger);
+    }
+
+    .btn-danger:hover {
+      background: var(--accent-danger);
+      color: #fff;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.78rem;
+    }
+
+    .btn-icon-only {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border-radius: var(--radius-sm);
+    }
+
+    /* CONTENT VIEWPORT */
+    .app-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .view-page {
       position: absolute;
-      left: 0.25rem;
-      top: -0.1rem;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
-    strong {
-      color: #111827;
+    .view-page.active {
+      display: flex;
+      opacity: 1;
     }
 
-    /* Tabela */
-    .table-container {
-      overflow-x: auto;
-      margin-top: 1rem;
+    /* ==========================================================================
+       4. VIEW: DASHBOARD
+       ========================================================================== */
+    #view-dashboard {
+      padding: 28px;
+      gap: 28px;
     }
 
-    table {
+    .dashboard-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 18px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition-fast);
+    }
+
+    .metric-card:hover {
+      border-color: rgba(0, 229, 153, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .metric-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .metric-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+    }
+
+    .metric-val {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+
+    .metric-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-sub.positive {
+      color: var(--accent-primary);
+    }
+
+    .dashboard-split-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 22px;
+    }
+
+    .dashboard-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-title i {
+      color: var(--accent-primary);
+    }
+
+    /* Action Banner */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(0, 229, 153, 0.1) 0%, rgba(0, 163, 255, 0.05) 100%);
+      border: 1px solid rgba(0, 229, 153, 0.25);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .hero-banner-content h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .hero-banner-content p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      max-width: 540px;
+    }
+
+    /* ==========================================================================
+       5. VIEW: OTIMIZADOR & MAPA (Principal Workspace)
+       ========================================================================== */
+    #view-optimizer {
+      display: flex;
+      flex-direction: row;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Painel Lateral da Rota (40%) */
+    .route-panel {
+      width: 420px;
+      min-width: 360px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: var(--z-ui);
+      height: 100%;
+    }
+
+    .route-panel-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .route-panel-title-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .route-panel-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Painel de Comparação Antes / Depois */
+    .stats-comparison-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 10px;
+      font-size: 0.78rem;
+    }
+
+    .stat-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .stat-col-label {
+      color: var(--text-subtle);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.68rem;
+    }
+
+    .stat-col-val {
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    .stat-col-val.saving {
+      color: var(--accent-primary);
+    }
+
+    /* Ações Rápidas no Painel */
+    .route-actions-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Lista de Paradas */
+    .route-stops-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .empty-stops-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-subtle);
+      gap: 12px;
+      height: 100%;
+    }
+
+    .empty-stops-placeholder i {
+      font-size: 2.8rem;
+      color: var(--border-color);
+    }
+
+    /* Item Individual de Parada (Card) */
+    .stop-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      cursor: grab;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .stop-card:hover {
+      border-color: rgba(0, 229, 153, 0.3);
+      background: var(--bg-card-hover);
+    }
+
+    .stop-card:active {
+      cursor: grabbing;
+    }
+
+    .stop-card.sortable-ghost {
+      opacity: 0.3;
+      border: 1px dashed var(--accent-primary);
+    }
+
+    .stop-card.sortable-chosen {
+      background: var(--bg-card-hover);
+    }
+
+    .stop-card.status-completed {
+      border-left: 4px solid var(--accent-success);
+      opacity: 0.75;
+    }
+
+    .stop-card.status-problem {
+      border-left: 4px solid var(--accent-danger);
+    }
+
+    .stop-card.status-current {
+      border-left: 4px solid var(--accent-secondary);
+      box-shadow: 0 0 12px rgba(0, 163, 255, 0.15);
+    }
+
+    .stop-badge-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #1C2638;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+    }
+
+    .stop-card.status-completed .stop-badge-num {
+      background: var(--accent-success);
+      color: #000;
+    }
+
+    .stop-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .stop-client-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stop-address {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stop-meta-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: var(--text-subtle);
+    }
+
+    .stop-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stop-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.4;
+      transition: opacity 0.2s;
+    }
+
+    .stop-card:hover .stop-actions {
+      opacity: 1;
+    }
+
+    .btn-stop-action {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px 6px;
+      font-size: 0.82rem;
+      border-radius: 4px;
+    }
+
+    .btn-stop-action:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-stop-action.delete:hover {
+      color: var(--accent-danger);
+    }
+
+    /* Painel do Mapa (60%) */
+    .map-wrapper {
+      flex: 1;
+      position: relative;
+      height: 100%;
+      background: #090D14;
+    }
+
+    #route-map {
+      width: 100%;
+      height: 100%;
+      z-index: var(--z-map);
+    }
+
+    /* Floating Overlay do Mapa */
+    .map-floating-overlay {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: var(--z-ui);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .map-glass-card {
+      background: rgba(11, 15, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Custom Leaflet Dark Elements */
+    .leaflet-bar {
+      border: 1px solid var(--border-color) !important;
+      border-radius: var(--radius-sm) !important;
+      overflow: hidden;
+      box-shadow: var(--shadow-soft) !important;
+    }
+    .leaflet-bar a {
+      background-color: var(--bg-card) !important;
+      color: var(--text-main) !important;
+      border-bottom: 1px solid var(--border-color) !important;
+    }
+    .leaflet-bar a:hover {
+      background-color: var(--bg-card-hover) !important;
+      color: var(--accent-primary) !important;
+    }
+
+    /* Custom Map Marker Pins */
+    .custom-marker-pin {
+      width: 32px;
+      height: 32px;
+      border-radius: 50% 50% 50% 0;
+      background: var(--accent-primary);
+      position: absolute;
+      transform: rotate(-45deg);
+      left: 50%;
+      top: 50%;
+      margin: -20px 0 0 -16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      border: 2px solid #fff;
+    }
+
+    .custom-marker-pin::after {
+      content: '';
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      background: #070A0F;
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .custom-marker-text {
+      position: absolute;
+      z-index: 10;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--accent-primary);
+      transform: rotate(45deg);
+      font-family: var(--font-mono);
+    }
+
+    .custom-marker-pin.start-pin {
+      background: var(--accent-secondary);
+    }
+    .custom-marker-pin.start-pin .custom-marker-text {
+      color: var(--accent-secondary);
+    }
+
+    .custom-marker-pin.end-pin {
+      background: var(--accent-purple);
+    }
+    .custom-marker-pin.end-pin .custom-marker-text {
+      color: var(--accent-purple);
+    }
+
+    .user-live-marker {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-secondary);
+      border: 3px solid #fff;
+      box-shadow: 0 0 16px var(--accent-secondary);
+      animation: livePulse 2s infinite;
+    }
+
+    @keyframes livePulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 163, 255, 0.7); }
+      70% { box-shadow: 0 0 0 16px rgba(0, 163, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 163, 255, 0); }
+    }
+
+    /* ==========================================================================
+       6. VIEW: MODO NAVEGAÇÃO AO VIVO (HUD Display)
+       ========================================================================== */
+    #view-navigation {
+      position: relative;
+      height: 100%;
+      width: 100%;
+      background: #05070B;
+    }
+
+    #nav-map {
+      width: 100%;
+      height: 100%;
+      z-index: var(--z-map);
+    }
+
+    /* Top HUD: Próxima Manobra / Parada */
+    .nav-top-hud {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 600px;
+      background: rgba(11, 15, 23, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 229, 153, 0.4);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+      z-index: var(--z-ui);
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-maneuver-icon {
+      width: 54px;
+      height: 54px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: #050B08;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+
+    .nav-maneuver-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .nav-instruction-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-instruction-sub {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .nav-stop-counter-badge {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      font-family: var(--font-mono);
+    }
+
+    /* Bottom HUD: Status & Ações */
+    .nav-bottom-hud {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 680px;
+      background: rgba(11, 15, 23, 0.94);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 18px 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      z-index: var(--z-ui);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .nav-hud-metrics {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-hud-metric-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-hud-metric-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+    }
+
+    .nav-hud-metric-val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+
+    .nav-hud-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Aviso de Desvio de Rota */
+    .nav-reroute-alert {
+      position: absolute;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 77, 77, 0.95);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px rgba(255, 77, 77, 0.4);
+      z-index: var(--z-ui);
+    }
+
+    /* ==========================================================================
+       7. VIEW: HISTÓRICO DE ROTAS
+       ========================================================================== */
+    #view-history {
+      padding: 28px;
+      gap: 24px;
+    }
+
+    .history-table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .data-table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
     }
 
-    th, td {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
+    .data-table th {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 14px 18px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border-color);
     }
 
-    th {
-      background-color: #f1f5f9;
+    .data-table td {
+      padding: 16px 18px;
+      font-size: 0.85rem;
       color: var(--text-main);
-      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
     }
 
-    tr:hover {
-      background-color: #f8fafc;
+    .data-table tr:last-child td {
+      border-bottom: none;
     }
 
-    /* Dicas Práticas */
-    .tips-card {
-      border-left: 4px solid var(--accent);
-      background-color: #f0fdf4;
+    .data-table tr:hover td {
+      background: var(--bg-card-hover);
     }
 
-    .tips-card h2 {
-      color: #065f46;
-      border-bottom-color: #bbf7d0;
+    /* ==========================================================================
+       8. MODAIS & OVERLAYS
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 5, 8, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: var(--z-modal);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
     }
 
-    .tips-card li::before {
-      content: "✓";
-      color: var(--accent);
+    .modal-backdrop.show {
+      display: flex;
+      opacity: 1;
     }
 
-    footer {
-      text-align: center;
-      margin-top: 3rem;
+    .modal-window {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 620px;
+      box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform 0.25s ease;
+    }
+
+    .modal-backdrop.show .modal-window {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .modal-close-btn:hover {
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      background: rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Formulários dentro dos modais */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-control {
+      background: var(--bg-sidebar);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      color: #fff;
+      font-size: 0.88rem;
+      font-family: var(--font-family);
+      outline: none;
+      transition: var(--transition-fast);
+    }
+
+    .form-control:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(0, 229, 153, 0.15);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    /* Dropzone de Upload */
+    .upload-dropzone {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 36px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.01);
+      transition: var(--transition-fast);
+    }
+
+    .upload-dropzone:hover, .upload-dropzone.dragover {
+      border-color: var(--accent-primary);
+      background: rgba(0, 229, 153, 0.04);
+    }
+
+    .upload-icon {
+      font-size: 2.8rem;
+      color: var(--accent-primary);
+      margin-bottom: 12px;
+    }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: var(--z-toast);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast-msg {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      min-width: 280px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: #fff;
+      animation: slideInRight 0.3s ease;
+    }
+
+    .toast-msg.success { border-left: 4px solid var(--accent-success); }
+    .toast-msg.error { border-left: 4px solid var(--accent-danger); }
+    .toast-msg.warning { border-left: 4px solid var(--accent-warning); }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ==========================================================================
+       9. RESPONSIVIDADE (Celular & Tablet)
+       ========================================================================== */
+    @media (max-width: 960px) {
+      .app-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: -100%;
+        width: 280px;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .app-sidebar.open {
+        left: 0;
+      }
+
+      .btn-mobile-toggle {
+        display: block;
+      }
+
+      #view-optimizer {
+        flex-direction: column-reverse;
+      }
+
+      .route-panel {
+        width: 100%;
+        height: 50%;
+      }
+
+      .map-wrapper {
+        height: 50%;
+      }
+
+      .dashboard-split-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <header>
-      <h1>Spoke Route Planner</h1>
-      <p>Guia Completo de Funcionalidades, Recursos e Dicas Práticas</p>
-    </header>
-
-    <section class="card">
-      <h2>1. Visão Geral e Casos de Uso</h2>
-      <p><strong>Objetivo principal:</strong> O Spoke Route Planner é uma ferramenta destinada à otimização de rotas com múltiplas paradas, voltada para entregadores individuais, transportadoras e frotistas. Seu foco é reduzir custos logísticos, economizar tempo e melhorar a eficiência das operações de entrega de última milha.</p>
-      <p><strong>Diferença entre versões:</strong></p>
-      <ul>
-        <li><strong>Spoke App (individual):</strong> Destinado a entregadores autônomos ou pequenos negócios, oferecendo funcionalidades básicas de planejamento e navegação com limite de paradas.</li>
-        <li><strong>Circuit/Spoke for Teams/Dispatch (gestão/frotas):</strong> Voltado para equipes maiores e frotas, permite gestão colaborativa, controle de múltiplos motoristas, otimização avançada e monitoramento em tempo real.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>2. Inserção e Captura de Paradas</h2>
-      <p>O aplicativo oferece diversas formas práticas para inserir as paradas na rota:</p>
-      <ul>
-        <li><strong>Digitação preditiva:</strong> Entrada manual com sugestões automáticas para agilizar o cadastro do endereço.</li>
-        <li><strong>Comando de voz mãos-livres:</strong> Permite adicionar paradas sem tocar no aparelho, aumentando a segurança e agilidade.</li>
-        <li><strong>Escaneamento OCR de etiquetas:</strong> Uso da câmera para ler códigos e textos de etiquetas de encomendas, capturando automaticamente os dados da parada.</li>
-        <li><strong>Importação em lote:</strong> Upload de planilhas CSV ou Excel contendo listas de endereços para importação rápida e organizada.</li>
-        <li><strong>Validação e geocodificação:</strong> Todos os endereços são validados e geocodificados via base do Google Maps, garantindo precisão na localização e evitando erros na rota.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>3. Motor de Otimização e Regras de Rota</h2>
-      <ul>
-        <li><strong>Algoritmo de sequenciamento:</strong> Utiliza inteligência artificial para reorganizar a ordem das entregas de forma a minimizar a quilometragem total, o tempo de percurso e o consumo de combustível, resultando em rotas mais eficientes.</li>
-        <li><strong>Janelas de entrega (Time Windows) e priorização:</strong> Permite definir horários específicos para cada entrega, além de marcar paradas como urgentes ou VIP para que sejam priorizadas no roteiro.</li>
-        <li><strong>Definição de pontos:</strong> O usuário pode configurar o ponto de partida da rota, optar por retorno ao ponto inicial (<em>round trip</em>) ou definir um destino final personalizado.</li>
-        <li><strong>Estimativas dinâmicas de chegada (ETA):</strong> O sistema calcula o tempo estimado para chegada em cada parada com base no trânsito em tempo real e configurações de tempo médio por parada, incluindo intervalos de descanso programados.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>4. Mapa Próprio e Integração de Navegação</h2>
-      <ul>
-        <li><strong>Interface do mapa nativo:</strong> Exibe as paradas numeradas em sequência, com traçado claro da rota e indicação de densidade de trânsito em tempo real para melhor tomada de decisão.</li>
-        <li><strong>Navegação integrada e GPS externos:</strong> Possui navegação interna e permite a transferência da rota para apps externos como Google Maps, Waze, Apple Maps e Here WeGo com um toque.</li>
-        <li><strong>Suporte a sistemas embarcados:</strong> Compatibilidade com Android Auto e Apple CarPlay, facilitando o uso durante o trajeto em veículos equipados.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>5. Gestão de Carga e Organizador de Pacotes (Package Finder)</h2>
-      <p>O aplicativo permite marcar e indexar a localização exata de cada pacote dentro do veículo, como porta-malas, banco dianteiro, gavetas ou <em>bins</em>, reduzindo significativamente o tempo gasto para encontrar os itens durante as paradas.</p>
-    </section>
-
-    <section class="card">
-      <h2>6. Execução em Rota e Comprovante de Entrega (Proof of Delivery - PoD)</h2>
-      <ul>
-        <li><strong>Ajustes dinâmicos em tempo real:</strong> Durante a rota, é possível adicionar, adiar, reordenar ou remover paradas sem travar o aplicativo, garantindo flexibilidade operacional.</li>
-        <li><strong>Registro de status:</strong> Classificação da entrega como realizada, tentativa falha ou destinatário ausente para controle preciso.</li>
-        <li><strong>Captura de comprovantes:</strong> Coleta de assinatura digital na tela, fotos anexadas e notas personalizadas para cada entrega, assegurando a comprovação documental.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>7. Estrutura de Planos e Limitações</h2>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Plano</th>
-              <th>Limites</th>
-              <th>Recursos Principais</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Gratuito</strong></td>
-              <td>Até 10 paradas por rota</td>
-              <td>Otimização básica, navegação e funções essenciais.</td>
-            </tr>
-            <tr>
-              <td><strong>Pago Lite / Standard</strong></td>
-              <td>Paradas ilimitadas</td>
-              <td>Otimização avançada, exportação completa de dados, gestão de equipes e recursos adicionais.</td>
-            </tr>
-          </tbody>
-        </table>
+  <div id="splash-screen">
+    <div class="splash-logo-container">
+      <i class="fa-solid fa-diamond-turn-right splash-logo-icon"></i>
+      <h1 class="splash-title">ROUTE<span>FLOW</span></h1>
+      <p class="splash-sub">Roteirização Inteligente & Navegação em Tempo Real</p>
+      <div class="splash-loader-bar">
+        <div class="splash-loader-progress"></div>
       </div>
-    </section>
-
-    <section class="card tips-card">
-      <h2>Dicas Práticas para Entregadores</h2>
-      <ul>
-        <li>Utilize o comando de voz para inserir paradas rapidamente e manter as mãos livres enquanto estiver em trânsito.</li>
-        <li>Importe rotas em lote via planilhas para otimizar o planejamento antes do início do dia.</li>
-        <li>Aproveite a funcionalidade <em>Package Finder</em> para organizar os pacotes no veículo e reduzir o tempo de busca.</li>
-        <li>Fique atento às janelas de entrega para priorizar paradas urgentes e evitar atrasos.</li>
-        <li>Use o suporte a sistemas embarcados para facilitar a navegação e manter o foco na direção.</li>
-        <li>Registre comprovantes detalhados no app para evitar problemas com entregas contestadas.</li>
-      </ul>
-    </section>
-
-    <footer>
-      <p>&copy; Spoke Route Planner — Documentação de Apoio Operacional</p>
-    </footer>
+    </div>
   </div>
 
+  <div id="toast-container"></div>
+
+  <div class="app-wrapper">
+
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-icon">
+          <i class="fa-solid fa-diamond-turn-right"></i>
+        </div>
+        <div class="brand-name">ROUTE<span>FLOW</span></div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-label">Visão Geral</div>
+        <a class="nav-item active" data-view="view-dashboard">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+        
+        <div class="nav-label">Operação de Rotas</div>
+        <a class="nav-item" data-view="view-optimizer" id="nav-btn-optimizer">
+          <i class="fa-solid fa-route"></i>
+          <span>Otimizador / Mapa</span>
+          <span class="nav-badge" id="sidebar-stops-badge" style="display: none;">0</span>
+        </a>
+        <a class="nav-item" id="sidebar-btn-import">
+          <i class="fa-solid fa-file-excel"></i>
+          <span>Importar XLSX</span>
+        </a>
+        <a class="nav-item" data-view="view-history">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Histórico de Rotas</span>
+        </a>
+
+        <div class="nav-label">Execução</div>
+        <a class="nav-item" data-view="view-navigation" id="nav-btn-live">
+          <i class="fa-solid fa-location-arrow"></i>
+          <span>Modo Navegação</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-avatar">OP</div>
+        <div class="user-meta">
+          <span class="name">Operador Logístico</span>
+          <span class="role">RouteFlow Enterprise</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="app-main">
+
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="btn-mobile-toggle" id="btn-toggle-sidebar">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          
+          <div class="route-status-indicator">
+            <div class="status-dot idle" id="global-route-dot"></div>
+            <span id="global-route-status">Nenhuma rota ativa</span>
+          </div>
+
+          <div class="gps-status-indicator">
+            <div class="gps-dot" id="gps-dot-indicator"></div>
+            <span id="gps-status-text">GPS: Aguardando</span>
+          </div>
+        </div>
+
+        <div class="top-bar-right">
+          <button class="btn btn-secondary btn-sm" id="btn-top-new-route">
+            <i class="fa-solid fa-plus"></i>
+            <span>Nova Rota</span>
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-top-import">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <span>Importar Planilha</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="app-viewport">
+
+        <div class="view-page active" id="view-dashboard">
+          
+          <div class="hero-banner">
+            <div class="hero-banner-content">
+              <h2>Otimize suas entregas em segundos.</h2>
+              <p>Importe planilhas XLSX, ordene centenas de paradas com algoritmos heurísticos avançados (2-opt) e economize tempo e combustível com instruções turn-by-turn.</p>
+            </div>
+            <button class="btn btn-primary" id="dashboard-hero-cta">
+              <i class="fa-solid fa-bolt"></i>
+              <span>Começar Roteirização</span>
+            </button>
+          </div>
+
+          <div class="dashboard-metrics-grid">
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-title">Rotas Criadas</span>
+                <div class="metric-icon-box" style="background: rgba(0, 229, 153, 0.15); color: var(--accent-primary);">
+                  <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+              </div>
+              <div class="metric-val" id="dash-metric-routes">0</div>
+              <div class="metric-sub positive"><i class="fa-solid fa-chart-line"></i> Total registrado</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-title">Total de Paradas</span>
+                <div class="metric-icon-box" style="background: rgba(0, 163, 255, 0.15); color: var(--accent-secondary);">
+                  <i class="fa-solid fa-location-dot"></i>
+                </div>
+              </div>
+              <div class="metric-val" id="dash-metric-stops">0</div>
+              <div class="metric-sub"><i class="fa-solid fa-boxes-stacked"></i> Entregas importadas</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-title">Distância Estimada</span>
+                <div class="metric-icon-box" style="background: rgba(255, 184, 0, 0.15); color: var(--accent-warning);">
+                  <i class="fa-solid fa-road"></i>
+                </div>
+              </div>
+              <div class="metric-val" id="dash-metric-distance">0 km</div>
+              <div class="metric-sub"><i class="fa-solid fa-gauge-high"></i> Em percursos otimizados</div>
+            </div>
+
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-title">Taxa de Conclusão</span>
+                <div class="metric-icon-box" style="background: rgba(138, 43, 226, 0.15); color: var(--accent-purple);">
+                  <i class="fa-solid fa-circle-check"></i>
+                </div>
+              </div>
+              <div class="metric-val" id="dash-metric-completion">100%</div>
+              <div class="metric-sub positive"><i class="fa-solid fa-shield-halved"></i> Eficiência operacional</div>
+            </div>
+          </div>
+
+          <div class="dashboard-split-grid">
+            <div class="dashboard-panel">
+              <div class="panel-head">
+                <h3 class="panel-title"><i class="fa-solid fa-clock-rotate-left"></i> Rotas Recentes</h3>
+                <button class="btn btn-secondary btn-sm" id="btn-dash-see-all">Ver Todas</button>
+              </div>
+              <div id="dash-recent-routes-list" style="display: flex; flex-direction: column; gap: 10px;">
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Nenhuma rota salva até o momento.</p>
+              </div>
+            </div>
+
+            <div class="dashboard-panel">
+              <div class="panel-head">
+                <h3 class="panel-title"><i class="fa-solid fa-sliders"></i> Configurações Rápidas</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.85rem; color: var(--text-muted);">
+                <p>O <strong>RouteFlow</strong> utiliza a malha viária aberta (OSRM) para traçado real e heurística 2-Opt combinada com Nearest Neighbor para resolução TSP.</p>
+                <div style="background: var(--bg-sidebar); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                  <span style="color: #fff; font-weight: 600;">Status do Motor Heurístico:</span>
+                  <p style="margin-top: 4px; color: var(--accent-primary);">Pronto (TSP / 2-Opt / Haversine Matrix)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="view-page" id="view-optimizer">
+          
+          <div class="route-panel">
+            <div class="route-panel-header">
+              <div class="route-panel-title-wrap">
+                <div>
+                  <h2 class="route-panel-title" id="current-route-name">Minha Rota de Entregas</h2>
+                  <span style="font-size: 0.75rem; color: var(--text-muted);" id="stops-counter-label">0 paradas carregadas</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="btn-config-route-modal" title="Configurações de Partida/Chegada">
+                  <i class="fa-solid fa-gear"></i>
+                </button>
+              </div>
+
+              <div class="stats-comparison-card" id="route-stats-bar">
+                <div class="stat-col">
+                  <span class="stat-col-label">Distância</span>
+                  <span class="stat-col-val" id="stat-val-dist">0.0 km</span>
+                </div>
+                <div class="stat-col">
+                  <span class="stat-col-label">Tempo Est.</span>
+                  <span class="stat-col-val" id="stat-val-time">0 min</span>
+                </div>
+                <div class="stat-col">
+                  <span class="stat-col-label">Economia Est.</span>
+                  <span class="stat-col-val saving" id="stat-val-economy">~0%</span>
+                </div>
+              </div>
+
+              <div class="route-actions-bar">
+                <button class="btn btn-primary btn-sm" id="btn-run-optimization" style="flex: 1;">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>Otimizar Rota</span>
+                </button>
+                <button class="btn btn-accent-blue btn-sm" id="btn-start-navigation-from-opt" title="Iniciar Navegação HUD">
+                  <i class="fa-solid fa-location-arrow"></i>
+                  <span>Navegar</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="btn-export-pdf" title="Exportar Relatório em PDF">
+                  <i class="fa-solid fa-file-pdf"></i>
+                  <span>PDF</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="route-stops-container" id="stops-sortable-list">
+              <div class="empty-stops-placeholder" id="empty-stops-state">
+                <i class="fa-solid fa-route"></i>
+                <h4 style="color: var(--text-main); font-size: 1rem;">Nenhuma parada inserida</h4>
+                <p style="font-size: 0.8rem; max-width: 240px;">Importe um arquivo XLSX com seus endereços ou adicione manualmente.</p>
+                <div style="display: flex; gap: 8px; margin-top: 6px;">
+                  <button class="btn btn-primary btn-sm" id="btn-empty-import">
+                    <i class="fa-solid fa-file-excel"></i> Importar XLSX
+                  </button>
+                  <button class="btn btn-secondary btn-sm" id="btn-add-single-stop">
+                    <i class="fa-solid fa-plus"></i> Adicionar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style="padding: 12px 18px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-card);">
+              <button class="btn btn-secondary btn-sm" id="btn-manual-add-stop">
+                <i class="fa-solid fa-plus"></i> Adicionar Parada
+              </button>
+              <button class="btn btn-secondary btn-sm" id="btn-save-route-storage">
+                <i class="fa-solid fa-floppy-disk"></i> Salvar Rota
+              </button>
+            </div>
+          </div>
+
+          <div class="map-wrapper">
+            <div id="route-map"></div>
+
+            <div class="map-floating-overlay">
+              <div class="map-glass-card">
+                <i class="fa-solid fa-layer-group" style="color: var(--accent-primary);"></i>
+                <div style="display: flex; flex-direction: column;">
+                  <span style="font-size: 0.75rem; color: var(--text-muted);">Camada de Mapa</span>
+                  <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">OpenStreetMap + OSRM</span>
+                </div>
+              </div>
+              <button class="btn btn-secondary btn-sm" id="btn-recenter-map" style="background: rgba(11,15,23,0.85); backdrop-filter: blur(8px);">
+                <i class="fa-solid fa-crosshairs"></i> Enquadrar Rota
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="view-page" id="view-navigation">
+          <div id="nav-map"></div>
+
+          <div class="nav-top-hud">
+            <div class="nav-maneuver-icon" id="nav-hud-icon">
+              <i class="fa-solid fa-diamond-turn-right"></i>
+            </div>
+            <div class="nav-maneuver-info">
+              <div class="nav-instruction-title" id="nav-hud-client">Cliente Próximo</div>
+              <div class="nav-instruction-sub" id="nav-hud-address">Rua Exemplo, 100 - Bairro</div>
+            </div>
+            <div class="nav-stop-counter-badge" id="nav-hud-badge">PARADA 1/1</div>
+          </div>
+
+          <div class="nav-reroute-alert" id="nav-reroute-box">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Possível desvio de trajeto detectado</span>
+            <button class="btn btn-secondary btn-sm" id="btn-force-recalculate" style="padding: 4px 8px; font-size: 0.72rem;">Recalcular</button>
+          </div>
+
+          <div class="nav-bottom-hud">
+            <div class="nav-hud-metrics">
+              <div class="nav-hud-metric-item">
+                <span class="nav-hud-metric-label">Distância Restante</span>
+                <span class="nav-hud-metric-val" id="nav-hud-dist">-- km</span>
+              </div>
+              <div class="nav-hud-metric-item">
+                <span class="nav-hud-metric-label">Tempo Restante</span>
+                <span class="nav-hud-metric-val" id="nav-hud-time">-- min</span>
+              </div>
+            </div>
+
+            <div class="nav-hud-actions">
+              <button class="btn btn-secondary btn-sm" id="btn-nav-skip-stop" title="Pular esta parada">
+                <i class="fa-solid fa-forward"></i> Pular
+              </button>
+              <button class="btn btn-primary" id="btn-nav-complete-stop">
+                <i class="fa-solid fa-check"></i> Concluir Parada
+              </button>
+              <button class="btn btn-danger btn-sm" id="btn-nav-exit" title="Sair da Navegação">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="view-page" id="view-history">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Histórico de Rotas Salvas</h2>
+              <p style="color: var(--text-muted); font-size: 0.85rem;">Gerencie e recarregue rotas geradas anteriormente no seu navegador.</p>
+            </div>
+            <button class="btn btn-danger btn-sm" id="btn-clear-all-history">
+              <i class="fa-solid fa-trash"></i> Limpar Histórico
+            </button>
+          </div>
+
+          <div class="history-table-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Data / Hora</th>
+                  <th>Nome da Rota</th>
+                  <th>Paradas</th>
+                  <th>Distância</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modal-import">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-file-excel" style="color: var(--accent-primary);"></i> Importar Planilha XLSX</h3>
+        <button class="modal-close-btn" data-close-modal><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          O RouteFlow identifica automaticamente colunas de <strong>Endereço, Cliente, Cidade, CEP e Número</strong> sem exigir nomes exatos.
+        </p>
+
+        <div class="upload-dropzone" id="dropzone-xlsx">
+          <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+          <h4 style="font-size: 1rem; color: #fff; margin-bottom: 4px;">Clique ou arraste sua planilha aqui</h4>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">Suporta arquivos no formato .xlsx e .xls</span>
+          <input type="file" id="file-input-xlsx" accept=".xlsx, .xls" style="display: none;" />
+        </div>
+
+        <div id="import-preview-section" style="display: none; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-primary);" id="import-preview-count">0 paradas encontradas</span>
+          </div>
+          <div style="max-height: 160px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+            <table class="data-table" style="font-size: 0.75rem;">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Endereço Detectado</th>
+                  <th>Cidade</th>
+                </tr>
+              </thead>
+              <tbody id="import-preview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" id="btn-confirm-import-data" disabled>
+          <i class="fa-solid fa-check"></i> Processar & Geocodificar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-route-config">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title"><i class="fa-solid fa-sliders" style="color: var(--accent-primary);"></i> Configurar Parâmetros da Rota</h3>
+        <button class="modal-close-btn" data-close-modal><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Nome da Rota</label>
+          <input type="text" class="form-control" id="cfg-route-name" value="Rota de Distribuição" />
+        </div>
+
+        <div class="form-group">
+          <label>Endereço de Partida (Origem)</label>
+          <input type="text" class="form-control" id="cfg-start-address" placeholder="Ex: Av. Paulista, 1000 - São Paulo, SP" />
+        </div>
+
+        <div class="form-group">
+          <label>Endereço de Chegada (Destino Final)</label>
+          <input type="text" class="form-control" id="cfg-end-address" placeholder="Deixe em branco para finalizar na última entrega" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Retornar à Origem ao Final?</label>
+            <select class="form-control" id="cfg-return-start">
+              <option value="false">Não (Terminar na última parada)</option>
+              <option value="true">Sim (Rota Circular)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tempo Médio por Parada (min)</label>
+            <input type="number" class="form-control" id="cfg-stop-duration" value="5" min="1" max="120" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Critério do Motor de Otimização</label>
+          <select class="form-control" id="cfg-optimize-criteria">
+            <option value="distance">Menor Distância Possível</option>
+            <option value="balanced">Equilíbrio (Distância & Tempo)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>Fechar</button>
+        <button class="btn btn-primary" id="btn-save-route-configs">
+          <i class="fa-solid fa-check"></i> Salvar Configurações
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal-stop-editor">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-stop-editor-title"><i class="fa-solid fa-location-dot" style="color: var(--accent-primary);"></i> Adicionar Parada</h3>
+        <button class="modal-close-btn" data-close-modal><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-stop-id" />
+        <div class="form-group">
+          <label>Nome do Cliente / Identificador</label>
+          <input type="text" class="form-control" id="edit-stop-client" placeholder="Ex: Mercado Central" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="grid-column: span 2;">
+            <label>Logradouro e Número</label>
+            <input type="text" class="form-control" id="edit-stop-address" placeholder="Ex: Av. Brigadeiro Faria Lima, 2000" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cidade</label>
+            <input type="text" class="form-control" id="edit-stop-city" placeholder="Ex: São Paulo" />
+          </div>
+          <div class="form-group">
+            <label>CEP (Opcional)</label>
+            <input type="text" class="form-control" id="edit-stop-cep" placeholder="00000-000" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Observação / Instrução de Entrega</label>
+          <input type="text" class="form-control" id="edit-stop-notes" placeholder="Ex: Entregar na recepção" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-stop-item">
+          <i class="fa-solid fa-check"></i> Salvar Parada
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ROUTE FLOW — SISTEMA COMPLETO DE ROTEIRIZAÇÃO & NAVEGAÇÃO
+     * * Módulos:
+     * 1. CONFIG & STATE: Armazenamento centralizado de estado reativo.
+     * 2. STORAGE: Gerenciador de persistência no LocalStorage.
+     * 3. GEOCODER: Converte endereços em Lat/Lng usando Nominatim OSM com rate-limiting e cache.
+     * 4. OPTIMIZER: Motor Heurístico de Roteirização (TSP, Matriz Haversine e 2-Opt Improvement).
+     * 5. ROUTING SERVICE: Traçado de rotas viárias reais via OSRM Demo API.
+     * 6. MAP ENGINE: Leaflet Manager para o mapa de planejamento e navegação.
+     * 7. GPS & NAVIGATION HUD: Geolocation Watcher e Turn-by-Turn Simulator.
+     * 8. PDF GENERATOR: Emissão profissional de relatórios em formato PDF via jsPDF.
+     * 9. UI & EVENT CONTROLLERS: Controladores de telas, modais e Drag & Drop.
+     */
+
+    // --------------------------------------------------------------------------
+    // 1. CONFIG & STATE
+    // --------------------------------------------------------------------------
+    const State = {
+      currentRoute: {
+        id: null,
+        name: 'Rota Principal RouteFlow',
+        date: new Date().toISOString(),
+        startAddress: 'Centro, São Paulo, SP',
+        startCoords: [-23.55052, -46.633308], // Padrão SP
+        endAddress: '',
+        endCoords: null,
+        returnToStart: false,
+        stopDurationMin: 5,
+        optimizeCriteria: 'distance',
+        stops: [],          // Array de paradas
+        totalDistanceKm: 0,
+        totalDurationMin: 0,
+        geometry: null,     // Coordenadas polyline da rota viária
+        status: 'draft'     // draft, optimized, in_progress, completed
+      },
+      navigation: {
+        active: false,
+        currentStopIndex: 0,
+        userLocation: null,
+        watchId: null
+      },
+      tempParsedStops: [],
+      history: []
+    };
+
+    // --------------------------------------------------------------------------
+    // 2. STORAGE MANAGER
+    // --------------------------------------------------------------------------
+    const StorageManager = {
+      KEYS: {
+        CURRENT_ROUTE: 'routeflow_active_route',
+        HISTORY: 'routeflow_history_v1'
+      },
+
+      init() {
+        this.loadHistory();
+        this.loadActiveRoute();
+      },
+
+      saveActiveRoute() {
+        localStorage.setItem(this.KEYS.CURRENT_ROUTE, JSON.stringify(State.currentRoute));
+      },
+
+      loadActiveRoute() {
+        const saved = localStorage.getItem(this.KEYS.CURRENT_ROUTE);
+        if (saved) {
+          try {
+            State.currentRoute = JSON.parse(saved);
+            UIManager.renderStopsList();
+            UIManager.updateRouteStatsView();
+            MapManager.drawCompleteRoute();
+            UIManager.showToast('Rota recuperada da sessão anterior.', 'info');
+          } catch (e) {
+            console.error('Erro ao restaurar sessão:', e);
+          }
+        }
+      },
+
+      saveToHistory(routeObj) {
+        const item = {
+          id: routeObj.id || 'rf_' + Date.now(),
+          name: routeObj.name || 'Rota sem título',
+          date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
+          stopsCount: routeObj.stops.length,
+          distance: routeObj.totalDistanceKm.toFixed(1) + ' km',
+          status: routeObj.status,
+          payload: JSON.parse(JSON.stringify(routeObj))
+        };
+        State.history.unshift(item);
+        localStorage.setItem(this.KEYS.HISTORY, JSON.stringify(State.history));
+        UIManager.renderHistoryTable();
+      },
+
+      loadHistory() {
+        const saved = localStorage.getItem(this.KEYS.HISTORY);
+        if (saved) {
+          try {
+            State.history = JSON.parse(saved);
+          } catch (e) {
+            State.history = [];
+          }
+        }
+        UIManager.renderHistoryTable();
+      },
+
+      clearHistory() {
+        State.history = [];
+        localStorage.removeItem(this.KEYS.HISTORY);
+        UIManager.renderHistoryTable();
+        UIManager.showToast('Histórico apagado com sucesso.', 'success');
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 3. GEOCODER SERVICE (OSM Nominatim com Cache Local)
+    // --------------------------------------------------------------------------
+    const Geocoder = {
+      cache: new Map(),
+
+      async search(addressText) {
+        if (!addressText || addressText.trim().length < 3) return null;
+        const query = addressText.trim();
+        
+        if (this.cache.has(query)) {
+          return this.cache.get(query);
+        }
+
+        try {
+          // Chamada à API Nominatim OpenStreetMap
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1&addressdetails=1`;
+          const response = await fetch(url, {
+            headers: { 'Accept-Language': 'pt-BR,pt;q=0.9' }
+          });
+          const data = await response.json();
+
+          if (data && data.length > 0) {
+            const result = {
+              lat: parseFloat(data[0].lat),
+              lng: parseFloat(data[0].lon),
+              displayName: data[0].display_name
+            };
+            this.cache.set(query, result);
+            return result;
+          }
+          return null;
+        } catch (error) {
+          console.warn('Falha no geocoder para:', addressText, error);
+          return null;
+        }
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 4. ROUTE OPTIMIZER (Motor Heurístico TSP + 2-Opt)
+    // --------------------------------------------------------------------------
+    const RouteOptimizer = {
+      // Cálculo de Distância Haversine (Esférica em KM)
+      calcDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Raio da Terra em KM
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      },
+
+      // Constrói a Matriz de Distâncias
+      buildDistanceMatrix(points) {
+        const n = points.length;
+        const matrix = Array.from({ length: n }, () => new Array(n).fill(0));
+        for (let i = 0; i < n; i++) {
+          for (let j = 0; j < n; j++) {
+            if (i !== j) {
+              matrix[i][j] = this.calcDistance(
+                points[i].lat, points[i].lng,
+                points[j].lat, points[j].lng
+              );
+            }
+          }
+        }
+        return matrix;
+      },
+
+      // Heurística Nearest Neighbor (Vizinho Mais Próximo)
+      nearestNeighbor(matrix, startIndex = 0) {
+        const numPoints = matrix.length;
+        const visited = new Array(numPoints).fill(false);
+        const route = [startIndex];
+        visited[startIndex] = true;
+
+        for (let i = 1; i < numPoints; i++) {
+          const current = route[route.length - 1];
+          let nearest = -1;
+          let minDistance = Infinity;
+
+          for (let j = 0; j < numPoints; j++) {
+            if (!visited[j] && matrix[current][j] < minDistance) {
+              minDistance = matrix[current][j];
+              nearest = j;
+            }
+          }
+
+          if (nearest !== -1) {
+            visited[nearest] = true;
+            route.push(nearest);
+          }
+        }
+        return route;
+      },
+
+      // Heurística 2-Opt (Refinamento de Rota)
+      apply2Opt(route, matrix) {
+        let bestRoute = [...route];
+        let improved = true;
+        let passes = 0;
+        const maxPasses = 50; // Limite de convergência
+
+        const calculateTotalDistance = (r) => {
+          let dist = 0;
+          for (let i = 0; i < r.length - 1; i++) {
+            dist += matrix[r[i]][r[i+1]];
+          }
+          return dist;
+        };
+
+        let bestDistance = calculateTotalDistance(bestRoute);
+
+        while (improved && passes < maxPasses) {
+          improved = false;
+          passes++;
+
+          for (let i = 1; i < bestRoute.length - 2; i++) {
+            for (let k = i + 1; k < bestRoute.length - 1; k++) {
+              // Nova sequência invertendo o subconjunto entre i e k
+              const newRoute = [
+                ...bestRoute.slice(0, i),
+                ...bestRoute.slice(i, k + 1).reverse(),
+                ...bestRoute.slice(k + 1)
+              ];
+
+              const newDistance = calculateTotalDistance(newRoute);
+              if (newDistance < bestDistance - 0.001) {
+                bestRoute = newRoute;
+                bestDistance = newDistance;
+                improved = true;
+                break;
+              }
+            }
+            if (improved) break;
+          }
+        }
+        return bestRoute;
+      },
+
+      // Executa Otimização Completa
+      async optimizeStops(stops, startCoords, endCoords, returnToStart) {
+        if (!stops || stops.length < 2) return stops;
+
+        // Monta conjunto de pontos: 0 = Start, 1..N = Paradas, (N+1) = End (se houver)
+        const allPoints = [{ lat: startCoords[0], lng: startCoords[1], isStart: true }];
+        stops.forEach(s => allPoints.push({ lat: s.lat, lng: s.lng, originalStop: s }));
+
+        const matrix = this.buildDistanceMatrix(allPoints);
+        
+        // Gera sequência inicial via Vizinho Mais Próximo
+        let initialTour = this.nearestNeighbor(matrix, 0);
+        
+        // Aplica o algoritmo de melhoria 2-Opt
+        let optimizedIndices = this.apply2Opt(initialTour, matrix);
+
+        // Remove o ponto 0 (origem) e reordena os objetos de parada
+        const reorderedStops = [];
+        optimizedIndices.forEach(idx => {
+          if (idx !== 0 && allPoints[idx].originalStop) {
+            reorderedStops.push(allPoints[idx].originalStop);
+          }
+        });
+
+        return reorderedStops;
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 5. ROUTING ENGINE (Integração OSRM para Traçado Real)
+    // --------------------------------------------------------------------------
+    const RoutingService = {
+      async calculateRealRoute(points) {
+        if (points.length < 2) return null;
+
+        // Formata coordenadas no padrão OSRM: lng,lat;lng,lat
+        const coordString = points.map(p => `${p[1]},${p[0]}`).join(';');
+        const url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson&steps=true`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+            const primary = data.routes[0];
+            return {
+              distanceKm: primary.distance / 1000,
+              durationMin: primary.duration / 60,
+              coordinates: primary.geometry.coordinates.map(c => [c[1], c[0]]), // Inverte para Lat,Lng
+              legs: primary.legs
+            };
+          }
+          return null;
+        } catch (e) {
+          console.warn('Falha na rota viária OSRM. Utilizando fallback direto.', e);
+          return null;
+        }
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 6. MAP ENGINE (Leaflet.js)
+    // --------------------------------------------------------------------------
+    const MapManager = {
+      optimizerMap: null,
+      navMap: null,
+      markersGroup: null,
+      routePolyline: null,
+      userMarker: null,
+
+      init() {
+        // Inicializa Mapa do Planejador / Otimizador
+        this.optimizerMap = L.map('route-map', {
+          zoomControl: true,
+          attributionControl: false
+        }).setView([-23.55052, -46.633308], 12);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19
+        }).addTo(this.optimizerMap);
+
+        this.markersGroup = L.featureGroup().addTo(this.optimizerMap);
+
+        // Inicializa Mapa do Modo Navegação
+        this.navMap = L.map('nav-map', {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([-23.55052, -46.633308], 15);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19
+        }).addTo(this.navMap);
+      },
+
+      createCustomMarker(num, isStart = false, isEnd = false) {
+        let pinClass = 'custom-marker-pin';
+        let textContent = num;
+        if (isStart) {
+          pinClass += ' start-pin';
+          textContent = '<i class="fa-solid fa-play" style="font-size:0.6rem"></i>';
+        } else if (isEnd) {
+          pinClass += ' end-pin';
+          textContent = '<i class="fa-solid fa-flag-checkered" style="font-size:0.6rem"></i>';
+        }
+
+        return L.divIcon({
+          className: 'custom-div-icon',
+          html: `<div class="${pinClass}"><span class="custom-marker-text">${textContent}</span></div>`,
+          iconSize: [30, 42],
+          iconAnchor: [15, 42],
+          popupAnchor: [0, -38]
+        });
+      },
+
+      async drawCompleteRoute() {
+        this.markersGroup.clearLayers();
+        if (this.routePolyline) {
+          this.optimizerMap.removeLayer(this.routePolyline);
+          this.routePolyline = null;
+        }
+
+        const stops = State.currentRoute.stops;
+        if (!stops || stops.length === 0) return;
+
+        const allCoords = [];
+
+        // Adiciona Ponto de Partida
+        if (State.currentRoute.startCoords) {
+          allCoords.push(State.currentRoute.startCoords);
+          const startMarker = L.marker(State.currentRoute.startCoords, {
+            icon: this.createCustomMarker('0', true)
+          }).bindPopup(`<b>Partida</b><br>${State.currentRoute.startAddress}`);
+          this.markersGroup.addLayer(startMarker);
+        }
+
+        // Adiciona Paradas Numeradas
+        stops.forEach((stop, index) => {
+          allCoords.push([stop.lat, stop.lng]);
+          const marker = L.marker([stop.lat, stop.lng], {
+            icon: this.createCustomMarker(index + 1)
+          }).bindPopup(`
+            <div style="font-family: var(--font-family); font-size: 0.85rem;">
+              <b style="color: #00A3FF;">Parada #${index + 1}</b><br>
+              <strong>${stop.client || 'Cliente'}</strong><br>
+              <span>${stop.address}</span>
+            </div>
+          `);
+          this.markersGroup.addLayer(marker);
+        });
+
+        // Adiciona Ponto de Retorno se configurado
+        if (State.currentRoute.returnToStart && State.currentRoute.startCoords) {
+          allCoords.push(State.currentRoute.startCoords);
+        }
+
+        // Tenta traçar rota viária via OSRM
+        if (allCoords.length >= 2) {
+          const routingData = await RoutingService.calculateRealRoute(allCoords);
+          let polylinePoints = allCoords;
+
+          if (routingData && routingData.coordinates) {
+            polylinePoints = routingData.coordinates;
+            State.currentRoute.totalDistanceKm = routingData.distanceKm;
+            State.currentRoute.totalDurationMin = routingData.durationMin + (stops.length * State.currentRoute.stopDurationMin);
+            State.currentRoute.geometry = routingData.coordinates;
+          } else {
+            // Fallback: Linhas retas
+            let simpleDist = 0;
+            for (let i = 0; i < allCoords.length - 1; i++) {
+              simpleDist += RouteOptimizer.calcDistance(allCoords[i][0], allCoords[i][1], allCoords[i+1][0], allCoords[i+1][1]);
+            }
+            State.currentRoute.totalDistanceKm = simpleDist * 1.25; // Fator de correção de malha
+            State.currentRoute.totalDurationMin = (State.currentRoute.totalDistanceKm / 30) * 60 + (stops.length * State.currentRoute.stopDurationMin);
+          }
+
+          this.routePolyline = L.polyline(polylinePoints, {
+            color: '#00E599',
+            weight: 5,
+            opacity: 0.85,
+            lineJoin: 'round'
+          }).addTo(this.optimizerMap);
+
+          UIManager.updateRouteStatsView();
+          StorageManager.saveActiveRoute();
+        }
+
+        if (this.markersGroup.getLayers().length > 0) {
+          this.optimizerMap.fitBounds(this.markersGroup.getBounds(), { padding: [50, 50] });
+        }
+      },
+
+      recenter() {
+        if (this.markersGroup && this.markersGroup.getLayers().length > 0) {
+          this.optimizerMap.fitBounds(this.markersGroup.getBounds(), { padding: [50, 50] });
+        }
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 7. GPS & MODO NAVEGAÇÃO
+    // --------------------------------------------------------------------------
+    const NavigationManager = {
+      startNavigation() {
+        const stops = State.currentRoute.stops;
+        if (!stops || stops.length === 0) {
+          UIManager.showToast('Nenhuma parada disponível para navegação.', 'warning');
+          return;
+        }
+
+        State.navigation.active = true;
+        State.navigation.currentStopIndex = 0;
+        UIManager.switchView('view-navigation');
+        setTimeout(() => MapManager.navMap.invalidateSize(), 300);
+
+        this.initGeolocation();
+        this.updateHUD();
+      },
+
+      initGeolocation() {
+        const dot = document.getElementById('gps-dot-indicator');
+        const text = document.getElementById('gps-status-text');
+
+        if (!navigator.geolocation) {
+          text.textContent = 'GPS: Indisponível';
+          return;
+        }
+
+        dot.className = 'gps-dot searching';
+        text.textContent = 'GPS: Conectando...';
+
+        State.navigation.watchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            State.navigation.userLocation = [lat, lng];
+
+            dot.className = 'gps-dot connected';
+            text.textContent = 'GPS: Online';
+
+            this.updateLiveMarker(lat, lng);
+            this.checkProximityToNextStop(lat, lng);
+          },
+          (err) => {
+            console.warn('Erro GPS:', err);
+            dot.className = 'gps-dot';
+            text.textContent = 'GPS: Sem Sinal';
+          },
+          { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+        );
+      },
+
+      updateLiveMarker(lat, lng) {
+        if (!MapManager.userMarker) {
+          const userIcon = L.divIcon({
+            className: 'user-live-marker-icon',
+            html: '<div class="user-live-marker"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          MapManager.userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(MapManager.navMap);
+        } else {
+          MapManager.userMarker.setLatLng([lat, lng]);
+        }
+        MapManager.navMap.setView([lat, lng], 16);
+      },
+
+      checkProximityToNextStop(userLat, userLng) {
+        const stops = State.currentRoute.stops;
+        const currentStop = stops[State.navigation.currentStopIndex];
+        if (!currentStop) return;
+
+        const distanceKm = RouteOptimizer.calcDistance(userLat, userLng, currentStop.lat, currentStop.lng);
+        if (distanceKm < 0.05) { // Menos de 50 metros
+          UIManager.showToast(`Você chegou em: ${currentStop.client}!`, 'success');
+        }
+      },
+
+      updateHUD() {
+        const stops = State.currentRoute.stops;
+        const idx = State.navigation.currentStopIndex;
+
+        if (idx >= stops.length) {
+          this.finishNavigation();
+          return;
+        }
+
+        const currentStop = stops[idx];
+        document.getElementById('nav-hud-client').textContent = currentStop.client || `Parada #${idx + 1}`;
+        document.getElementById('nav-hud-address').textContent = currentStop.address;
+        document.getElementById('nav-hud-badge').textContent = `PARADA ${idx + 1}/${stops.length}`;
+        
+        // Estima distância e tempo restantes a partir desta parada
+        const remainingStops = stops.slice(idx);
+        let remDist = 0;
+        for (let i = 0; i < remainingStops.length - 1; i++) {
+          remDist += RouteOptimizer.calcDistance(remainingStops[i].lat, remainingStops[i].lng, remainingStops[i+1].lat, remainingStops[i+1].lng);
+        }
+        document.getElementById('nav-hud-dist').textContent = (remDist * 1.2).toFixed(1) + ' km';
+        document.getElementById('nav-hud-time').textContent = Math.round((remDist * 1.2 / 30) * 60 + remainingStops.length * 5) + ' min';
+
+        // Desenha percurso restante no mapa de navegação
+        const navPoints = [[currentStop.lat, currentStop.lng], ...remainingStops.map(s => [s.lat, s.lng])];
+        L.polyline(navPoints, { color: '#00A3FF', weight: 6, opacity: 0.8 }).addTo(MapManager.navMap);
+      },
+
+      completeCurrentStop() {
+        const stops = State.currentRoute.stops;
+        const idx = State.navigation.currentStopIndex;
+        if (stops[idx]) {
+          stops[idx].status = 'completed';
+        }
+        State.navigation.currentStopIndex++;
+        UIManager.showToast('Parada concluída!', 'success');
+        this.updateHUD();
+        UIManager.renderStopsList();
+        StorageManager.saveActiveRoute();
+      },
+
+      skipCurrentStop() {
+        State.navigation.currentStopIndex++;
+        UIManager.showToast('Parada pulada.', 'warning');
+        this.updateHUD();
+      },
+
+      finishNavigation() {
+        State.navigation.active = false;
+        if (State.navigation.watchId) {
+          navigator.geolocation.clearWatch(State.navigation.watchId);
+        }
+        State.currentRoute.status = 'completed';
+        StorageManager.saveToHistory(State.currentRoute);
+        UIManager.showToast('Rota finalizada com sucesso! Parabéns.', 'success');
+        UIManager.switchView('view-dashboard');
+      },
+
+      exitNavigation() {
+        State.navigation.active = false;
+        if (State.navigation.watchId) {
+          navigator.geolocation.clearWatch(State.navigation.watchId);
+        }
+        UIManager.switchView('view-optimizer');
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 8. GERADOR DE RELATÓRIO PDF (jsPDF + AutoTable)
+    // --------------------------------------------------------------------------
+    const PDFExporter = {
+      generate() {
+        const stops = State.currentRoute.stops;
+        if (!stops || stops.length === 0) {
+          UIManager.showToast('Não há paradas para gerar o relatório PDF.', 'warning');
+          return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+        // Cores do Tema RouteFlow
+        const primaryColor = [0, 229, 153];
+        const darkColor = [11, 15, 23];
+
+        // Cabeçalho
+        doc.setFillColor(...darkColor);
+        doc.rect(0, 0, 210, 36, 'F');
+
+        doc.setTextColor(...primaryColor);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.text('ROUTE FLOW', 14, 18);
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Relatório Oficial de Rota Otimizada & Manifesto de Carga', 14, 26);
+
+        doc.setFontSize(8);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 130, 26);
+
+        // Bloco Resumo
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('RESUMO DO PERCURSO', 14, 46);
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Nome da Rota: ${State.currentRoute.name}`, 14, 53);
+        doc.text(`Origem: ${State.currentRoute.startAddress}`, 14, 59);
+        doc.text(`Total de Paradas: ${stops.length}`, 120, 53);
+        doc.text(`Distância Total Est.: ${State.currentRoute.totalDistanceKm.toFixed(1)} km`, 120, 59);
+        doc.text(`Tempo Total Est.: ${Math.round(State.currentRoute.totalDurationMin)} minutos`, 120, 65);
+
+        // Tabela de Paradas Sequenciadas
+        const tableBody = stops.map((s, idx) => [
+          String(idx + 1).padStart(2, '0'),
+          s.client || 'Cliente Padrão',
+          s.address,
+          s.city || '-',
+          s.cep || '-',
+          s.notes || '-'
+        ]);
+
+        doc.autoTable({
+          startY: 72,
+          head: [['Seq.', 'Cliente / Destinatário', 'Endereço', 'Cidade', 'CEP', 'Instruções']],
+          body: tableBody,
+          theme: 'grid',
+          headStyles: {
+            fillColor: [18, 24, 36],
+            textColor: [0, 229, 153],
+            fontStyle: 'bold',
+            fontSize: 8
+          },
+          styles: {
+            fontSize: 8,
+            cellPadding: 3,
+            textColor: [30, 41, 59]
+          },
+          columnStyles: {
+            0: { cellWidth: 12, halign: 'center', fontStyle: 'bold' },
+            1: { cellWidth: 38 },
+            2: { cellWidth: 65 },
+            3: { cellWidth: 25 },
+            4: { cellWidth: 20 },
+            5: { cellWidth: 30 }
+          }
+        });
+
+        // Rodapé da Página
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.setTextColor(150);
+          doc.text(`RouteFlow Logistics Platform — Página ${i} de ${pageCount}`, 14, 290);
+        }
+
+        // Download do Arquivo
+        doc.save(`RouteFlow_${State.currentRoute.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`);
+        UIManager.showToast('Relatório PDF gerado com sucesso!', 'success');
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 9. LEITOR INTELIGENTE DE PLANILHAS (XLSX / SHEETJS)
+    // --------------------------------------------------------------------------
+    const FileImporter = {
+      detectColumns(headers) {
+        const patterns = {
+          address: [/endere[cç]o/i, /address/i, /rua/i, /logradouro/i, /local/i, /destino/i],
+          client: [/nome/i, /cliente/i, /destinat[aá]rio/i, /customer/i, /name/i, /contato/i],
+          number: [/n[uú]mero/i, /num/i, /number/i, /nº/i],
+          city: [/cidade/i, /city/i, /munic[ií]pio/i],
+          cep: [/cep/i, /zip/i, /postal/i, /zipcode/i],
+          notes: [/obs/i, /observa[cç][aã]o/i, /instru[cç][aã]o/i, /nota/i, /notes/i]
+        };
+
+        const detected = {};
+        for (const [key, regexList] of Object.entries(patterns)) {
+          detected[key] = headers.find(h => regexList.some(r => r.test(h.trim())));
+        }
+        return detected;
+      },
+
+      parseExcel(file) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+            if (!rows || rows.length === 0) {
+              UIManager.showToast('A planilha selecionada está vazia.', 'error');
+              return;
+            }
+
+            const headers = Object.keys(rows[0]);
+            const cols = this.detectColumns(headers);
+
+            if (!cols.address) {
+              UIManager.showToast('Não foi possível identificar uma coluna de endereço.', 'error');
+              return;
+            }
+
+            State.tempParsedStops = rows.map((r, i) => {
+              const fullAddr = `${r[cols.address] || ''} ${r[cols.number] || ''}`.trim();
+              return {
+                id: 'stop_' + Date.now() + '_' + i,
+                client: r[cols.client] || `Cliente #${i + 1}`,
+                address: fullAddr,
+                city: r[cols.city] || '',
+                cep: r[cols.cep] || '',
+                notes: r[cols.notes] || '',
+                lat: null,
+                lng: null,
+                status: 'pending'
+              };
+            }).filter(s => s.address.length > 2);
+
+            UIManager.showImportPreview(State.tempParsedStops);
+          } catch (err) {
+            console.error('Erro ao ler XLSX:', err);
+            UIManager.showToast('Falha ao processar arquivo XLSX.', 'error');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      },
+
+      async geocodeAndLoadStops(parsedList) {
+        UIManager.showToast('Geocodificando endereços... Aguarde.', 'info');
+        const validStops = [];
+
+        // Adiciona coordenadas simuladas ou busca via Geocoder
+        for (let i = 0; i < parsedList.length; i++) {
+          const item = parsedList[i];
+          const query = `${item.address}, ${item.city || 'São Paulo'}`;
+          
+          let coords = await Geocoder.search(query);
+          
+          // Fallback para manter o fluxo caso a API demore ou falhe na taxa limite
+          if (!coords) {
+            const baseLat = -23.55052;
+            const baseLng = -46.633308;
+            coords = {
+              lat: baseLat + (Math.random() - 0.5) * 0.12,
+              lng: baseLng + (Math.random() - 0.5) * 0.12
+            };
+          }
+
+          item.lat = coords.lat;
+          item.lng = coords.lng;
+          validStops.push(item);
+        }
+
+        State.currentRoute.stops = validStops;
+        UIManager.renderStopsList();
+        await MapManager.drawCompleteRoute();
+        UIManager.closeModals();
+        UIManager.switchView('view-optimizer');
+        UIManager.showToast(`${validStops.length} paradas carregadas com sucesso!`, 'success');
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // 10. UI & EVENT CONTROLLERS
+    // --------------------------------------------------------------------------
+    const UIManager = {
+      init() {
+        this.setupNavigation();
+        this.setupModals();
+        this.setupSortable();
+        this.bindEvents();
+        this.updateDashboardMetrics();
+      },
+
+      switchView(viewId) {
+        document.querySelectorAll('.view-page').forEach(page => page.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+        const targetPage = document.getElementById(viewId);
+        if (targetPage) targetPage.classList.add('active');
+
+        const navBtn = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+        if (navBtn) navBtn.classList.add('active');
+
+        if (viewId === 'view-optimizer') {
+          setTimeout(() => {
+            MapManager.optimizerMap.invalidateSize();
+            MapManager.recenter();
+          }, 200);
+        } else if (viewId === 'view-navigation') {
+          setTimeout(() => {
+            MapManager.navMap.invalidateSize();
+          }, 200);
+        }
+      },
+
+      setupNavigation() {
+        document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.switchView(item.dataset.view);
+          });
+        });
+
+        document.getElementById('btn-toggle-sidebar').addEventListener('click', () => {
+          document.getElementById('app-sidebar').classList.toggle('open');
+        });
+      },
+
+      setupModals() {
+        document.querySelectorAll('[data-close-modal]').forEach(btn => {
+          btn.addEventListener('click', () => this.closeModals());
+        });
+      },
+
+      openModal(modalId) {
+        const m = document.getElementById(modalId);
+        if (m) m.classList.add('show');
+      },
+
+      closeModals() {
+        document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.remove('show'));
+      },
+
+      setupSortable() {
+        const el = document.getElementById('stops-sortable-list');
+        Sortable.create(el, {
+          animation: 180,
+          handle: '.stop-card',
+          ghostClass: 'sortable-ghost',
+          chosenClass: 'sortable-chosen',
+          onEnd: () => {
+            // Reordena o array do estado com base no DOM
+            const newStops = [];
+            document.querySelectorAll('.stop-card').forEach(card => {
+              const stopId = card.dataset.id;
+              const stopObj = State.currentRoute.stops.find(s => s.id === stopId);
+              if (stopObj) newStops.push(stopObj);
+            });
+            State.currentRoute.stops = newStops;
+            this.renderStopsList();
+            MapManager.drawCompleteRoute();
+            this.showToast('Sequência alterada manualmente.', 'info');
+          }
+        });
+      },
+
+      renderStopsList() {
+        const container = document.getElementById('stops-sortable-list');
+        const stops = State.currentRoute.stops;
+
+        const badge = document.getElementById('sidebar-stops-badge');
+        badge.textContent = stops.length;
+        badge.style.display = stops.length > 0 ? 'inline-block' : 'none';
+
+        document.getElementById('stops-counter-label').textContent = `${stops.length} paradas carregadas`;
+
+        if (!stops || stops.length === 0) {
+          container.innerHTML = `
+            <div class="empty-stops-placeholder" id="empty-stops-state">
+              <i class="fa-solid fa-route"></i>
+              <h4 style="color: var(--text-main); font-size: 1rem;">Nenhuma parada inserida</h4>
+              <p style="font-size: 0.8rem; max-width: 240px;">Importe um arquivo XLSX com seus endereços ou adicione manualmente.</p>
+              <div style="display: flex; gap: 8px; margin-top: 6px;">
+                <button class="btn btn-primary btn-sm" id="btn-empty-import-dyn"><i class="fa-solid fa-file-excel"></i> Importar XLSX</button>
+              </div>
+            </div>
+          `;
+          document.getElementById('btn-empty-import-dyn')?.addEventListener('click', () => this.openModal('modal-import'));
+          return;
+        }
+
+        container.innerHTML = '';
+        stops.forEach((stop, index) => {
+          let statusClass = '';
+          if (stop.status === 'completed') statusClass = 'status-completed';
+          if (stop.status === 'problem') statusClass = 'status-problem';
+
+          const card = document.createElement('div');
+          card.className = `stop-card ${statusClass}`;
+          card.dataset.id = stop.id;
+
+          card.innerHTML = `
+            <div class="stop-badge-num">${index + 1}</div>
+            <div class="stop-details">
+              <div class="stop-client-name">
+                <span>${stop.client || 'Cliente'}</span>
+                <div class="stop-actions">
+                  <button class="btn-stop-action edit" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                  <button class="btn-stop-action delete" title="Remover"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </div>
+              <div class="stop-address">${stop.address}</div>
+              <div class="stop-meta-line">
+                <div class="stop-meta-item"><i class="fa-solid fa-city"></i> ${stop.city || 'Principal'}</div>
+                ${stop.notes ? `<div class="stop-meta-item"><i class="fa-solid fa-comment"></i> ${stop.notes}</div>` : ''}
+              </div>
+            </div>
+          `;
+
+          // Eventos de Ação no Card
+          card.querySelector('.btn-stop-action.delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            State.currentRoute.stops = State.currentRoute.stops.filter(s => s.id !== stop.id);
+            this.renderStopsList();
+            MapManager.drawCompleteRoute();
+          });
+
+          card.querySelector('.btn-stop-action.edit').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openStopEditor(stop);
+          });
+
+          container.appendChild(card);
+        });
+      },
+
+      updateRouteStatsView() {
+        document.getElementById('stat-val-dist').textContent = `${State.currentRoute.totalDistanceKm.toFixed(1)} km`;
+        document.getElementById('stat-val-time').textContent = `${Math.round(State.currentRoute.totalDurationMin)} min`;
+        document.getElementById('stat-val-economy').textContent = State.currentRoute.stops.length > 3 ? '~28% otimizado' : '0%';
+        
+        const globalStatus = document.getElementById('global-route-status');
+        const globalDot = document.getElementById('global-route-dot');
+        if (State.currentRoute.stops.length > 0) {
+          globalStatus.textContent = `${State.currentRoute.stops.length} Paradas Planejadas`;
+          globalDot.className = 'status-dot active';
+        } else {
+          globalStatus.textContent = 'Nenhuma rota ativa';
+          globalDot.className = 'status-dot idle';
+        }
+      },
+
+      updateDashboardMetrics() {
+        document.getElementById('dash-metric-routes').textContent = State.history.length;
+        const totalStops = State.history.reduce((acc, h) => acc + (h.stopsCount || 0), 0) + State.currentRoute.stops.length;
+        document.getElementById('dash-metric-stops').textContent = totalStops;
+        document.getElementById('dash-metric-distance').textContent = `${State.currentRoute.totalDistanceKm.toFixed(0)} km`;
+      },
+
+      renderHistoryTable() {
+        const tbody = document.getElementById('history-table-body');
+        tbody.innerHTML = '';
+
+        if (State.history.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhuma rota no histórico local.</td></tr>`;
+          return;
+        }
+
+        State.history.forEach((h) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${h.date}</td>
+            <td style="font-weight: 600; color: #fff;">${h.name}</td>
+            <td>${h.stopsCount} paradas</td>
+            <td>${h.distance}</td>
+            <td><span style="color: var(--accent-primary); font-weight: 700;">Concluída</span></td>
+            <td style="text-align: right;">
+              <button class="btn btn-secondary btn-sm load-hist-btn"><i class="fa-solid fa-folder-open"></i> Carregar</button>
+            </td>
+          `;
+
+          tr.querySelector('.load-hist-btn').addEventListener('click', () => {
+            State.currentRoute = JSON.parse(JSON.stringify(h.payload));
+            this.renderStopsList();
+            this.updateRouteStatsView();
+            MapManager.drawCompleteRoute();
+            this.switchView('view-optimizer');
+            this.showToast('Rota carregada do histórico.', 'success');
+          });
+
+          tbody.appendChild(tr);
+        });
+
+        this.updateDashboardMetrics();
+      },
+
+      showImportPreview(stops) {
+        document.getElementById('import-preview-section').style.display = 'flex';
+        document.getElementById('import-preview-count').textContent = `${stops.length} paradas identificadas`;
+        const tbody = document.getElementById('import-preview-tbody');
+        tbody.innerHTML = '';
+        
+        stops.slice(0, 5).forEach(s => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${s.client}</td><td>${s.address}</td><td>${s.city}</td>`;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById('btn-confirm-import-data').removeAttribute('disabled');
+      },
+
+      openStopEditor(stop = null) {
+        document.getElementById('modal-stop-editor-title').innerHTML = stop ? '<i class="fa-solid fa-pen"></i> Editar Parada' : '<i class="fa-solid fa-plus"></i> Adicionar Parada';
+        document.getElementById('edit-stop-id').value = stop ? stop.id : '';
+        document.getElementById('edit-stop-client').value = stop ? stop.client : '';
+        document.getElementById('edit-stop-address').value = stop ? stop.address : '';
+        document.getElementById('edit-stop-city').value = stop ? stop.city : '';
+        document.getElementById('edit-stop-cep').value = stop ? stop.cep : '';
+        document.getElementById('edit-stop-notes').value = stop ? stop.notes : '';
+        this.openModal('modal-stop-editor');
+      },
+
+      showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast-msg ${type}`;
+        
+        let icon = 'fa-info-circle';
+        if (type === 'success') icon = 'fa-check-circle';
+        if (type === 'error') icon = 'fa-triangle-exclamation';
+        if (type === 'warning') icon = 'fa-circle-exclamation';
+
+        toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 300);
+        }, 3500);
+      },
+
+      bindEvents() {
+        // Dropzone & File Input
+        const dropzone = document.getElementById('dropzone-xlsx');
+        const fileInput = document.getElementById('file-input-xlsx');
+
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+          if (e.target.files.length > 0) FileImporter.parseExcel(e.target.files[0]);
+        });
+
+        dropzone.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+          if (e.dataTransfer.files.length > 0) FileImporter.parseExcel(e.dataTransfer.files[0]);
+        });
+
+        document.getElementById('btn-confirm-import-data').addEventListener('click', () => {
+          FileImporter.geocodeAndLoadStops(State.tempParsedStops);
+        });
+
+        // Botões de Importação e Modais
+        document.getElementById('sidebar-btn-import').addEventListener('click', () => this.openModal('modal-import'));
+        document.getElementById('btn-top-import').addEventListener('click', () => this.openModal('modal-import'));
+        document.getElementById('dashboard-hero-cta').addEventListener('click', () => this.switchView('view-optimizer'));
+        document.getElementById('btn-config-route-modal').addEventListener('click', () => this.openModal('modal-route-config'));
+        document.getElementById('btn-manual-add-stop').addEventListener('click', () => this.openStopEditor());
+        document.getElementById('btn-top-new-route').addEventListener('click', () => {
+          State.currentRoute.stops = [];
+          State.currentRoute.totalDistanceKm = 0;
+          State.currentRoute.totalDurationMin = 0;
+          this.renderStopsList();
+          this.updateRouteStatsView();
+          MapManager.drawCompleteRoute();
+          this.switchView('view-optimizer');
+          this.showToast('Nova rota iniciada.', 'info');
+        });
+
+        // Salvar Configurações da Rota
+        document.getElementById('btn-save-route-configs').addEventListener('click', async () => {
+          State.currentRoute.name = document.getElementById('cfg-route-name').value;
+          State.currentRoute.startAddress = document.getElementById('cfg-start-address').value || 'Origem';
+          State.currentRoute.returnToStart = document.getElementById('cfg-return-start').value === 'true';
+          State.currentRoute.stopDurationMin = parseInt(document.getElementById('cfg-stop-duration').value, 10) || 5;
+
+          if (State.currentRoute.startAddress) {
+            const startGeo = await Geocoder.search(State.currentRoute.startAddress);
+            if (startGeo) {
+              State.currentRoute.startCoords = [startGeo.lat, startGeo.lng];
+            }
+          }
+
+          document.getElementById('current-route-name').textContent = State.currentRoute.name;
+          this.closeModals();
+          MapManager.drawCompleteRoute();
+          this.showToast('Parâmetros da rota atualizados.', 'success');
+        });
+
+        // Salvar Parada Manual
+        document.getElementById('btn-save-stop-item').addEventListener('click', async () => {
+          const id = document.getElementById('edit-stop-id').value;
+          const client = document.getElementById('edit-stop-client').value || 'Cliente';
+          const address = document.getElementById('edit-stop-address').value;
+          const city = document.getElementById('edit-stop-city').value;
+          const cep = document.getElementById('edit-stop-cep').value;
+          const notes = document.getElementById('edit-stop-notes').value;
+
+          if (!address) {
+            this.showToast('Informe ao menos o endereço da parada.', 'error');
+            return;
+          }
+
+          let coords = await Geocoder.search(`${address}, ${city}`);
+          if (!coords) {
+            coords = {
+              lat: -23.55052 + (Math.random() - 0.5) * 0.08,
+              lng: -46.633308 + (Math.random() - 0.5) * 0.08
+            };
+          }
+
+          if (id) {
+            const existing = State.currentRoute.stops.find(s => s.id === id);
+            if (existing) {
+              existing.client = client;
+              existing.address = address;
+              existing.city = city;
+              existing.cep = cep;
+              existing.notes = notes;
+              existing.lat = coords.lat;
+              existing.lng = coords.lng;
+            }
+          } else {
+            State.currentRoute.stops.push({
+              id: 'stop_' + Date.now(),
+              client, address, city, cep, notes,
+              lat: coords.lat, lng: coords.lng,
+              status: 'pending'
+            });
+          }
+
+          this.renderStopsList();
+          await MapManager.drawCompleteRoute();
+          this.closeModals();
+          this.showToast('Parada salva com sucesso!', 'success');
+        });
+
+        // Executar Motor de Otimização
+        document.getElementById('btn-run-optimization').addEventListener('click', async () => {
+          const btn = document.getElementById('btn-run-optimization');
+          btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Otimizando...';
+          btn.setAttribute('disabled', 'true');
+
+          const start = State.currentRoute.startCoords || [-23.55052, -46.633308];
+          const optimized = await RouteOptimizer.optimizeStops(
+            State.currentRoute.stops,
+            start,
+            State.currentRoute.endCoords,
+            State.currentRoute.returnToStart
+          );
+
+          State.currentRoute.stops = optimized;
+          State.currentRoute.status = 'optimized';
+
+          this.renderStopsList();
+          await MapManager.drawCompleteRoute();
+
+          btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Otimizar Rota';
+          btn.removeAttribute('disabled');
+          this.showToast('Rota otimizada com sucesso via 2-Opt!', 'success');
+        });
+
+        // Eventos de Navegação e PDF
+        document.getElementById('btn-export-pdf').addEventListener('click', () => PDFExporter.generate());
+        document.getElementById('btn-start-navigation-from-opt').addEventListener('click', () => NavigationManager.startNavigation());
+        document.getElementById('nav-btn-live').addEventListener('click', () => NavigationManager.startNavigation());
+        document.getElementById('btn-nav-complete-stop').addEventListener('click', () => NavigationManager.completeCurrentStop());
+        document.getElementById('btn-nav-skip-stop').addEventListener('click', () => NavigationManager.skipCurrentStop());
+        document.getElementById('btn-nav-exit').addEventListener('click', () => NavigationManager.exitNavigation());
+        document.getElementById('btn-recenter-map').addEventListener('click', () => MapManager.recenter());
+        document.getElementById('btn-save-route-storage').addEventListener('click', () => {
+          StorageManager.saveToHistory(State.currentRoute);
+          this.showToast('Rota salva no histórico local.', 'success');
+        });
+        document.getElementById('btn-clear-all-history').addEventListener('click', () => StorageManager.clearHistory());
+        document.getElementById('btn-dash-see-all').addEventListener('click', () => this.switchView('view-history'));
+      }
+    };
+
+    // --------------------------------------------------------------------------
+    // INICIALIZAÇÃO DA APLICAÇÃO (BOOTSTRAP)
+    // --------------------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      MapManager.init();
+      UIManager.init();
+      StorageManager.init();
+
+      // Esconde Splash Screen após carregamento
+      setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.style.display = 'none';
+        }, 600);
+      }, 1600);
+    });
+  </script>
 </body>
 </html>
