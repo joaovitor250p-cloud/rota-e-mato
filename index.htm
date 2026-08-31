@@ -2,109 +2,114 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ROUTE FLOW — Otimizador & Navegador Logístico</title>
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>ROUTE FLOW — Roteirização & Navegação Profissional</title>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg-dark: #0f172a;
-      --panel-bg: #1e293b;
-      --card-bg: #273549;
-      --primary: #38bdf8;
-      --primary-hover: #0284c7;
-      --accent: #6366f1;
+      --bg-main: #090d16;
+      --panel-bg: #131b2e;
+      --card-bg: #1c2640;
+      --card-hover: #243152;
+      --border-color: #2b395b;
+      --primary: #00d2ff;
+      --primary-dark: #0099cc;
+      --primary-glow: rgba(0, 210, 255, 0.25);
+      --accent: #3a7bd5;
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
-      --text-light: #f8fafc;
+      --text-main: #f1f5f9;
       --text-muted: #94a3b8;
-      --border: #334155;
-      --sidebar-width: 440px;
+      --sidebar-width: 420px;
+      --nav-height: 60px;
+      --bottom-sheet-peek: 130px;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
 
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text-light);
-      display: flex;
-      height: 100vh;
+    html, body {
+      width: 100%;
+      height: 100%;
       overflow: hidden;
+      background-color: var(--bg-main);
+      color: var(--text-main);
     }
 
-    /* Animação SplashScreen */
-    #splash-screen {
+    /* Splash Screen */
+    #splash {
       position: fixed;
       inset: 0;
-      background: linear-gradient(135deg, #090d16, #1e1b4b);
-      z-index: 99999;
+      background: radial-gradient(circle at center, #1e293b, #090d16);
+      z-index: 100000;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: opacity 0.6s ease, visibility 0.6s;
+      transition: opacity 0.5s ease, visibility 0.5s;
     }
-    .splash-logo {
-      font-size: 3rem;
+    .splash-brand {
+      font-size: 2.5rem;
       font-weight: 800;
-      letter-spacing: 2px;
-      background: linear-gradient(to right, #38bdf8, #818cf8);
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, var(--primary), #a855f7);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      animation: pulseText 1.8s infinite ease-in-out;
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .splash-tagline {
+    .splash-sub {
       color: var(--text-muted);
+      font-size: 0.9rem;
       margin-top: 8px;
-      font-size: 0.95rem;
-    }
-    @keyframes pulseText {
-      0%, 100% { opacity: 0.7; transform: scale(0.98); }
-      50% { opacity: 1; transform: scale(1.02); }
     }
 
     /* Layout Geral */
-    #app-container {
+    #app {
       display: flex;
       width: 100vw;
       height: 100vh;
       position: relative;
     }
 
-    /* Sidebar */
-    aside {
+    /* Sidebar Desktop */
+    #sidebar {
       width: var(--sidebar-width);
-      min-width: var(--sidebar-width);
-      background-color: var(--panel-bg);
-      border-right: 1px solid var(--border);
+      height: 100%;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
-      z-index: 1000;
-      transition: transform 0.3s ease;
+      z-index: 2000;
+      flex-shrink: 0;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    header {
-      padding: 18px 20px;
-      border-bottom: 1px solid var(--border);
+    .app-header {
+      padding: 16px 20px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      background-color: rgba(15, 23, 42, 0.6);
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(9, 13, 22, 0.5);
     }
-    .brand-title {
-      font-weight: 800;
+    .brand {
       font-size: 1.25rem;
-      background: linear-gradient(to right, var(--primary), var(--accent));
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), #818cf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       display: flex;
@@ -112,166 +117,248 @@
       gap: 8px;
     }
 
-    nav {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      background-color: var(--bg-dark);
-    }
-    .nav-btn {
-      flex: 1;
-      padding: 12px;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-weight: 600;
-      font-size: 0.85rem;
+    /* GPS Status Tag */
+    .gps-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
       cursor: pointer;
+      transition: 0.2s;
+    }
+    .gps-badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .gps-badge i { font-size: 0.7rem; }
+
+    /* Navegação por Abas */
+    .tabs-nav {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-main);
+    }
+    .tab-item {
+      flex: 1;
+      padding: 12px 6px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      transition: 0.2s;
+      transition: all 0.2s;
     }
-    .nav-btn.active {
+    .tab-item.active {
       color: var(--primary);
-      border-bottom: 2px solid var(--primary);
-      background-color: rgba(56, 189, 248, 0.05);
+      border-bottom-color: var(--primary);
+      background: rgba(0, 210, 255, 0.04);
     }
 
-    /* Painéis */
-    .tab-content {
+    /* Painel de Conteúdo das Abas */
+    .tab-panel {
       flex: 1;
       overflow-y: auto;
       padding: 16px;
       display: none;
-    }
-    .tab-content.active {
-      display: flex;
       flex-direction: column;
       gap: 14px;
     }
-
-    /* Cards & Elementos UI */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
+    .tab-panel.active {
+      display: flex;
     }
-    .card-title {
-      font-size: 0.85rem;
+
+    /* Cards e Componentes */
+    .ui-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ui-card-title {
+      font-size: 0.8rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--text-muted);
-      margin-bottom: 10px;
-      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-glow);
     }
 
     .btn {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: none;
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: background 0.2s, opacity 0.2s;
+      padding: 11px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
       width: 100%;
     }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--primary); color: #000; }
-    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-    .btn-accent { background: var(--accent); color: #fff; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #000; }
+    .btn-primary:hover { opacity: 0.95; }
     .btn-success { background: var(--success); color: #fff; }
     .btn-warning { background: var(--warning); color: #000; }
     .btn-danger { background: var(--danger); color: #fff; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-light); }
-    .btn-outline:hover { background: var(--card-bg); }
+    .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+    .btn-outline:hover { background: var(--card-hover); }
 
-    .input-field {
-      width: 100%;
-      background: var(--bg-dark);
-      border: 1px solid var(--border);
-      color: var(--text-light);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      margin-bottom: 8px;
+    /* Indicador de Métricas */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
-    .input-field:focus { outline: 1px solid var(--primary); border-color: var(--primary); }
+    .stat-pill {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      padding: 10px 6px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .stat-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+    .stat-lbl { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; }
 
     /* Lista de Paradas */
     .stop-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      margin-top: 4px;
     }
-    .stop-item {
+    .stop-card {
       background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
       padding: 12px;
       display: flex;
       align-items: center;
       gap: 12px;
       cursor: grab;
       position: relative;
+      transition: 0.2s;
     }
-    .stop-item.sortable-ghost { opacity: 0.4; background: var(--primary); }
-    .stop-index {
-      width: 28px;
-      height: 28px;
+    .stop-card:hover { border-color: var(--primary); }
+    .stop-card.completed { border-left: 4px solid var(--success); opacity: 0.8; }
+    .stop-card.skipped { border-left: 4px solid var(--danger); opacity: 0.7; }
+    .stop-card.active-target { border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
+
+    .stop-badge {
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #334155;
+      background: var(--bg-main);
+      border: 2px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 0.8rem;
-      color: var(--primary);
+      color: var(--text-main);
+      flex-shrink: 0;
     }
-    .stop-item.completed .stop-index { background: var(--success); color: #fff; }
-    .stop-item.skipped .stop-index { background: var(--danger); color: #fff; }
-    .stop-item.current { border-color: var(--primary); box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+    .stop-card.completed .stop-badge { background: var(--success); color: #fff; border-color: var(--success); }
+    .stop-card.skipped .stop-badge { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    .stop-meta { flex: 1; min-width: 0; }
+    .stop-name { font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stop-address { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
     
-    .stop-info { flex: 1; overflow: hidden; }
-    .stop-title { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stop-desc { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-    .stop-status { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
-    .status-pending { background: #334155; color: var(--text-muted); }
-    .status-completed { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-    .status-skipped { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-    .status-error { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-
-    /* Dashboard Metrics */
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+    .status-tag {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      align-self: flex-start;
+      margin-top: 4px;
+      display: inline-block;
     }
-    .metric-box {
-      background: var(--bg-dark);
-      border: 1px solid var(--border);
-      padding: 10px;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .metric-val { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-    .metric-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+    .st-pending { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+    .st-completed { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .st-skipped { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .st-error { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
 
-    /* Mapa */
-    #map-wrapper {
+    .stop-actions { display: flex; gap: 4px; }
+    .btn-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+    .btn-icon:hover { color: var(--text-main); background: var(--card-hover); }
+
+    /* Área do Mapa */
+    #map-container {
       flex: 1;
+      height: 100%;
       position: relative;
-      background: #111;
+      background: #0f172a;
     }
     #map { width: 100%; height: 100%; }
 
-    /* Alerta Desvio */
+    /* HUD de Navegação no Desktop e Topo */
+    #nav-hud-desktop {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      max-width: 500px;
+      background: rgba(19, 27, 46, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    /* Alerta Desvio de Rota */
     #off-route-banner {
       position: absolute;
       top: 20px;
@@ -279,66 +366,174 @@
       transform: translateX(-50%);
       background: var(--danger);
       color: white;
-      padding: 12px 24px;
+      padding: 10px 20px;
       border-radius: 30px;
       font-weight: 700;
       font-size: 0.85rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+      z-index: 2500;
       display: none;
       align-items: center;
       gap: 12px;
     }
 
-    /* Overlay de Navegação no Topo do Mapa */
-    #nav-overlay-hud {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      right: 15px;
-      z-index: 999;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(8px);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      display: none;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-    }
-    .hud-title { font-size: 0.75rem; color: var(--primary); font-weight: 700; text-transform: uppercase; }
-    .hud-target { font-size: 1.1rem; font-weight: 800; margin: 2px 0 6px 0; }
-    .hud-details { font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px; }
-
-    /* Mobile toggle */
-    #btn-toggle-sidebar {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      z-index: 1001;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--primary);
-      border: none;
-      color: #000;
-      font-size: 1.2rem;
+    /* Progress Overlay de Otimização */
+    #optimizer-loader {
       display: none;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      gap: 10px;
+      padding: 10px;
+      background: rgba(0, 210, 255, 0.1);
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 600;
     }
 
+    /* Painel Mobile Inferior (Bottom Sheet) */
+    #mobile-bottom-sheet {
+      display: none;
+    }
+
+    /* Customização Marcadores Leaflet */
+    .leaflet-div-icon {
+      background: transparent;
+      border: none;
+    }
+    .custom-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-weight: 800;
+      color: #fff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+      font-size: 11px;
+      transition: transform 0.2s;
+    }
+    .custom-marker.pending { background: #3a7bd5; }
+    .custom-marker.current { background: #00d2ff; color: #000; transform: scale(1.2); box-shadow: 0 0 15px #00d2ff; }
+    .custom-marker.completed { background: #10b981; }
+    .custom-marker.skipped { background: #ef4444; }
+
+    .user-pulse-marker {
+      width: 18px;
+      height: 18px;
+      background: #00d2ff;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #00d2ff;
+      position: relative;
+    }
+    .user-pulse-marker::after {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(0, 210, 255, 0.4);
+      animation: ripple 1.6s infinite ease-out;
+    }
+    @keyframes ripple {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    /* ADAPTAÇÃO MOBILE AVANÇADA (< 768px) */
     @media (max-width: 768px) {
-      aside {
+      #app {
+        flex-direction: column;
+      }
+
+      #sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        transform: translateX(-100%);
+      }
+      #sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      /* Mobile Header Superior */
+      .mobile-topbar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: rgba(15, 23, 42, 0.9);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        z-index: 1000;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      /* Bottom Sheet Mobile */
+      #mobile-bottom-sheet {
         position: absolute;
         bottom: 0;
         left: 0;
-        width: 100vw;
-        height: 60vh;
-        transform: translateY(100%);
+        right: 0;
+        background: var(--panel-bg);
+        border-top: 1px solid var(--border-color);
+        border-radius: 18px 18px 0 0;
+        z-index: 1500;
+        display: flex;
+        flex-direction: column;
+        max-height: 80vh;
+        box-shadow: 0 -8px 25px rgba(0,0,0,0.6);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(calc(100% - var(--bottom-sheet-peek)));
       }
-      aside.open { transform: translateY(0); }
-      #btn-toggle-sidebar { display: flex; }
+      #mobile-bottom-sheet.expanded {
+        transform: translateY(0);
+      }
+
+      .sheet-drag-handle {
+        width: 40px;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 4px;
+        margin: 10px auto 6px auto;
+        cursor: pointer;
+      }
+
+      .sheet-peek-content {
+        padding: 10px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .mobile-action-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
+        padding: 6px 16px 14px 16px;
+      }
+
+      .btn-nav-large {
+        padding: 14px 8px;
+        font-size: 0.85rem;
+        font-weight: 800;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+      .btn-nav-large i { font-size: 1.1rem; }
     }
   </style>
 
@@ -349,224 +544,295 @@
 </head>
 <body>
 
-  <div id="splash-screen">
-    <div class="splash-logo"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
-    <div class="splash-tagline">Logística Inteligente de Entregas</div>
+  <div id="splash">
+    <div class="splash-brand"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
+    <div class="splash-sub">Roteirização Inteligente & GPS em Tempo Real</div>
   </div>
 
-  <div id="app-container">
-    <aside id="sidebar">
-      <header>
-        <div class="brand-title"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
-        <button id="btn-gps-trigger" class="btn btn-outline" style="width: auto; padding: 6px 12px; font-size: 0.75rem;">
+  <div id="app">
+    <div class="mobile-topbar" style="display: none;" id="mobile-bar">
+      <div class="brand" style="font-size: 1.05rem;"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <div id="mobile-gps-badge" class="gps-badge" onclick="gpsManager.requestRealLocation()">
           <i class="fa-solid fa-crosshairs"></i> GPS
-        </button>
-      </header>
+        </div>
+        <button class="btn-icon" onclick="ui.toggleMobileSidebar()"><i class="fa-solid fa-bars"></i></button>
+      </div>
+    </div>
 
-      <nav>
-        <button class="nav-btn active" onclick="ui.setTab('stops')"><i class="fa-solid fa-list-check"></i> Paradas</button>
-        <button class="nav-btn" onclick="ui.setTab('route')"><i class="fa-solid fa-sliders"></i> Rota</button>
-        <button class="nav-btn" onclick="ui.setTab('nav')"><i class="fa-solid fa-location-arrow"></i> Navegação</button>
-        <button class="nav-btn" onclick="ui.setTab('history')"><i class="fa-solid fa-history"></i> Histórico</button>
+    <aside id="sidebar">
+      <div class="app-header">
+        <div class="brand"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
+        <div id="desktop-gps-badge" class="gps-badge" onclick="gpsManager.requestRealLocation()">
+          <i class="fa-solid fa-location-crosshairs"></i> <span>USAR GPS</span>
+        </div>
+      </div>
+
+      <nav class="tabs-nav">
+        <div class="tab-item active" onclick="ui.switchTab('paradas')"><i class="fa-solid fa-list-check"></i> Paradas</div>
+        <div class="tab-item" onclick="ui.switchTab('config')"><i class="fa-solid fa-sliders"></i> Otimizador</div>
+        <div class="tab-item" onclick="ui.switchTab('navegacao')"><i class="fa-solid fa-location-arrow"></i> Navegar</div>
+        <div class="tab-item" onclick="ui.switchTab('historico')"><i class="fa-solid fa-history"></i> Histórico</div>
       </nav>
 
-      <div id="tab-stops" class="tab-content active">
-        <div class="card">
-          <div class="card-title">Importar Arquivo XLSX</div>
-          <input type="file" id="xlsx-input" accept=".xlsx, .xls" style="display: none;" onchange="fileImporter.handleFile(event)" />
-          <button class="btn btn-primary" onclick="document.getElementById('xlsx-input').click()">
-            <i class="fa-solid fa-file-excel"></i> Importar XLSX
+      <div id="tab-paradas" class="tab-panel active">
+        <div class="ui-card">
+          <div class="ui-card-title">Importar Arquivo XLSX</div>
+          <input type="file" id="xlsx-file" accept=".xlsx, .xls" style="display:none;" onchange="fileImporter.processXLSX(event)">
+          <button class="btn btn-primary" onclick="document.getElementById('xlsx-file').click()">
+            <i class="fa-solid fa-file-excel"></i> IMPORTAR PLANILHA XLSX
           </button>
+          <div id="import-stats" style="font-size:0.75rem; color:var(--text-muted); display:none;"></div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Adicionar Parada Manual</div>
-          <input type="text" id="manual-client" class="input-field" placeholder="Nome do Cliente / Identificador" />
-          <input type="text" id="manual-address" class="input-field" placeholder="Endereço, Número, Cidade" />
+        <div class="ui-card">
+          <div class="ui-card-title">Nova Parada Manual</div>
+          <input type="text" id="manual-client" class="form-input" placeholder="Nome do Cliente / Destinatário">
+          <input type="text" id="manual-address" class="form-input" placeholder="Endereço, Número, Cidade ou CEP">
           <button class="btn btn-outline" onclick="routeManager.addManualStop()">
-            <i class="fa-solid fa-plus"></i> Adicionar à Lista
+            <i class="fa-solid fa-plus"></i> Adicionar Parada
           </button>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;" id="stop-counter">0 Paradas</span>
-          <button class="btn btn-danger" style="width:auto; padding: 4px 8px; font-size:0.7rem;" onclick="routeManager.clearAll()">Limpar Todas</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 4px;">
+          <span id="stops-counter-badge" style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">0 Paradas</span>
+          <button class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:0.7rem;" onclick="routeManager.clearAllStops()">Limpar Todas</button>
         </div>
 
-        <ul id="stop-list-ul" class="stop-list"></ul>
+        <ul id="stops-container" class="stop-list"></ul>
       </div>
 
-      <div id="tab-route" class="tab-content">
-        <div class="card">
-          <div class="card-title">Ponto de Início</div>
-          <select id="route-start-type" class="input-field" onchange="ui.toggleStartField()">
-            <option value="gps">Minha Localização Atual (GPS)</option>
-            <option value="manual">Endereço Personalizado</option>
-          </select>
-          <input type="text" id="route-start-address" class="input-field" style="display:none;" placeholder="Digite o ponto de partida" />
+      <div id="tab-config" class="tab-panel">
+        <div class="stats-row">
+          <div class="stat-pill">
+            <div id="metric-stops-total" class="stat-val">0</div>
+            <div class="stat-lbl">Paradas</div>
+          </div>
+          <div class="stat-pill">
+            <div id="metric-distance-total" class="stat-val">0 km</div>
+            <div class="stat-lbl">Distância</div>
+          </div>
+          <div class="stat-pill">
+            <div id="metric-duration-total" class="stat-val">0 min</div>
+            <div class="stat-lbl">Tempo Est.</div>
+          </div>
         </div>
 
-        <div class="card">
-          <div class="card-title">Ponto Final</div>
-          <select id="route-end-type" class="input-field" onchange="ui.toggleEndField()">
-            <option value="any">Livre (Terminar na última entrega)</option>
+        <div class="ui-card">
+          <div class="ui-card-title">Ponto de Partida</div>
+          <select id="start-point-mode" class="form-input" onchange="ui.toggleStartAddressInput()">
+            <option value="gps">Minha Localização Atual (GPS Real)</option>
+            <option value="manual">Endereço Inicial Manual</option>
+          </select>
+          <input type="text" id="start-point-manual-input" class="form-input" placeholder="Digite o endereço de partida..." style="display:none;">
+        </div>
+
+        <div class="ui-card">
+          <div class="ui-card-title">Destino Final</div>
+          <select id="end-point-mode" class="form-input" onchange="ui.toggleEndAddressInput()">
+            <option value="open">Livre (Terminar na última parada)</option>
             <option value="start">Retornar ao Ponto de Partida</option>
-            <option value="manual">Endereço Específico</option>
+            <option value="manual">Endereço Final Específico</option>
           </select>
-          <input type="text" id="route-end-address" class="input-field" style="display:none;" placeholder="Digite o ponto final" />
+          <input type="text" id="end-point-manual-input" class="form-input" placeholder="Digite o endereço de destino..." style="display:none;">
         </div>
 
-        <div class="card">
-          <div class="card-title">Critério de Otimização</div>
-          <select id="route-metric" class="input-field">
-            <option value="distance">Menor Distância Total</option>
-            <option value="time">Menor Tempo Estimado</option>
-          </select>
+        <div id="optimizer-loader">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+          <span id="optimizer-status-message">Calculando matriz de distâncias...</span>
         </div>
 
-        <div id="optimizer-status-box" style="display:none;" class="card">
-          <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem;">
-            <i class="fa-solid fa-spinner fa-spin" style="color:var(--primary)"></i>
-            <span id="optimizer-status-text">Processando...</span>
-          </div>
-        </div>
-
-        <button id="btn-optimize" class="btn btn-accent" onclick="routeOptimizer.execute()">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> Otimizar Sequência
+        <button id="btn-optimize-run" class="btn btn-primary" onclick="routeOptimizer.optimizeRoute()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> OTIMIZAR SEQUÊNCIA REAL
         </button>
 
-        <button class="btn btn-outline" onclick="pdfExporter.generate()">
-          <i class="fa-solid fa-file-pdf"></i> Baixar Sequência em PDF
+        <button class="btn btn-outline" onclick="routeOptimizer.reoptimize()">
+          <i class="fa-solid fa-arrows-rotate"></i> REOTIMIZAR ROTA
         </button>
 
-        <button class="btn btn-outline" onclick="storageManager.saveCurrentRoute()">
-          <i class="fa-solid fa-floppy-disk"></i> Salvar Rota Atual
+        <button class="btn btn-outline" onclick="pdfExporter.downloadManifest()">
+          <i class="fa-solid fa-file-pdf"></i> BAIXAR SEQUÊNCIA EM PDF
+        </button>
+
+        <button class="btn btn-outline" onclick="storageManager.saveRoute()">
+          <i class="fa-solid fa-floppy-disk"></i> Salvar Rota no Histórico
         </button>
       </div>
 
-      <div id="tab-nav" class="tab-content">
-        <div class="metric-grid">
-          <div class="metric-box">
-            <div id="nav-metric-rem" class="metric-val">0</div>
-            <div class="metric-lbl">Restantes</div>
-          </div>
-          <div class="metric-box">
-            <div id="nav-metric-dist" class="metric-val">0 km</div>
-            <div class="metric-lbl">Dist. Total</div>
-          </div>
-        </div>
-
-        <div class="card" id="nav-current-stop-card">
-          <div class="card-title">Parada Atual em Foco</div>
-          <div id="nav-current-info" style="margin-bottom: 10px;">Nenhuma rota ativa no momento.</div>
+      <div id="tab-navegacao" class="tab-panel">
+        <div class="ui-card" id="nav-info-card">
+          <div class="ui-card-title">Próxima Parada em Foco</div>
+          <div id="nav-client-target" style="font-size:1.1rem; font-weight:800; color:var(--primary);">Nenhuma Rota Ativa</div>
+          <div id="nav-address-target" style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Inicie a navegação para começar.</div>
           
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <button class="btn btn-success" onclick="navigationManager.completeCurrentStop()">
-              <i class="fa-solid fa-check"></i> Concluir Parada
-            </button>
-            <button class="btn btn-warning" onclick="navigationManager.skipCurrentStop()">
-              <i class="fa-solid fa-forward"></i> Pular Parada
-            </button>
-            <button class="btn btn-outline" onclick="routeOptimizer.recalculateFromCurrentLocation()">
-              <i class="fa-solid fa-rotate"></i> Recalcular Rota
-            </button>
+          <div style="display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid var(--border-color);">
+            <div>
+              <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">Distância Restante</span>
+              <div id="nav-dist-target" style="font-weight:800; font-size:1rem;">—</div>
+            </div>
+            <div>
+              <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">Tempo Estimado</span>
+              <div id="nav-time-target" style="font-weight:800; font-size:1rem;">—</div>
+            </div>
+            <div>
+              <span style="font-size:0.65rem; color:var(--text-muted); text-transform:uppercase;">Progresso</span>
+              <div id="nav-progress-target" style="font-weight:800; font-size:1rem;">0 / 0</div>
+            </div>
           </div>
         </div>
 
-        <button class="btn btn-danger" onclick="navigationManager.stopRoute()">
-          <i class="fa-solid fa-stop"></i> Encerrar Rota
-        </button>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn btn-success" onclick="navigationManager.markCurrentComplete()">
+            <i class="fa-solid fa-circle-check"></i> CONCLUIR PARADA
+          </button>
+          <button class="btn btn-warning" onclick="navigationManager.skipCurrent()">
+            <i class="fa-solid fa-forward-step"></i> PULAR PARADA
+          </button>
+          <button class="btn btn-outline" onclick="routeOptimizer.recalculateFromCurrentLocation()">
+            <i class="fa-solid fa-arrows-rotate"></i> RECALCULAR ROTA
+          </button>
+          <button class="btn btn-danger" onclick="navigationManager.terminateRoute()">
+            <i class="fa-solid fa-stop"></i> ENCERRAR NAVEGAÇÃO
+          </button>
+        </div>
       </div>
 
-      <div id="tab-history" class="tab-content">
-        <div class="card-title">Minhas Rotas Salvas</div>
-        <div id="history-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <div id="tab-historico" class="tab-panel">
+        <div class="ui-card-title">Rotas Salvas</div>
+        <div id="saved-routes-list" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
     </aside>
 
-    <main id="map-wrapper">
+    <main id="map-container">
       <div id="off-route-banner">
         <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>Você saiu da rota traçada!</span>
-        <button class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.7rem; border-color:#fff;" onclick="routeOptimizer.recalculateFromCurrentLocation()">Recalcular</button>
+        <span>VOCÊ SAIU DA ROTA!</span>
+        <button class="btn btn-outline" style="width:auto; padding:4px 10px; font-size:0.75rem; border-color:#fff;" onclick="routeOptimizer.recalculateFromCurrentLocation()">RECALCULAR</button>
       </div>
 
-      <div id="nav-overlay-hud">
-        <div class="hud-title">PRÓXIMA PARADA</div>
-        <div class="hud-target" id="hud-name">—</div>
-        <div class="hud-details">
-          <span id="hud-addr">—</span>
-          <span id="hud-dist" style="color:var(--primary); font-weight:700;">—</span>
+      <div id="nav-hud-desktop">
+        <div style="font-size:0.7rem; font-weight:700; color:var(--primary); text-transform:uppercase;">Próxima Parada</div>
+        <div id="hud-desktop-name" style="font-size:1.1rem; font-weight:800;">—</div>
+        <div id="hud-desktop-address" style="font-size:0.8rem; color:var(--text-muted);">—</div>
+        <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:0.85rem; font-weight:700;">
+          <span id="hud-desktop-distance" style="color:var(--primary);">— km</span>
+          <span id="hud-desktop-progress">Progresso: 0 / 0</span>
         </div>
       </div>
 
       <div id="map"></div>
-      <button id="btn-toggle-sidebar" onclick="ui.toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
     </main>
+
+    <div id="mobile-bottom-sheet">
+      <div class="sheet-drag-handle" onclick="ui.toggleMobileSheet()"></div>
+      <div class="sheet-peek-content">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:0.7rem; font-weight:700; color:var(--primary); text-transform:uppercase;">PARADA ATUAL</div>
+          <span id="sheet-progress-tag" style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">0 / 0</span>
+        </div>
+        <div id="sheet-client-name" style="font-size:1.05rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Nenhuma parada ativa</div>
+        <div id="sheet-address" style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Configure a rota para começar</div>
+      </div>
+      
+      <div class="mobile-action-buttons">
+        <button class="btn btn-success btn-nav-large" onclick="navigationManager.markCurrentComplete()">
+          <i class="fa-solid fa-check"></i> CONCLUIR
+        </button>
+        <button class="btn btn-warning btn-nav-large" onclick="navigationManager.skipCurrent()">
+          <i class="fa-solid fa-forward"></i> PULAR
+        </button>
+        <button class="btn btn-outline btn-nav-large" onclick="routeOptimizer.recalculateFromCurrentLocation()">
+          <i class="fa-solid fa-rotate"></i> RECALCULAR
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
     /**
-     * GPSManager — Manipulação do Geolocation Real
+     * GPSManager — Manipulação Real de Localização
      */
     class GPSManager {
       constructor() {
-        this.currentPosition = null;
+        this.currentCoords = null;
         this.watchId = null;
         this.listeners = [];
+        this.isTracking = false;
       }
 
       init() {
+        this.requestRealLocation();
+      }
+
+      requestRealLocation() {
         if (!navigator.geolocation) {
-          alert('Geolocalização não é suportada pelo seu dispositivo.');
+          this.updateBadgeUI(false, 'GPS Não Suportado');
           return;
         }
 
         navigator.geolocation.getCurrentPosition(
-          (pos) => this.handleSuccess(pos),
-          (err) => this.handleError(err),
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          (pos) => this.onLocationSuccess(pos),
+          (err) => this.onLocationError(err),
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
         );
 
-        this.watchId = navigator.geolocation.watchPosition(
-          (pos) => this.handleSuccess(pos),
-          (err) => this.handleError(err),
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
-        );
-      }
-
-      handleSuccess(position) {
-        this.currentPosition = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          heading: position.coords.heading,
-          speed: position.coords.speed
-        };
-        mapManager.updateDriverMarker(this.currentPosition);
-        this.listeners.forEach(fn => fn(this.currentPosition));
-      }
-
-      handleError(error) {
-        console.warn(`GPS Erro (${error.code}): ${error.message}`);
-        if (error.code === 1) {
-          alert('Permissão de GPS negada. Por favor, habilite o acesso à localização nas permissões do navegador.');
+        if (!this.watchId) {
+          this.watchId = navigator.geolocation.watchPosition(
+            (pos) => this.onLocationSuccess(pos),
+            (err) => this.onLocationError(err),
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+          );
         }
       }
 
-      subscribe(callback) {
+      onLocationSuccess(position) {
+        this.currentCoords = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          heading: position.coords.heading,
+          speed: position.coords.speed,
+          accuracy: position.coords.accuracy
+        };
+        this.isTracking = true;
+        this.updateBadgeUI(true, 'GPS ATIVO');
+        mapManager.updateDriverPosition(this.currentCoords);
+        this.listeners.forEach(cb => cb(this.currentCoords));
+      }
+
+      onLocationError(error) {
+        console.warn('Falha GPS:', error);
+        this.isTracking = false;
+        let msg = 'GPS Inativo';
+        if (error.code === 1) msg = 'GPS Negado';
+        this.updateBadgeUI(false, msg);
+      }
+
+      updateBadgeUI(active, text) {
+        const dBadge = document.getElementById('desktop-gps-badge');
+        const mBadge = document.getElementById('mobile-gps-badge');
+        if (dBadge) {
+          dBadge.className = `gps-badge ${active ? 'active' : ''}`;
+          dBadge.querySelector('span').innerText = text;
+        }
+        if (mBadge) {
+          mBadge.className = `gps-badge ${active ? 'active' : ''}`;
+        }
+      }
+
+      onPositionChange(callback) {
         this.listeners.push(callback);
       }
     }
 
     /**
-     * Geocoder — Conversão de Endereços via Nominatim
+     * Geocoder — Fila Resiliente de Geocodificação Nominatim
      */
     class Geocoder {
-      static async search(address) {
+      static async geocodeAddress(address) {
         if (!address || address.trim().length === 0) return null;
         try {
           const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-          const res = await fetch(url, { headers: { 'User-Agent': 'RouteFlow-Logistic-App' } });
+          const res = await fetch(url, { headers: { 'User-Agent': 'RouteFlow-Logistic-Application-V2' } });
           const data = await res.json();
           if (data && data.length > 0) {
             return {
@@ -576,105 +842,125 @@
             };
           }
           return null;
-        } catch (e) {
-          console.error("Erro no Geocoding:", e);
+        } catch (err) {
+          console.error('Falha no Geocoder:', err);
           return null;
+        }
+      }
+
+      static async geocodeQueue(stops, progressCallback) {
+        for (let i = 0; i < stops.length; i++) {
+          const stop = stops[i];
+          if (!stop.coords) {
+            if (progressCallback) progressCallback(i + 1, stops.length, stop.address);
+            const res = await this.geocodeAddress(stop.address);
+            if (res) {
+              stop.coords = { lat: res.lat, lng: res.lng };
+              stop.status = 'pending';
+            } else {
+              stop.status = 'error';
+            }
+            // Intervalo para respeitar limite da OSM Nominatim
+            await new Promise(r => setTimeout(r, 900));
+          }
         }
       }
     }
 
     /**
-     * MapManager — Gestão da visualização do Leaflet
+     * MapManager — Gestão Completa de Leaflet e Linhas de Rota OSRM
      */
     class MapManager {
       constructor() {
         this.map = null;
         this.driverMarker = null;
         this.stopMarkers = [];
-        this.routePolyline = null;
+        this.routeLayer = null;
       }
 
       init() {
-        this.map = L.map('map', { zoomControl: false }).setView([-23.55052, -46.633308], 12);
+        const mapEl = document.getElementById('map');
+        this.map = L.map(mapEl, { zoomControl: false }).setView([-23.55052, -46.633308], 12);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap'
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap contributors'
         }).addTo(this.map);
+
         L.control.zoom({ position: 'topright' }).addTo(this.map);
+
+        // Correção de renderização
+        setTimeout(() => this.map.invalidateSize(), 300);
+        window.addEventListener('resize', () => this.map.invalidateSize());
       }
 
-      updateDriverMarker(pos) {
+      updateDriverPosition(pos) {
         if (!this.map) return;
         const latLng = [pos.lat, pos.lng];
 
         if (!this.driverMarker) {
           const icon = L.divIcon({
-            className: 'custom-driver-icon',
-            html: `<div style="background:#38bdf8; width:16px; height:16px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 10px #38bdf8;"></div>`,
-            iconSize: [22, 22],
-            iconAnchor: [11, 11]
+            className: 'user-marker-wrapper',
+            html: `<div class="user-pulse-marker"></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
           });
-          this.driverMarker = L.marker(latLng, { icon }).addTo(this.map);
-          this.map.setView(latLng, 14);
+          this.driverMarker = L.marker(latLng, { icon, zIndexOffset: 1000 }).addTo(this.map);
+          if (routeManager.stops.length === 0) {
+            this.map.setView(latLng, 14);
+          }
         } else {
           this.driverMarker.setLatLng(latLng);
         }
       }
 
-      renderStops(stops) {
+      renderStopMarkers(stops, currentIndex = -1) {
         this.stopMarkers.forEach(m => this.map.removeLayer(m));
         this.stopMarkers = [];
 
-        stops.forEach((stop, index) => {
+        stops.forEach((stop, idx) => {
           if (!stop.coords) return;
-          
-          let color = '#38bdf8';
-          if (stop.status === 'completed') color = '#10b981';
-          if (stop.status === 'skipped') color = '#ef4444';
+          const isCurrent = (idx === currentIndex);
+          let markerClass = `custom-marker ${stop.status}`;
+          if (isCurrent) markerClass = 'custom-marker current';
 
           const icon = L.divIcon({
-            className: 'custom-stop-marker',
-            html: `<div style="background:${color}; width:24px; height:24px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold; font-size:11px; box-shadow:0 2px 5px rgba(0,0,0,0.4);">${index + 1}</div>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
+            className: 'marker-icon-container',
+            html: `<div class="${markerClass}" style="width:26px; height:26px;">${idx + 1}</div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
           });
 
-          const marker = L.marker([stop.coords.lat, stop.coords.lng], { icon })
-            .bindPopup(`<b>#${index + 1} - ${stop.client}</b><br>${stop.address}<br>Status: ${stop.status}`)
+          const m = L.marker([stop.coords.lat, stop.coords.lng], { icon })
+            .bindPopup(`<b>#${idx + 1} ${stop.client}</b><br>${stop.address}<br>Status: ${stop.status}`)
             .addTo(this.map);
 
-          this.stopMarkers.push(marker);
+          this.stopMarkers.push(m);
         });
-
-        this.fitBounds(stops);
       }
 
-      drawPolyline(coordsArray) {
-        if (this.routePolyline) {
-          this.map.removeLayer(this.routePolyline);
+      drawRoadPolyline(coordinates) {
+        if (this.routeLayer) {
+          this.map.removeLayer(this.routeLayer);
         }
-        if (coordsArray.length < 2) return;
+        if (!coordinates || coordinates.length < 2) return;
 
-        this.routePolyline = L.polyline(coordsArray, {
-          color: '#6366f1',
-          weight: 4,
-          opacity: 0.8,
-          dashArray: '8, 4'
+        this.routeLayer = L.polyline(coordinates, {
+          color: '#00d2ff',
+          weight: 5,
+          opacity: 0.85,
+          lineJoin: 'round'
         }).addTo(this.map);
       }
 
-      fitBounds(stops) {
-        const validCoords = stops.filter(s => s.coords).map(s => [s.coords.lat, s.coords.lng]);
-        if (gpsManager.currentPosition) {
-          validCoords.push([gpsManager.currentPosition.lat, gpsManager.currentPosition.lng]);
-        }
-        if (validCoords.length > 0) {
-          this.map.fitBounds(validCoords, { padding: [40, 40] });
-        }
+      fitToCoordinates(points) {
+        if (!this.map || points.length === 0) return;
+        this.map.fitBounds(points, { padding: [50, 50], maxZoom: 16 });
       }
     }
 
     /**
-     * RouteManager — Estado das Paradas e Dados da Viagem
+     * RouteManager — Estado das Paradas
      */
     class RouteManager {
       constructor() {
@@ -683,346 +969,455 @@
 
       async addStop(client, address, extra = {}) {
         const stop = {
-          id: 'stop-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          id: 's-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
           client: client || 'Cliente Avulso',
-          address: address,
+          address: address.trim(),
           status: 'pending',
           coords: null,
           extra
         };
 
         this.stops.push(stop);
-        ui.renderStops();
-        
-        // Geocodificação em Background
-        const result = await Geocoder.search(address);
-        if (result) {
-          stop.coords = { lat: result.lat, lng: result.lng };
+        ui.renderStopsList();
+
+        // Geocodificação individual em background
+        const res = await Geocoder.geocodeAddress(stop.address);
+        if (res) {
+          stop.coords = { lat: res.lat, lng: res.lng };
           stop.status = 'pending';
         } else {
           stop.status = 'error';
         }
-        ui.renderStops();
-        mapManager.renderStops(this.stops);
+
+        ui.renderStopsList();
+        mapManager.renderStopMarkers(this.stops);
+        ui.updateMetricsHeader();
       }
 
       async addManualStop() {
         const clientInput = document.getElementById('manual-client');
-        const addrInput = document.getElementById('manual-address');
-        if (!addrInput.value) return;
+        const addressInput = document.getElementById('manual-address');
+        if (!addressInput.value) return;
 
-        await this.addStop(clientInput.value, addrInput.value);
+        await this.addStop(clientInput.value, addressInput.value);
         clientInput.value = '';
-        addrInput.value = '';
+        addressInput.value = '';
       }
 
       removeStop(id) {
         this.stops = this.stops.filter(s => s.id !== id);
-        ui.renderStops();
-        mapManager.renderStops(this.stops);
+        ui.renderStopsList();
+        mapManager.renderStopMarkers(this.stops);
+        routeOptimizer.drawCurrentSequenceLine();
+        ui.updateMetricsHeader();
       }
 
-      clearAll() {
+      clearAllStops() {
         this.stops = [];
-        ui.renderStops();
-        mapManager.renderStops(this.stops);
-        if (mapManager.routePolyline) mapManager.map.removeLayer(mapManager.routePolyline);
+        ui.renderStopsList();
+        mapManager.renderStopMarkers(this.stops);
+        if (mapManager.routeLayer) mapManager.map.removeLayer(mapManager.routeLayer);
+        ui.updateMetricsHeader();
       }
 
       reorder(fromIndex, toIndex) {
-        const item = this.stops.splice(fromIndex, 1)[0];
-        this.stops.splice(toIndex, 0, item);
-        ui.renderStops();
-        mapManager.renderStops(this.stops);
-        routeOptimizer.updatePolylineOnly();
+        const moved = this.stops.splice(fromIndex, 1)[0];
+        this.stops.splice(toIndex, 0, moved);
+        ui.renderStopsList();
+        mapManager.renderStopMarkers(this.stops);
+        routeOptimizer.drawCurrentSequenceLine();
       }
     }
 
     /**
-     * RouteOptimizer — Motor de Otimização Euclidiana/2-Opt
+     * RouteOptimizer — Motor Real de Roteirização e Matriz de Distâncias
      */
     class RouteOptimizer {
-      static calculateDistance(coord1, coord2) {
+      static calculateHaversine(ptA, ptB) {
         const R = 6371; // km
-        const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
-        const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+        const dLat = (ptB.lat - ptA.lat) * (Math.PI / 180);
+        const dLng = (ptB.lng - ptA.lng) * (Math.PI / 180);
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
+                  Math.cos(ptA.lat * (Math.PI / 180)) * Math.cos(ptB.lat * (Math.PI / 180)) *
                   Math.sin(dLng / 2) * Math.sin(dLng / 2);
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      async execute() {
+      async getStartCoordinate() {
+        const mode = document.getElementById('start-point-mode').value;
+        if (mode === 'gps' && gpsManager.currentCoords) {
+          return gpsManager.currentCoords;
+        } else if (mode === 'manual') {
+          const addr = document.getElementById('start-point-manual-input').value;
+          const geo = await Geocoder.geocodeAddress(addr);
+          if (geo) return { lat: geo.lat, lng: geo.lng };
+        }
+        // Fallback para primeira parada válida
+        const firstValid = routeManager.stops.find(s => s.coords);
+        return firstValid ? firstValid.coords : null;
+      }
+
+      async optimizeRoute() {
         const validStops = routeManager.stops.filter(s => s.coords !== null);
         if (validStops.length < 2) {
-          alert('Necessário ao menos 2 paradas com geolocalização válida para otimização.');
+          alert('Adicione ao menos 2 paradas geocodificadas para otimização.');
           return;
         }
 
-        ui.showOptimizerStatus('Iniciando otimização com Nearest Neighbor...');
-        await new Promise(r => setTimeout(r, 100));
-
-        let startCoord = gpsManager.currentPosition;
-        const startType = document.getElementById('route-start-type').value;
-
-        if (startType === 'manual') {
-          const manualAddr = document.getElementById('route-start-address').value;
-          const res = await Geocoder.search(manualAddr);
-          if (res) startCoord = { lat: res.lat, lng: res.lng };
-        }
-
+        ui.showOptimizerProgress('Obtendo ponto inicial e calculando matriz...');
+        const startCoord = await this.getStartCoordinate();
         if (!startCoord) {
-          alert('Ponto de partida GPS não disponível. Otimizando a partir da 1ª parada.');
-          startCoord = validStops[0].coords;
+          ui.hideOptimizerProgress();
+          alert('Ponto de partida não definido. Habilite o GPS ou digite um endereço inicial.');
+          return;
         }
 
-        // 1. Nearest Neighbor
+        // 1. Nearest Neighbor Heuristic
+        ui.showOptimizerProgress('Construindo rota inicial (Nearest Neighbor)...');
+        await new Promise(r => setTimeout(r, 60));
+
         let unvisited = [...validStops];
-        let ordered = [];
-        let currentPoint = startCoord;
+        let orderedRoute = [];
+        let currentPos = startCoord;
 
         while (unvisited.length > 0) {
-          let nearestIdx = 0;
-          let minDist = Infinity;
+          let closestIdx = 0;
+          let minDistance = Infinity;
 
           for (let i = 0; i < unvisited.length; i++) {
-            const d = RouteOptimizer.calculateDistance(currentPoint, unvisited[i].coords);
-            if (d < minDist) {
-              minDist = d;
-              nearestIdx = i;
+            const d = RouteOptimizer.calculateHaversine(currentPos, unvisited[i].coords);
+            if (d < minDistance) {
+              minDistance = d;
+              closestIdx = i;
             }
           }
 
-          ordered.push(unvisited[nearestIdx]);
-          currentPoint = unvisited[nearestIdx].coords;
-          unvisited.splice(nearestIdx, 1);
+          orderedRoute.push(unvisited[closestIdx]);
+          currentPos = unvisited[closestIdx].coords;
+          unvisited.splice(closestIdx, 1);
         }
 
-        // 2. 2-Opt Iterativo para refinamento
-        ui.showOptimizerStatus('Refinando malha com algoritmo 2-Opt...');
-        await new Promise(r => setTimeout(r, 100));
-        ordered = this.twoOpt(ordered, startCoord);
+        // 2. 2-Opt Iterative Optimization
+        ui.showOptimizerProgress('Refinando sequência com algoritmo 2-Opt...');
+        await new Promise(r => setTimeout(r, 60));
+        orderedRoute = this.run2Opt(orderedRoute, startCoord);
 
-        routeManager.stops = ordered;
-        ui.hideOptimizerStatus();
-        ui.renderStops();
-        mapManager.renderStops(routeManager.stops);
-        this.updatePolylineOnly(startCoord);
+        // Atualiza a lista com a sequência final
+        routeManager.stops = orderedRoute;
+        ui.hideOptimizerProgress();
+        ui.renderStopsList();
+        mapManager.renderStopMarkers(routeManager.stops);
+
+        await this.drawCurrentSequenceLine(startCoord);
+        ui.updateMetricsHeader();
       }
 
-      twoOpt(stops, startCoord) {
+      run2Opt(route, startCoord) {
+        let bestRoute = [...route];
         let improved = true;
-        let count = 0;
-        let best = [...stops];
+        let iteration = 0;
 
-        const getTotalDistance = (arr) => {
-          let dist = RouteOptimizer.calculateDistance(startCoord, arr[0].coords);
-          for (let i = 0; i < arr.length - 1; i++) {
-            dist += RouteOptimizer.calculateDistance(arr[i].coords, arr[i + 1].coords);
+        const evalDistance = (rt) => {
+          let dist = RouteOptimizer.calculateHaversine(startCoord, rt[0].coords);
+          for (let i = 0; i < rt.length - 1; i++) {
+            dist += RouteOptimizer.calculateHaversine(rt[i].coords, rt[i + 1].coords);
           }
           return dist;
         };
 
-        let bestDistance = getTotalDistance(best);
+        let bestDistance = evalDistance(bestRoute);
 
-        while (improved && count < 50) {
+        while (improved && iteration < 50) {
           improved = false;
-          count++;
-          for (let i = 0; i < best.length - 1; i++) {
-            for (let k = i + 1; k < best.length; k++) {
-              const candidate = this.twoOptSwap(best, i, k);
-              const candidateDist = getTotalDistance(candidate);
-              if (candidateDist < bestDistance) {
-                best = candidate;
-                bestDistance = candidateDist;
+          iteration++;
+          for (let i = 0; i < bestRoute.length - 1; i++) {
+            for (let k = i + 1; k < bestRoute.length; k++) {
+              const newRoute = this.twoOptSwap(bestRoute, i, k);
+              const newDist = evalDistance(newRoute);
+              if (newDist < bestDistance) {
+                bestRoute = newRoute;
+                bestDistance = newDist;
                 improved = true;
               }
             }
           }
         }
-        return best;
+        return bestRoute;
       }
 
       twoOptSwap(route, i, k) {
-        const newRoute = route.slice(0, i);
-        const segment = route.slice(i, k + 1).reverse();
-        return newRoute.concat(segment).concat(route.slice(k + 1));
+        const p1 = route.slice(0, i);
+        const p2 = route.slice(i, k + 1).reverse();
+        const p3 = route.slice(k + 1);
+        return p1.concat(p2).concat(p3);
       }
 
-      updatePolylineOnly(startCoord = gpsManager.currentPosition) {
-        const polyCoords = [];
-        if (startCoord) polyCoords.push([startCoord.lat, startCoord.lng]);
-        routeManager.stops.filter(s => s.coords).forEach(s => {
-          polyCoords.push([s.coords.lat, s.coords.lng]);
-        });
-        mapManager.drawPolyline(polyCoords);
+      async drawCurrentSequenceLine(startCoord = null) {
+        if (!startCoord) startCoord = await this.getStartCoordinate();
+        const points = [];
+        if (startCoord) points.push(startCoord);
+        routeManager.stops.filter(s => s.coords).forEach(s => points.push(s.coords));
+
+        if (points.length < 2) return;
+
+        // Requisição de Roteamento OSRM para obter geometria das ruas
+        try {
+          const coordsString = points.map(p => `${p.lng},${p.lat}`).join(';');
+          const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+          const res = await fetch(osrmUrl);
+          const data = await res.json();
+
+          if (data && data.routes && data.routes.length > 0) {
+            const geom = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+            mapManager.drawRoadPolyline(geom);
+            mapManager.fitToCoordinates(points.map(p => [p.lat, p.lng]));
+
+            const roadDistKm = (data.routes[0].distance / 1000).toFixed(1);
+            const roadDurationMin = Math.round(data.routes[0].duration / 60);
+            ui.setMetrics(routeManager.stops.length, roadDistKm, roadDurationMin);
+            return;
+          }
+        } catch (e) {
+          console.warn('Fallback para polilinha direta Haversine:', e);
+        }
+
+        // Fallback para linha direta
+        const directLine = points.map(p => [p.lat, p.lng]);
+        mapManager.drawRoadPolyline(directLine);
+        mapManager.fitToCoordinates(directLine);
+        ui.updateMetricsHeader();
       }
 
-      recalculateFromCurrentLocation() {
+      reoptimize() {
+        this.optimizeRoute();
+      }
+
+      async recalculateFromCurrentLocation() {
         document.getElementById('off-route-banner').style.display = 'none';
-        this.execute();
+        if (!gpsManager.currentCoords) {
+          alert('Aguardando sinal de GPS real para recálculo.');
+          return;
+        }
+        await this.optimizeRoute();
       }
     }
 
     /**
-     * NavigationManager — Execução de Rota em Tempo Real e HUD
+     * NavigationManager — Execução de Rota em Tempo Real
      */
     class NavigationManager {
       constructor() {
-        this.currentIndex = 0;
         this.active = false;
+        this.currentIndex = 0;
       }
 
-      startRoute() {
+      start() {
         if (routeManager.stops.length === 0) {
-          alert('Não há paradas para iniciar navegação.');
+          alert('Adicione paradas antes de iniciar a navegação.');
           return;
         }
         this.active = true;
         this.currentIndex = 0;
-        ui.setTab('nav');
+        ui.switchTab('navegacao');
         this.updateHUD();
 
-        gpsManager.subscribe((pos) => this.onGPSUpdate(pos));
+        gpsManager.onPositionChange((pos) => this.trackNavigation(pos));
       }
 
-      onGPSUpdate(pos) {
+      trackNavigation(pos) {
         if (!this.active || this.currentIndex >= routeManager.stops.length) return;
-        const targetStop = routeManager.stops[this.currentIndex];
-        if (!targetStop || !targetStop.coords) return;
+        const currentStop = routeManager.stops[this.currentIndex];
+        if (!currentStop || !currentStop.coords) return;
 
-        const dist = RouteOptimizer.calculateDistance(pos, targetStop.coords);
-        document.getElementById('hud-dist').innerText = `${dist.toFixed(2)} km`;
+        const dist = RouteOptimizer.calculateHaversine(pos, currentStop.coords);
+        document.getElementById('nav-dist-target').innerText = `${dist.toFixed(2)} km`;
+        document.getElementById('hud-desktop-distance').innerText = `${dist.toFixed(2)} km`;
 
-        // Detecção de Desvio (> 3km de distância perpendicular intuitiva)
-        if (dist > 5.0) {
+        // Detecção de Desvio (> 3km de afastamento do destino atual)
+        if (dist > 4.0) {
           document.getElementById('off-route-banner').style.display = 'flex';
         } else {
           document.getElementById('off-route-banner').style.display = 'none';
         }
       }
 
-      completeCurrentStop() {
+      markCurrentComplete() {
+        if (!this.active) this.start();
         if (this.currentIndex < routeManager.stops.length) {
           routeManager.stops[this.currentIndex].status = 'completed';
-          this.nextStop();
+          this.advance();
         }
       }
 
-      skipCurrentStop() {
+      skipCurrent() {
+        if (!this.active) this.start();
         if (this.currentIndex < routeManager.stops.length) {
           routeManager.stops[this.currentIndex].status = 'skipped';
-          this.nextStop();
+          this.advance();
         }
       }
 
-      nextStop() {
+      advance() {
         this.currentIndex++;
-        ui.renderStops();
-        mapManager.renderStops(routeManager.stops);
+        ui.renderStopsList();
+        mapManager.renderStopMarkers(routeManager.stops, this.currentIndex);
         this.updateHUD();
+
+        if (this.currentIndex < routeManager.stops.length) {
+          const next = routeManager.stops[this.currentIndex];
+          if (next.coords) {
+            mapManager.map.setView([next.coords.lat, next.coords.lng], 15);
+          }
+        }
       }
 
       updateHUD() {
-        const hud = document.getElementById('nav-overlay-hud');
-        if (!this.active || this.currentIndex >= routeManager.stops.length) {
-          hud.style.display = 'none';
-          document.getElementById('nav-current-info').innerText = "Rota concluída!";
-          return;
+        const isFinished = this.currentIndex >= routeManager.stops.length;
+        const total = routeManager.stops.length;
+        const currNum = isFinished ? total : this.currentIndex + 1;
+
+        const desktopHUD = document.getElementById('nav-hud-desktop');
+        if (this.active && !isFinished) {
+          desktopHUD.style.display = 'block';
+          const stop = routeManager.stops[this.currentIndex];
+          document.getElementById('hud-desktop-name').innerText = `#${currNum} ${stop.client}`;
+          document.getElementById('hud-desktop-address').innerText = stop.address;
+          document.getElementById('hud-desktop-progress').innerText = `Progresso: ${currNum}/${total}`;
+
+          // Mobile Sheet Update
+          document.getElementById('sheet-client-name').innerText = `#${currNum} ${stop.client}`;
+          document.getElementById('sheet-address').innerText = stop.address;
+          document.getElementById('sheet-progress-tag').innerText = `${currNum} de ${total}`;
+
+          // Tab Navegação
+          document.getElementById('nav-client-target').innerText = `#${currNum} ${stop.client}`;
+          document.getElementById('nav-address-target').innerText = stop.address;
+          document.getElementById('nav-progress-target').innerText = `${currNum} / ${total}`;
+        } else {
+          desktopHUD.style.display = 'none';
+          document.getElementById('sheet-client-name').innerText = isFinished ? "Todas as paradas concluídas!" : "Nenhuma rota ativa";
+          document.getElementById('sheet-address').innerText = isFinished ? "Excelente trabalho!" : "Selecione uma rota para navegar";
         }
-
-        hud.style.display = 'block';
-        const stop = routeManager.stops[this.currentIndex];
-        document.getElementById('hud-name').innerText = `#${this.currentIndex + 1} ${stop.client}`;
-        document.getElementById('hud-addr').innerText = stop.address;
-        document.getElementById('nav-current-info').innerHTML = `<b>#${this.currentIndex + 1} - ${stop.client}</b><br>${stop.address}`;
-
-        const remaining = routeManager.stops.filter(s => s.status === 'pending').length;
-        document.getElementById('nav-metric-rem').innerText = remaining;
       }
 
-      stopRoute() {
+      terminateRoute() {
         this.active = false;
-        document.getElementById('nav-overlay-hud').style.display = 'none';
-        ui.setTab('stops');
+        document.getElementById('nav-hud-desktop').style.display = 'none';
+        document.getElementById('off-route-banner').style.display = 'none';
+        ui.switchTab('paradas');
       }
     }
 
     /**
-     * FileImporter — Leitura XLSX com Normalização de Cabeçalhos
+     * FileImporter — Importação XLSX Real
      */
     class FileImporter {
-      handleFile(e) {
+      processXLSX(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (evt) => {
-          const data = new Uint8Array(evt.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+        reader.onload = async (evt) => {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-          json.forEach(row => {
-            const keys = Object.keys(row);
-            const clientKey = keys.find(k => /cliente|nome|name/i.test(k));
-            const addrKey = keys.find(k => /endereço|endereco|address|rua|logradouro/i.test(k));
-            const numKey = keys.find(k => /número|numero|number|num/i.test(k));
-            const cityKey = keys.find(k => /cidade|city|municipio/i.test(k));
+            const newStops = [];
+            jsonRows.forEach(row => {
+              const keys = Object.keys(row);
+              const clientKey = keys.find(k => /cliente|nome|destinatario|name/i.test(k));
+              const addrKey = keys.find(k => /endereço|endereco|rua|logradouro|address/i.test(k));
+              const numKey = keys.find(k => /número|numero|num|number/i.test(k));
+              const cityKey = keys.find(k => /cidade|city|municipio/i.test(k));
+              const cepKey = keys.find(k => /cep|zip/i.test(k));
 
-            let addressBuilt = row[addrKey] || '';
-            if (row[numKey]) addressBuilt += `, ${row[numKey]}`;
-            if (row[cityKey]) addressBuilt += ` - ${row[cityKey]}`;
+              let builtAddr = row[addrKey] || '';
+              if (row[numKey]) builtAddr += `, ${row[numKey]}`;
+              if (row[cityKey]) builtAddr += ` - ${row[cityKey]}`;
+              if (row[cepKey]) builtAddr += ` (${row[cepKey]})`;
 
-            if (addressBuilt.trim()) {
-              routeManager.addStop(row[clientKey], addressBuilt, row);
-            }
-          });
+              if (builtAddr.trim()) {
+                newStops.push({
+                  id: 's-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+                  client: row[clientKey] || 'Cliente XLSX',
+                  address: builtAddr,
+                  status: 'pending',
+                  coords: null
+                });
+              }
+            });
+
+            routeManager.stops = routeManager.stops.concat(newStops);
+            ui.renderStopsList();
+
+            // Geocodificação em lote com fila
+            ui.showOptimizerProgress(`Geocodificando ${newStops.length} endereços...`);
+            await Geocoder.geocodeQueue(routeManager.stops, (curr, total, addr) => {
+              ui.showOptimizerProgress(`Geocodificando (${curr}/${total}): ${addr.substring(0, 25)}...`);
+            });
+
+            ui.hideOptimizerProgress();
+            ui.renderStopsList();
+            mapManager.renderStopMarkers(routeManager.stops);
+            ui.updateMetricsHeader();
+          } catch (err) {
+            alert('Erro ao processar XLSX: ' + err.message);
+          }
         };
         reader.readAsArrayBuffer(file);
       }
     }
 
     /**
-     * PDFExporter — Geração de Relatório via jsPDF
+     * PDFExporter — Gerador de Manifesto de Rota
      */
     class PDFExporter {
-      static generate() {
+      static downloadManifest() {
+        if (routeManager.stops.length === 0) {
+          alert('Não há paradas para gerar manifesto.');
+          return;
+        }
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
+        // Cabeçalho
         doc.setFillColor(15, 23, 42);
-        doc.rect(0, 0, 210, 30, 'F');
-        
-        doc.setTextColor(56, 189, 248);
+        doc.rect(0, 0, 210, 32, 'F');
+        doc.setTextColor(0, 210, 255);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text('ROUTE FLOW — Manifest de Entrega', 14, 18);
+        doc.text('ROUTE FLOW — Manifesto de Entrega', 14, 16);
 
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(241, 245, 249);
         doc.setFontSize(9);
-        doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 25);
+        doc.text(`Data: ${new Date().toLocaleString()} | Total de Paradas: ${routeManager.stops.length}`, 14, 25);
 
-        let y = 40;
+        // Tabela
+        let y = 42;
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         doc.text('Seq', 14, y);
-        doc.text('Cliente', 26, y);
-        doc.text('Endereço', 70, y);
+        doc.text('Destinatário', 26, y);
+        doc.text('Endereço', 75, y);
         doc.text('Status', 170, y);
         doc.line(14, y + 2, 196, y + 2);
 
         y += 8;
         doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+
         routeManager.stops.forEach((stop, i) => {
-          if (y > 280) {
+          if (y > 275) {
             doc.addPage();
             y = 20;
           }
           doc.text(String(i + 1), 14, y);
-          doc.text(String(stop.client).substring(0, 20), 26, y);
-          doc.text(String(stop.address).substring(0, 50), 70, y);
+          doc.text(String(stop.client).substring(0, 22), 26, y);
+          doc.text(String(stop.address).substring(0, 48), 75, y);
           doc.text(String(stop.status), 170, y);
           y += 7;
         });
@@ -1035,156 +1430,197 @@
      * StorageManager — Persistência no LocalStorage
      */
     class StorageManager {
-      static saveCurrentRoute() {
+      static saveRoute() {
         if (routeManager.stops.length === 0) return;
-        const routes = JSON.parse(localStorage.getItem('rf_saved_routes') || '[]');
-        const newRecord = {
+        const saved = JSON.parse(localStorage.getItem('rf_saved_routes_v2') || '[]');
+        const record = {
           id: Date.now(),
           date: new Date().toLocaleString(),
           stops: routeManager.stops
         };
-        routes.unshift(newRecord);
-        localStorage.setItem('rf_saved_routes', JSON.stringify(routes));
-        alert('Rota salva com sucesso no histórico local.');
-        ui.renderHistory();
+        saved.unshift(record);
+        localStorage.setItem('rf_saved_routes_v2', JSON.stringify(saved));
+        alert('Rota salva no histórico com sucesso!');
+        ui.renderHistoryList();
       }
 
-      static getRoutes() {
-        return JSON.parse(localStorage.getItem('rf_saved_routes') || '[]');
+      static getSavedRoutes() {
+        return JSON.parse(localStorage.getItem('rf_saved_routes_v2') || '[]');
       }
 
-      static loadRoute(id) {
-        const routes = this.getRoutes();
+      static loadSaved(id) {
+        const routes = this.getSavedRoutes();
         const found = routes.find(r => r.id === id);
         if (found) {
           routeManager.stops = found.stops;
-          ui.renderStops();
-          mapManager.renderStops(routeManager.stops);
-          ui.setTab('stops');
+          ui.renderStopsList();
+          mapManager.renderStopMarkers(routeManager.stops);
+          routeOptimizer.drawCurrentSequenceLine();
+          ui.switchTab('paradas');
         }
       }
 
-      static deleteRoute(id) {
-        let routes = this.getRoutes();
-        routes = routes.filter(r => r.id !== id);
-        localStorage.setItem('rf_saved_routes', JSON.stringify(routes));
-        ui.renderHistory();
+      static deleteSaved(id) {
+        let routes = this.getSavedRoutes().filter(r => r.id !== id);
+        localStorage.setItem('rf_saved_routes_v2', JSON.stringify(routes));
+        ui.renderHistoryList();
       }
     }
 
     /**
-     * UIManager — Interações de Interface
+     * UIManager — Interface e Interações
      */
     class UIManager {
       init() {
         setTimeout(() => {
-          const splash = document.getElementById('splash-screen');
+          const splash = document.getElementById('splash');
           splash.style.opacity = '0';
-          setTimeout(() => splash.style.display = 'none', 600);
-        }, 1200);
+          setTimeout(() => splash.style.display = 'none', 500);
+        }, 1000);
+
+        if (window.innerWidth <= 768) {
+          document.getElementById('mobile-bar').style.display = 'flex';
+          document.getElementById('mobile-bottom-sheet').style.display = 'flex';
+        }
 
         this.initSortable();
       }
 
-      setTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('nav .nav-btn').forEach(el => el.classList.remove('active'));
-        
-        const targetTab = document.getElementById(`tab-${tabId}`);
-        if (targetTab) targetTab.classList.add('active');
+      switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tabs-nav .tab-item').forEach(t => t.classList.remove('active'));
 
-        const tabIdx = ['stops', 'route', 'nav', 'history'].indexOf(tabId);
-        if (tabIdx >= 0) {
-          document.querySelectorAll('nav .nav-btn')[tabIdx].classList.add('active');
+        const target = document.getElementById(`tab-${tabId}`);
+        if (target) target.classList.add('active');
+
+        const tabs = ['paradas', 'config', 'navegacao', 'historico'];
+        const idx = tabs.indexOf(tabId);
+        if (idx >= 0) {
+          document.querySelectorAll('.tabs-nav .tab-item')[idx].classList.add('active');
         }
 
-        if (tabId === 'history') this.renderHistory();
+        if (tabId === 'historico') this.renderHistoryList();
+        if (window.innerWidth <= 768) this.closeMobileSidebar();
       }
 
-      toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
+      toggleMobileSidebar() {
+        document.getElementById('sidebar').classList.toggle('mobile-open');
       }
 
-      toggleStartField() {
-        const val = document.getElementById('route-start-type').value;
-        document.getElementById('route-start-address').style.display = (val === 'manual') ? 'block' : 'none';
+      closeMobileSidebar() {
+        document.getElementById('sidebar').classList.remove('mobile-open');
       }
 
-      toggleEndField() {
-        const val = document.getElementById('route-end-type').value;
-        document.getElementById('route-end-address').style.display = (val === 'manual') ? 'block' : 'none';
+      toggleMobileSheet() {
+        document.getElementById('mobile-bottom-sheet').classList.toggle('expanded');
       }
 
-      showOptimizerStatus(text) {
-        const el = document.getElementById('optimizer-status-box');
-        document.getElementById('optimizer-status-text').innerText = text;
-        el.style.display = 'block';
+      toggleStartAddressInput() {
+        const val = document.getElementById('start-point-mode').value;
+        document.getElementById('start-point-manual-input').style.display = (val === 'manual') ? 'block' : 'none';
       }
 
-      hideOptimizerStatus() {
-        document.getElementById('optimizer-status-box').style.display = 'none';
+      toggleEndAddressInput() {
+        const val = document.getElementById('end-point-mode').value;
+        document.getElementById('end-point-manual-input').style.display = (val === 'manual') ? 'block' : 'none';
+      }
+
+      showOptimizerProgress(msg) {
+        const el = document.getElementById('optimizer-loader');
+        document.getElementById('optimizer-status-message').innerText = msg;
+        el.style.display = 'flex';
+      }
+
+      hideOptimizerProgress() {
+        document.getElementById('optimizer-loader').style.display = 'none';
+      }
+
+      setMetrics(count, km, min) {
+        document.getElementById('metric-stops-total').innerText = count;
+        document.getElementById('metric-distance-total').innerText = `${km} km`;
+        document.getElementById('metric-duration-total').innerText = `${min} min`;
+      }
+
+      updateMetricsHeader() {
+        const valid = routeManager.stops.filter(s => s.coords);
+        let dist = 0;
+        for (let i = 0; i < valid.length - 1; i++) {
+          dist += RouteOptimizer.calculateHaversine(valid[i].coords, valid[i + 1].coords);
+        }
+        const estMin = Math.round((dist / 35) * 60 + valid.length * 4);
+        this.setMetrics(routeManager.stops.length, dist.toFixed(1), estMin);
       }
 
       initSortable() {
-        const el = document.getElementById('stop-list-ul');
+        const el = document.getElementById('stops-container');
         Sortable.create(el, {
-          animation: 150,
+          animation: 180,
+          handle: '.stop-card',
           onEnd: (evt) => {
             routeManager.reorder(evt.oldIndex, evt.newIndex);
           }
         });
       }
 
-      renderStops() {
-        const ul = document.getElementById('stop-list-ul');
+      renderStopsList() {
+        const ul = document.getElementById('stops-container');
         ul.innerHTML = '';
-        document.getElementById('stop-counter').innerText = `${routeManager.stops.length} Paradas`;
+        document.getElementById('stops-counter-badge').innerText = `${routeManager.stops.length} Paradas`;
 
         routeManager.stops.forEach((stop, i) => {
           const li = document.createElement('li');
-          li.className = `stop-item ${stop.status}`;
+          li.className = `stop-card ${stop.status}`;
+          
+          let tagClass = 'st-pending';
+          let tagLabel = 'Pendente';
+          if (stop.status === 'completed') { tagClass = 'st-completed'; tagLabel = 'Concluída'; }
+          if (stop.status === 'skipped') { tagClass = 'st-skipped'; tagLabel = 'Pulada'; }
+          if (stop.status === 'error') { tagClass = 'st-error'; tagLabel = 'Não Localizado'; }
+
           li.innerHTML = `
-            <div class="stop-index">${i + 1}</div>
-            <div class="stop-info">
-              <div class="stop-title">${stop.client}</div>
-              <div class="stop-desc">${stop.address}</div>
+            <div class="stop-badge">${i + 1}</div>
+            <div class="stop-meta">
+              <div class="stop-name">${stop.client}</div>
+              <div class="stop-address">${stop.address}</div>
+              <span class="status-tag ${tagClass}">${tagLabel}</span>
             </div>
-            <span class="stop-status status-${stop.status}">${stop.status}</span>
-            <button class="btn btn-outline" style="width:auto; padding:4px 6px;" onclick="routeManager.removeStop('${stop.id}')">
-              <i class="fa-solid fa-trash" style="color:var(--danger)"></i>
-            </button>
+            <div class="stop-actions">
+              <button class="btn-icon" onclick="routeManager.removeStop('${stop.id}')" title="Excluir">
+                <i class="fa-solid fa-trash" style="color:var(--danger);"></i>
+              </button>
+            </div>
           `;
           ul.appendChild(li);
         });
       }
 
-      renderHistory() {
-        const list = document.getElementById('history-list');
-        const routes = StorageManager.getRoutes();
-        list.innerHTML = '';
+      renderHistoryList() {
+        const container = document.getElementById('saved-routes-list');
+        const routes = StorageManager.getSavedRoutes();
+        container.innerHTML = '';
 
         if (routes.length === 0) {
-          list.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted);">Nenhuma rota salva no histórico.</div>`;
+          container.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted);">Nenhuma rota salva no histórico.</div>`;
           return;
         }
 
         routes.forEach(r => {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.innerHTML = `
+          const item = document.createElement('div');
+          item.className = 'ui-card';
+          item.innerHTML = `
             <div style="font-weight:700; font-size:0.85rem;">Rota: ${r.date}</div>
-            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${r.stops.length} Paradas registradas</div>
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.loadRoute(${r.id})">Carregar</button>
-              <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.deleteRoute(${r.id})">Excluir</button>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${r.stops.length} Paradas registradas</div>
+            <div style="display:flex; gap:8px; margin-top:6px;">
+              <button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.loadSaved(${r.id})">Carregar</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.deleteSaved(${r.id})">Excluir</button>
             </div>
           `;
-          list.appendChild(div);
+          container.appendChild(item);
         });
       }
     }
 
-    // Instanciação e Inicialização
+    // Inicialização da Aplicação
     const gpsManager = new GPSManager();
     const mapManager = new MapManager();
     const routeManager = new RouteManager();
@@ -1198,7 +1634,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       mapManager.init();
       ui.init();
-      document.getElementById('btn-gps-trigger').addEventListener('click', () => gpsManager.init());
       gpsManager.init();
     });
   </script>
