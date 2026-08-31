@@ -3,1204 +3,1204 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>RouteFlow — Otimização & Navegação</title>
+  <title>ROUTE FLOW — Otimizador & Navegador Logístico</title>
   
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg-main: #0B0F17;
-      --bg-sidebar: #070A0F;
-      --bg-card: #121824;
-      --bg-card-hover: #182232;
-      --border-color: #1F293D;
-      --accent-primary: #00E599;
-      --accent-secondary: #00A3FF;
-      --accent-warning: #FFB800;
-      --accent-danger: #FF4D4D;
-      --accent-success: #00E599;
-      --accent-purple: #8A2BE2;
-      --text-main: #F0F4F8;
-      --text-muted: #8E9BAE;
-      --text-subtle: #4D5B6F;
-      --font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      --sidebar-width: 250px;
-      --header-height: 64px;
-      --radius-sm: 8px;
-      --radius-md: 12px;
-      --radius-lg: 16px;
-      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.5);
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-bg: #273549;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent: #6366f1;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --sidebar-width: 440px;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
-      font-family: var(--font-family);
-      background-color: var(--bg-main);
-      color: var(--text-main);
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-    }
-
-    /* Correções de Renderização do Leaflet */
-    .leaflet-container {
-      width: 100% !important;
-      height: 100% !important;
-      background: #090D14 !important;
-      z-index: 1;
-    }
-
-    .leaflet-pane { z-index: 2 !important; }
-    .leaflet-top, .leaflet-bottom { z-index: 3 !important; }
-
-    .app-wrapper {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
       display: flex;
-      width: 100vw;
       height: 100vh;
       overflow: hidden;
     }
 
-    /* SIDEBAR */
-    .app-sidebar {
-      width: var(--sidebar-width);
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border-color);
+    /* Animação SplashScreen */
+    #splash-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #090d16, #1e1b4b);
+      z-index: 99999;
       display: flex;
       flex-direction: column;
-      flex-shrink: 0;
-      z-index: 100;
-      transition: all 0.3s ease;
-    }
-
-    .sidebar-header {
-      height: var(--header-height);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 12px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      background: rgba(0, 229, 153, 0.15);
-      border: 1px solid var(--accent-primary);
-      border-radius: var(--radius-sm);
-      display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--accent-primary);
-      font-size: 1.1rem;
+      transition: opacity 0.6s ease, visibility 0.6s;
     }
-
-    .brand-name {
-      font-size: 1.15rem;
+    .splash-logo {
+      font-size: 3rem;
       font-weight: 800;
-      letter-spacing: 0.5px;
-      color: #fff;
+      letter-spacing: 2px;
+      background: linear-gradient(to right, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: pulseText 1.8s infinite ease-in-out;
     }
-
-    .brand-name span { color: var(--accent-primary); }
-
-    .sidebar-nav {
-      flex: 1;
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      overflow-y: auto;
-    }
-
-    .nav-label {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-subtle);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin: 10px 0 4px 10px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
+    .splash-tagline {
       color: var(--text-muted);
-      font-weight: 500;
-      font-size: 0.88rem;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s ease;
+      margin-top: 8px;
+      font-size: 0.95rem;
+    }
+    @keyframes pulseText {
+      0%, 100% { opacity: 0.7; transform: scale(0.98); }
+      50% { opacity: 1; transform: scale(1.02); }
     }
 
-    .nav-item i { width: 18px; text-align: center; }
-
-    .nav-item:hover {
-      background: var(--bg-card);
-      color: var(--text-main);
-    }
-
-    .nav-item.active {
-      background: rgba(0, 229, 153, 0.12);
-      border: 1px solid rgba(0, 229, 153, 0.3);
-      color: var(--accent-primary);
-      font-weight: 600;
-    }
-
-    .nav-badge {
-      margin-left: auto;
-      background: var(--accent-primary);
-      color: #000;
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 10px;
-    }
-
-    /* MAIN CONTAINER */
-    .app-main {
-      flex: 1;
+    /* Layout Geral */
+    #app-container {
       display: flex;
-      flex-direction: column;
+      width: 100vw;
       height: 100vh;
-      overflow: hidden;
       position: relative;
     }
 
-    .top-bar {
-      height: var(--header-height);
-      background: var(--bg-sidebar);
-      border-bottom: 1px solid var(--border-color);
+    /* Sidebar */
+    aside {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      background-color: var(--panel-bg);
+      border-right: 1px solid var(--border);
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+
+    header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
       justify-content: space-between;
-      padding: 0 20px;
-      z-index: 50;
-      flex-shrink: 0;
-    }
-
-    .top-bar-left {
-      display: flex;
       align-items: center;
-      gap: 16px;
+      background-color: rgba(15, 23, 42, 0.6);
     }
-
-    .btn-mobile-toggle {
-      display: none;
-      background: none;
-      border: none;
-      color: #fff;
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-
-    .status-badge {
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.25rem;
+      background: linear-gradient(to right, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
       display: flex;
       align-items: center;
       gap: 8px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
     }
 
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--text-subtle);
+    nav {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background-color: var(--bg-dark);
+    }
+    .nav-btn {
+      flex: 1;
+      padding: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+    .nav-btn.active {
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+      background-color: rgba(56, 189, 248, 0.05);
     }
 
-    .status-dot.active {
-      background: var(--accent-primary);
-      box-shadow: 0 0 8px var(--accent-primary);
+    /* Painéis */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: none;
+    }
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
     }
 
-    .status-dot.searching {
-      background: var(--accent-warning);
-      animation: pulse 1.2s infinite;
+    /* Cards & Elementos UI */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
     }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    .card-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      font-weight: 700;
     }
 
     .btn {
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 8px 14px;
-      border-radius: var(--radius-sm);
+      transition: background 0.2s, opacity 0.2s;
+      width: 100%;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #000; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-light); }
+    .btn-outline:hover { background: var(--card-bg); }
+
+    .input-field {
+      width: 100%;
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      color: var(--text-light);
+      padding: 10px;
+      border-radius: 8px;
       font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.2s ease;
-      text-decoration: none;
+      margin-bottom: 8px;
     }
+    .input-field:focus { outline: 1px solid var(--primary); border-color: var(--primary); }
 
-    .btn-primary {
-      background: var(--accent-primary);
-      color: #050B08;
-    }
-
-    .btn-primary:hover { background: #02ffab; }
-
-    .btn-secondary {
-      background: var(--bg-card);
-      border-color: var(--border-color);
-      color: var(--text-main);
-    }
-
-    .btn-secondary:hover { background: var(--bg-card-hover); }
-
-    .btn-accent-blue {
-      background: var(--accent-secondary);
-      color: #fff;
-    }
-
-    .btn-sm {
-      padding: 6px 10px;
-      font-size: 0.78rem;
-    }
-
-    /* VIEWPORT */
-    .app-viewport {
-      flex: 1;
-      height: calc(100vh - var(--header-height));
-      position: relative;
-      overflow: hidden;
-    }
-
-    .view-page {
-      position: absolute;
-      inset: 0;
-      display: none;
-      height: 100%;
-      width: 100%;
-    }
-
-    .view-page.active { display: flex; }
-
-    /* VIEW: OPTIMIZER & MAP (LAYOUT 40/60) */
-    #view-optimizer {
-      display: flex;
-      flex-direction: row;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    .route-panel {
-      width: 380px;
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border-color);
+    /* Lista de Paradas */
+    .stop-list {
+      list-style: none;
       display: flex;
       flex-direction: column;
-      height: 100%;
-      flex-shrink: 0;
-      z-index: 10;
+      gap: 10px;
     }
-
-    .route-panel-header {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .stats-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      font-size: 0.78rem;
-    }
-
-    .stat-box { display: flex; flex-direction: column; }
-    .stat-label { color: var(--text-subtle); font-size: 0.7rem; font-weight: 600; }
-    .stat-val { font-weight: 700; font-size: 1rem; color: #fff; font-family: var(--font-mono); }
-    .stat-val.highlight { color: var(--accent-primary); }
-
-    .route-stops-container {
-      flex: 1;
-      overflow-y: auto;
+    .stop-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       padding: 12px;
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .stop-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 10px 12px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      align-items: center;
+      gap: 12px;
       cursor: grab;
+      position: relative;
     }
-
-    .stop-card:hover { border-color: var(--accent-primary); }
-
-    .stop-num {
-      width: 24px;
-      height: 24px;
+    .stop-item.sortable-ghost { opacity: 0.4; background: var(--primary); }
+    .stop-index {
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: #1C2638;
-      color: var(--accent-primary);
+      background: #334155;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.75rem;
       font-weight: 700;
-      font-family: var(--font-mono);
-      flex-shrink: 0;
+      font-size: 0.8rem;
+      color: var(--primary);
     }
-
+    .stop-item.completed .stop-index { background: var(--success); color: #fff; }
+    .stop-item.skipped .stop-index { background: var(--danger); color: #fff; }
+    .stop-item.current { border-color: var(--primary); box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+    
     .stop-info { flex: 1; overflow: hidden; }
-    .stop-name { font-size: 0.85rem; font-weight: 700; color: #fff; }
-    .stop-addr { font-size: 0.75rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+    .stop-title { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stop-desc { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .stop-status { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; }
+    .status-pending { background: #334155; color: var(--text-muted); }
+    .status-completed { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .status-skipped { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .status-error { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
 
-    .map-container {
+    /* Dashboard Metrics */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .metric-box {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .metric-val { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+    .metric-lbl { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+
+    /* Mapa */
+    #map-wrapper {
       flex: 1;
-      height: 100%;
       position: relative;
-      background: #090D14;
+      background: #111;
     }
+    #map { width: 100%; height: 100%; }
 
-    #route-map, #nav-map {
-      width: 100%;
-      height: 100%;
+    /* Alerta Desvio */
+    #off-route-banner {
       position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
-
-    /* VIEW: HUD NAVEGAÇÃO */
-    #view-navigation {
-      position: relative;
-      height: 100%;
-      width: 100%;
-    }
-
-    .nav-hud-top {
-      position: absolute;
-      top: 16px;
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      width: 90%;
-      max-width: 500px;
-      background: rgba(11, 15, 23, 0.95);
-      border: 1px solid var(--accent-primary);
-      border-radius: var(--radius-md);
-      padding: 14px 18px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .nav-hud-bottom {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90%;
-      max-width: 500px;
-      background: rgba(11, 15, 23, 0.95);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      padding: 14px 18px;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow-soft);
-    }
-
-    /* PINS PERSONALIZADOS */
-    .custom-marker {
-      background: #070A0F;
-      border: 2px solid var(--accent-primary);
-      color: var(--accent-primary);
-      border-radius: 50%;
-      font-weight: 800;
-      font-size: 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    }
-
-    .custom-marker.start {
-      border-color: var(--accent-secondary);
-      color: var(--accent-secondary);
-    }
-
-    .gps-user-pulse {
-      width: 16px;
-      height: 16px;
-      background: var(--accent-secondary);
-      border-radius: 50%;
-      border: 2px solid #fff;
-      box-shadow: 0 0 14px var(--accent-secondary);
-    }
-
-    /* MODAL */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: var(--danger);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
       z-index: 1000;
       display: none;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      gap: 12px;
     }
 
-    .modal-backdrop.show { display: flex; }
-
-    .modal-box {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      width: 100%;
-      max-width: 500px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    /* Overlay de Navegação no Topo do Mapa */
+    #nav-overlay-hud {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      z-index: 999;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: none;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
     }
+    .hud-title { font-size: 0.75rem; color: var(--primary); font-weight: 700; text-transform: uppercase; }
+    .hud-target { font-size: 1.1rem; font-weight: 800; margin: 2px 0 6px 0; }
+    .hud-details { font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px; }
 
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
-    .form-control {
-      background: var(--bg-sidebar);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      padding: 10px;
-      color: #fff;
-      font-family: inherit;
-      outline: none;
-    }
-    .form-control:focus { border-color: var(--accent-primary); }
-
-    /* TOAST */
-    #toast-box {
-      position: fixed;
+    /* Mobile toggle */
+    #btn-toggle-sidebar {
+      position: absolute;
       bottom: 20px;
       right: 20px;
-      z-index: 2000;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
+      z-index: 1001;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: #000;
+      font-size: 1.2rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
 
-    .toast-item {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-left: 4px solid var(--accent-primary);
-      padding: 10px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 0.85rem;
-      color: #fff;
-      box-shadow: var(--shadow-soft);
-    }
-
-    @media (max-width: 850px) {
-      .app-sidebar {
-        position: fixed;
-        left: -100%;
-        top: 0;
+    @media (max-width: 768px) {
+      aside {
+        position: absolute;
         bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 60vh;
+        transform: translateY(100%);
       }
-      .app-sidebar.open { left: 0; }
-      .btn-mobile-toggle { display: block; }
-      #view-optimizer { flex-direction: column-reverse; }
-      .route-panel { width: 100%; height: 50%; }
-      .map-container { height: 50%; }
+      aside.open { transform: translateY(0); }
+      #btn-toggle-sidebar { display: flex; }
     }
   </style>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 </head>
 <body>
 
-  <div id="toast-box"></div>
+  <div id="splash-screen">
+    <div class="splash-logo"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
+    <div class="splash-tagline">Logística Inteligente de Entregas</div>
+  </div>
 
-  <div class="app-wrapper">
-
-    <aside class="app-sidebar" id="app-sidebar">
-      <div class="sidebar-header">
-        <div class="brand-icon"><i class="fa-solid fa-diamond-turn-right"></i></div>
-        <div class="brand-name">ROUTE<span>FLOW</span></div>
-      </div>
-
-      <nav class="sidebar-nav">
-        <div class="nav-label">Módulos</div>
-        <a class="nav-item active" data-view="view-optimizer">
-          <i class="fa-solid fa-route"></i>
-          <span>Otimizador & Mapa</span>
-          <span class="nav-badge" id="badge-stops-count">0</span>
-        </a>
-        <a class="nav-item" id="btn-menu-import">
-          <i class="fa-solid fa-file-excel"></i>
-          <span>Importar XLSX</span>
-        </a>
-        <a class="nav-item" data-view="view-navigation" id="btn-menu-nav">
-          <i class="fa-solid fa-location-arrow"></i>
-          <span>Navegação GPS</span>
-        </a>
-      </nav>
-    </aside>
-
-    <main class="app-main">
-      <header class="top-bar">
-        <div class="top-bar-left">
-          <button class="btn-mobile-toggle" id="btn-toggle-menu"><i class="fa-solid fa-bars"></i></button>
-          <div class="status-badge">
-            <div class="status-dot searching" id="gps-status-dot"></div>
-            <span id="gps-status-label">Obtendo GPS Real...</span>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary btn-sm" id="btn-force-gps" title="Atualizar minha posição GPS">
-            <i class="fa-solid fa-crosshairs"></i> Minha Posição
-          </button>
-          <button class="btn btn-primary btn-sm" id="btn-open-import">
-            <i class="fa-solid fa-cloud-arrow-up"></i> Importar XLSX
-          </button>
-        </div>
+  <div id="app-container">
+    <aside id="sidebar">
+      <header>
+        <div class="brand-title"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
+        <button id="btn-gps-trigger" class="btn btn-outline" style="width: auto; padding: 6px 12px; font-size: 0.75rem;">
+          <i class="fa-solid fa-crosshairs"></i> GPS
+        </button>
       </header>
 
-      <div class="app-viewport">
+      <nav>
+        <button class="nav-btn active" onclick="ui.setTab('stops')"><i class="fa-solid fa-list-check"></i> Paradas</button>
+        <button class="nav-btn" onclick="ui.setTab('route')"><i class="fa-solid fa-sliders"></i> Rota</button>
+        <button class="nav-btn" onclick="ui.setTab('nav')"><i class="fa-solid fa-location-arrow"></i> Navegação</button>
+        <button class="nav-btn" onclick="ui.setTab('history')"><i class="fa-solid fa-history"></i> Histórico</button>
+      </nav>
 
-        <div class="view-page active" id="view-optimizer">
-          
-          <div class="route-panel">
-            <div class="route-panel-header">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="color: #fff; font-size: 0.95rem;">Sequência de Entrega</strong>
-                <button class="btn btn-secondary btn-sm" id="btn-open-cfg"><i class="fa-solid fa-gear"></i></button>
-              </div>
-
-              <div class="stats-card">
-                <div class="stat-box">
-                  <span class="stat-label">Distância Total</span>
-                  <span class="stat-val highlight" id="stat-dist">0.0 km</span>
-                </div>
-                <div class="stat-box">
-                  <span class="stat-label">Tempo Estimado</span>
-                  <span class="stat-val" id="stat-time">0 min</span>
-                </div>
-              </div>
-
-              <div style="display: flex; gap: 6px;">
-                <button class="btn btn-primary btn-sm" id="btn-exec-optimize" style="flex: 1;">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i> Otimizar
-                </button>
-                <button class="btn btn-accent-blue btn-sm" id="btn-start-nav">
-                  <i class="fa-solid fa-location-arrow"></i> Navegar
-                </button>
-                <button class="btn btn-secondary btn-sm" id="btn-gen-pdf">
-                  <i class="fa-solid fa-file-pdf"></i> PDF
-                </button>
-              </div>
-            </div>
-
-            <div class="route-stops-container" id="stops-list-box"></div>
-
-            <div style="padding: 10px; border-top: 1px solid var(--border-color); display: flex; gap: 6px;">
-              <button class="btn btn-secondary btn-sm" style="flex: 1;" id="btn-add-stop-manual">
-                <i class="fa-solid fa-plus"></i> Adicionar Ponto
-              </button>
-            </div>
-          </div>
-
-          <div class="map-container">
-            <div id="route-map"></div>
-          </div>
-
+      <div id="tab-stops" class="tab-content active">
+        <div class="card">
+          <div class="card-title">Importar Arquivo XLSX</div>
+          <input type="file" id="xlsx-input" accept=".xlsx, .xls" style="display: none;" onchange="fileImporter.handleFile(event)" />
+          <button class="btn btn-primary" onclick="document.getElementById('xlsx-input').click()">
+            <i class="fa-solid fa-file-excel"></i> Importar XLSX
+          </button>
         </div>
 
-        <div class="view-page" id="view-navigation">
-          <div class="nav-hud-top">
-            <i class="fa-solid fa-diamond-turn-right" style="font-size: 1.6rem; color: var(--accent-primary);"></i>
-            <div style="flex: 1; overflow: hidden;">
-              <div style="font-weight: 800; color: #fff; font-size: 0.95rem;" id="nav-target-name">Destino Próximo</div>
-              <div style="font-size: 0.78rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" id="nav-target-addr">-</div>
-            </div>
-          </div>
-
-          <div id="nav-map"></div>
-
-          <div class="nav-hud-bottom">
-            <div>
-              <div style="font-size: 0.7rem; color: var(--text-subtle);">RESTANTE</div>
-              <div style="font-size: 1.1rem; font-weight: 800; color: #fff;" id="nav-rem-dist">0.0 km</div>
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-primary btn-sm" id="btn-nav-complete"><i class="fa-solid fa-check"></i> Concluir</button>
-              <button class="btn btn-secondary btn-sm" id="btn-nav-exit"><i class="fa-solid fa-xmark"></i> Sair</button>
-            </div>
-          </div>
+        <div class="card">
+          <div class="card-title">Adicionar Parada Manual</div>
+          <input type="text" id="manual-client" class="input-field" placeholder="Nome do Cliente / Identificador" />
+          <input type="text" id="manual-address" class="input-field" placeholder="Endereço, Número, Cidade" />
+          <button class="btn btn-outline" onclick="routeManager.addManualStop()">
+            <i class="fa-solid fa-plus"></i> Adicionar à Lista
+          </button>
         </div>
 
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.8rem; color:var(--text-muted); font-weight:600;" id="stop-counter">0 Paradas</span>
+          <button class="btn btn-danger" style="width:auto; padding: 4px 8px; font-size:0.7rem;" onclick="routeManager.clearAll()">Limpar Todas</button>
+        </div>
+
+        <ul id="stop-list-ul" class="stop-list"></ul>
       </div>
+
+      <div id="tab-route" class="tab-content">
+        <div class="card">
+          <div class="card-title">Ponto de Início</div>
+          <select id="route-start-type" class="input-field" onchange="ui.toggleStartField()">
+            <option value="gps">Minha Localização Atual (GPS)</option>
+            <option value="manual">Endereço Personalizado</option>
+          </select>
+          <input type="text" id="route-start-address" class="input-field" style="display:none;" placeholder="Digite o ponto de partida" />
+        </div>
+
+        <div class="card">
+          <div class="card-title">Ponto Final</div>
+          <select id="route-end-type" class="input-field" onchange="ui.toggleEndField()">
+            <option value="any">Livre (Terminar na última entrega)</option>
+            <option value="start">Retornar ao Ponto de Partida</option>
+            <option value="manual">Endereço Específico</option>
+          </select>
+          <input type="text" id="route-end-address" class="input-field" style="display:none;" placeholder="Digite o ponto final" />
+        </div>
+
+        <div class="card">
+          <div class="card-title">Critério de Otimização</div>
+          <select id="route-metric" class="input-field">
+            <option value="distance">Menor Distância Total</option>
+            <option value="time">Menor Tempo Estimado</option>
+          </select>
+        </div>
+
+        <div id="optimizer-status-box" style="display:none;" class="card">
+          <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem;">
+            <i class="fa-solid fa-spinner fa-spin" style="color:var(--primary)"></i>
+            <span id="optimizer-status-text">Processando...</span>
+          </div>
+        </div>
+
+        <button id="btn-optimize" class="btn btn-accent" onclick="routeOptimizer.execute()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Otimizar Sequência
+        </button>
+
+        <button class="btn btn-outline" onclick="pdfExporter.generate()">
+          <i class="fa-solid fa-file-pdf"></i> Baixar Sequência em PDF
+        </button>
+
+        <button class="btn btn-outline" onclick="storageManager.saveCurrentRoute()">
+          <i class="fa-solid fa-floppy-disk"></i> Salvar Rota Atual
+        </button>
+      </div>
+
+      <div id="tab-nav" class="tab-content">
+        <div class="metric-grid">
+          <div class="metric-box">
+            <div id="nav-metric-rem" class="metric-val">0</div>
+            <div class="metric-lbl">Restantes</div>
+          </div>
+          <div class="metric-box">
+            <div id="nav-metric-dist" class="metric-val">0 km</div>
+            <div class="metric-lbl">Dist. Total</div>
+          </div>
+        </div>
+
+        <div class="card" id="nav-current-stop-card">
+          <div class="card-title">Parada Atual em Foco</div>
+          <div id="nav-current-info" style="margin-bottom: 10px;">Nenhuma rota ativa no momento.</div>
+          
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn btn-success" onclick="navigationManager.completeCurrentStop()">
+              <i class="fa-solid fa-check"></i> Concluir Parada
+            </button>
+            <button class="btn btn-warning" onclick="navigationManager.skipCurrentStop()">
+              <i class="fa-solid fa-forward"></i> Pular Parada
+            </button>
+            <button class="btn btn-outline" onclick="routeOptimizer.recalculateFromCurrentLocation()">
+              <i class="fa-solid fa-rotate"></i> Recalcular Rota
+            </button>
+          </div>
+        </div>
+
+        <button class="btn btn-danger" onclick="navigationManager.stopRoute()">
+          <i class="fa-solid fa-stop"></i> Encerrar Rota
+        </button>
+      </div>
+
+      <div id="tab-history" class="tab-content">
+        <div class="card-title">Minhas Rotas Salvas</div>
+        <div id="history-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </aside>
+
+    <main id="map-wrapper">
+      <div id="off-route-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>Você saiu da rota traçada!</span>
+        <button class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.7rem; border-color:#fff;" onclick="routeOptimizer.recalculateFromCurrentLocation()">Recalcular</button>
+      </div>
+
+      <div id="nav-overlay-hud">
+        <div class="hud-title">PRÓXIMA PARADA</div>
+        <div class="hud-target" id="hud-name">—</div>
+        <div class="hud-details">
+          <span id="hud-addr">—</span>
+          <span id="hud-dist" style="color:var(--primary); font-weight:700;">—</span>
+        </div>
+      </div>
+
+      <div id="map"></div>
+      <button id="btn-toggle-sidebar" onclick="ui.toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
     </main>
   </div>
 
-  <div class="modal-backdrop" id="modal-import">
-    <div class="modal-box">
-      <h3 style="color: #fff; font-size: 1rem;"><i class="fa-solid fa-file-excel" style="color: var(--accent-primary);"></i> Carregar Planilha XLSX</h3>
-      <input type="file" id="xlsx-file-input" accept=".xlsx, .xls" class="form-control" />
-      <div id="import-msg" style="font-size: 0.8rem; color: var(--text-muted);">Selecione uma planilha contendo colunas com endereços.</div>
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
-        <button class="btn btn-secondary btn-sm" id="btn-close-import">Cancelar</button>
-        <button class="btn btn-primary btn-sm" id="btn-confirm-import" disabled>Processar</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="modal-cfg">
-    <div class="modal-box">
-      <h3 style="color: #fff; font-size: 1rem;"><i class="fa-solid fa-sliders"></i> Configurar Rota</h3>
-      <div class="form-group">
-        <label>Ponto de Partida</label>
-        <div style="display: flex; gap: 6px;">
-          <input type="text" class="form-control" id="cfg-start-addr" style="flex: 1;" placeholder="Buscando GPS..." />
-          <button class="btn btn-secondary btn-sm" id="btn-cfg-use-gps" title="Usar minha localização exata"><i class="fa-solid fa-crosshairs"></i></button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Retornar ao ponto inicial ao final?</label>
-        <select class="form-control" id="cfg-return-start">
-          <option value="false">Não (Terminar na última parada)</option>
-          <option value="true">Sim (Rota Circular)</option>
-        </select>
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
-        <button class="btn btn-secondary btn-sm" id="btn-close-cfg">Fechar</button>
-        <button class="btn btn-primary btn-sm" id="btn-save-cfg">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="modal-add-stop">
-    <div class="modal-box">
-      <h3 style="color: #fff; font-size: 1rem;"><i class="fa-solid fa-location-dot"></i> Adicionar Ponto</h3>
-      <div class="form-group">
-        <label>Nome / Identificador</label>
-        <input type="text" class="form-control" id="add-stop-name" placeholder="Ex: Entrega #1" />
-      </div>
-      <div class="form-group">
-        <label>Endereço Completo</label>
-        <input type="text" class="form-control" id="add-stop-addr" placeholder="Ex: Av. Paulista, 1000, São Paulo" />
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
-        <button class="btn btn-secondary btn-sm" id="btn-close-add">Cancelar</button>
-        <button class="btn btn-primary btn-sm" id="btn-save-add">Adicionar</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // ESTADO CENTRAL
-    const State = {
-      userLocation: null, // [lat, lng] exato via GPS
-      startAddress: 'Obtendo localização...',
-      startCoords: null,
-      returnToStart: false,
-      stops: [],
-      routePolyline: null,
-      navIndex: 0
-    };
-
-    let map = null;
-    let navMap = null;
-    let markersLayer = null;
-    let userMarker = null;
-
-    // INICIALIZAÇÃO
-    window.addEventListener('DOMContentLoaded', () => {
-      initMaps();
-      initRealGPS();
-      bindEvents();
-      setupSortable();
-    });
-
-    // CORREÇÃO DO MAPA LEAFLET
-    function initMaps() {
-      // Posição inicial neutra até o GPS responder
-      const defaultCoord = [-23.55052, -46.633308];
-
-      map = L.map('route-map', {
-        zoomControl: true,
-        attributionControl: false
-      }).setView(defaultCoord, 14);
-
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19
-      }).addTo(map);
-
-      markersLayer = L.featureGroup().addTo(map);
-
-      navMap = L.map('nav-map', {
-        zoomControl: false,
-        attributionControl: false
-      }).setView(defaultCoord, 16);
-
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19
-      }).addTo(navMap);
-
-      // Garante redimensionamento sem bugs de blocos cinzas
-      setTimeout(() => {
-        map.invalidateSize();
-        navMap.invalidateSize();
-      }, 400);
-
-      window.addEventListener('resize', () => {
-        map.invalidateSize();
-        navMap.invalidateSize();
-      });
-    }
-
-    // CAPTURA DE GPS REAL E EXATO
-    function initRealGPS() {
-      const dot = document.getElementById('gps-status-dot');
-      const label = document.getElementById('gps-status-label');
-
-      if (!navigator.geolocation) {
-        label.textContent = 'GPS não suportado';
-        dot.className = 'status-dot';
-        return;
+    /**
+     * GPSManager — Manipulação do Geolocation Real
+     */
+    class GPSManager {
+      constructor() {
+        this.currentPosition = null;
+        this.watchId = null;
+        this.listeners = [];
       }
 
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          State.userLocation = [lat, lng];
-          State.startCoords = [lat, lng];
-
-          dot.className = 'status-dot active';
-          label.textContent = 'GPS Conectado';
-
-          // Centraliza no local exato do usuário
-          map.setView([lat, lng], 15);
-          map.invalidateSize();
-
-          // Marcador do Usuário
-          if (!userMarker) {
-            userMarker = L.marker([lat, lng], {
-              icon: L.divIcon({
-                className: '',
-                html: '<div class="gps-user-pulse"></div>',
-                iconSize: [16, 16],
-                iconAnchor: [8, 8]
-              })
-            }).addTo(map);
-          } else {
-            userMarker.setLatLng([lat, lng]);
-          }
-
-          // Reverse Geocoding para obter o nome da rua real
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-            const data = await res.json();
-            State.startAddress = data.display_name ? data.display_name.split(',').slice(0, 3).join(',') : 'Minha Localização Atual';
-          } catch(e) {
-            State.startAddress = 'Minha Localização GPS';
-          }
-
-          document.getElementById('cfg-start-addr').value = State.startAddress;
-          renderRoute();
-          showToast('Localização exata capturada via GPS!', 'success');
-        },
-        (error) => {
-          dot.className = 'status-dot';
-          label.textContent = 'GPS sem permissão';
-          showToast('Permita o acesso à localização para puxar seu ponto de partida real.', 'error');
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    }
-
-    // DESENHO E TRAÇADO DA ROTA
-    async function renderRoute() {
-      markersLayer.clearLayers();
-      if (State.routePolyline) {
-        map.removeLayer(State.routePolyline);
-        State.routePolyline = null;
-      }
-
-      const allCoords = [];
-
-      // Adiciona ponto de partida real
-      if (State.startCoords) {
-        allCoords.push(State.startCoords);
-        L.marker(State.startCoords, {
-          icon: L.divIcon({
-            className: 'custom-marker start',
-            html: '<i class="fa-solid fa-play" style="font-size:0.6rem"></i>',
-            iconSize: [26, 26],
-            iconAnchor: [13, 13]
-          })
-        }).bindPopup(`<b>Ponto de Partida:</b><br>${State.startAddress}`).addTo(markersLayer);
-      }
-
-      // Adiciona paradas
-      State.stops.forEach((stop, idx) => {
-        allCoords.push([stop.lat, stop.lng]);
-        L.marker([stop.lat, stop.lng], {
-          icon: L.divIcon({
-            className: 'custom-marker',
-            html: `${idx + 1}`,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13]
-          })
-        }).bindPopup(`<b>Parada ${idx + 1}:</b><br>${stop.name}<br>${stop.addr}`).addTo(markersLayer);
-      });
-
-      if (State.returnToStart && State.startCoords) {
-        allCoords.push(State.startCoords);
-      }
-
-      // Traçado Viário via OSRM
-      if (allCoords.length >= 2) {
-        const coordString = allCoords.map(p => `${p[1]},${p[0]}`).join(';');
-        try {
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`);
-          const data = await res.json();
-
-          if (data.code === 'Ok' && data.routes.length > 0) {
-            const route = data.routes[0];
-            const polyCoords = route.geometry.coordinates.map(c => [c[1], c[0]]);
-
-            State.routePolyline = L.polyline(polyCoords, {
-              color: '#00E599',
-              weight: 5,
-              opacity: 0.85
-            }).addTo(map);
-
-            document.getElementById('stat-dist').textContent = (route.distance / 1000).toFixed(1) + ' km';
-            document.getElementById('stat-time').textContent = Math.round(route.duration / 60) + ' min';
-          }
-        } catch(e) {
-          // Fallback Linha Reta
-          State.routePolyline = L.polyline(allCoords, { color: '#00E599', weight: 4, dashArray: '6,6' }).addTo(map);
-        }
-
-        map.fitBounds(markersLayer.getBounds(), { padding: [40, 40] });
-      }
-
-      document.getElementById('badge-stops-count').textContent = State.stops.length;
-      renderStopsUI();
-    }
-
-    // RENDERIZAÇÃO DA LISTA DE PARADAS
-    function renderStopsUI() {
-      const box = document.getElementById('stops-list-box');
-      box.innerHTML = '';
-
-      if (State.stops.length === 0) {
-        box.innerHTML = `<div style="text-align:center; padding: 30px 10px; color: var(--text-subtle); font-size: 0.8rem;">Nenhuma parada carregada. Importe uma planilha ou adicione manualmente.</div>`;
-        return;
-      }
-
-      State.stops.forEach((s, i) => {
-        const card = document.createElement('div');
-        card.className = 'stop-card';
-        card.dataset.id = s.id;
-        card.innerHTML = `
-          <div class="stop-num">${i + 1}</div>
-          <div class="stop-info">
-            <div class="stop-name">${s.name}</div>
-            <div class="stop-addr">${s.addr}</div>
-          </div>
-          <button class="btn btn-secondary btn-sm remove-stop" style="padding: 2px 6px;"><i class="fa-solid fa-trash" style="color:var(--accent-danger);"></i></button>
-        `;
-
-        card.querySelector('.remove-stop').addEventListener('click', (e) => {
-          e.stopPropagation();
-          State.stops.splice(i, 1);
-          renderRoute();
-        });
-
-        box.appendChild(card);
-      });
-    }
-
-    // DRAG & DROP
-    function setupSortable() {
-      const el = document.getElementById('stops-list-box');
-      Sortable.create(el, {
-        animation: 150,
-        handle: '.stop-card',
-        onEnd: () => {
-          const reordered = [];
-          document.querySelectorAll('.stop-card').forEach(card => {
-            const st = State.stops.find(s => s.id === card.dataset.id);
-            if (st) reordered.push(st);
-          });
-          State.stops = reordered;
-          renderRoute();
-          showToast('Ordem alterada manualmente.', 'info');
-        }
-      });
-    }
-
-    // MOTOR DE OTIMIZAÇÃO (NEAREST NEIGHBOR + 2-OPT)
-    function calcDist(p1, p2) {
-      const R = 6371;
-      const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-      const dLon = (p2.lng - p1.lng) * Math.PI / 180;
-      const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-
-    async function optimizeRoute() {
-      if (State.stops.length < 2) return;
-
-      const start = State.startCoords ? { lat: State.startCoords[0], lng: State.startCoords[1] } : { lat: State.stops[0].lat, lng: State.stops[0].lng };
-      let unvisited = [...State.stops];
-      let current = start;
-      const optimized = [];
-
-      while (unvisited.length > 0) {
-        let nearestIdx = 0;
-        let minDist = Infinity;
-        for (let i = 0; i < unvisited.length; i++) {
-          const d = calcDist(current, unvisited[i]);
-          if (d < minDist) {
-            minDist = d;
-            nearestIdx = i;
-          }
-        }
-        current = unvisited[nearestIdx];
-        optimized.push(unvisited.splice(nearestIdx, 1)[0]);
-      }
-
-      State.stops = optimized;
-      await renderRoute();
-      showToast('Sequência otimizada com sucesso!', 'success');
-    }
-
-    // IMPORTAÇÃO XLSX
-    let parsedTemp = [];
-    document.getElementById('xlsx-file-input').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        const data = new Uint8Array(evt.target.result);
-        const wb = XLSX.read(data, { type: 'array' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-        if (json.length === 0) {
-          showToast('Planilha vazia.', 'error');
+      init() {
+        if (!navigator.geolocation) {
+          alert('Geolocalização não é suportada pelo seu dispositivo.');
           return;
         }
 
-        // Reconhecimento Automático de Colunas
-        const keys = Object.keys(json[0]);
-        const addrKey = keys.find(k => /endere[cç]o|rua|address|logradouro/i.test(k)) || keys[1] || keys[0];
-        const nameKey = keys.find(k => /nome|cliente|destinat[aá]rio|name/i.test(k)) || keys[0];
+        navigator.geolocation.getCurrentPosition(
+          (pos) => this.handleSuccess(pos),
+          (err) => this.handleError(err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
 
-        parsedTemp = json.map((r, i) => ({
-          id: 'p_' + Date.now() + '_' + i,
-          name: r[nameKey] || `Parada #${i + 1}`,
-          addr: r[addrKey] || ''
-        })).filter(x => x.addr.length > 2);
-
-        document.getElementById('import-msg').textContent = `${parsedTemp.length} paradas identificadas na planilha.`;
-        document.getElementById('btn-confirm-import').removeAttribute('disabled');
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    document.getElementById('btn-confirm-import').addEventListener('click', async () => {
-      document.getElementById('modal-import').classList.remove('show');
-      showToast('Geocodificando endereços...', 'info');
-
-      // Geocodificação com fallback
-      for (let s of parsedTemp) {
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(s.addr)}&limit=1`);
-          const data = await res.json();
-          if (data.length > 0) {
-            s.lat = parseFloat(data[0].lat);
-            s.lng = parseFloat(data[0].lon);
-          } else {
-            throw new Error();
-          }
-        } catch(e) {
-          // Ponto próximo à partida
-          const baseLat = State.startCoords ? State.startCoords[0] : -23.55052;
-          const baseLng = State.startCoords ? State.startCoords[1] : -46.633308;
-          s.lat = baseLat + (Math.random() - 0.5) * 0.06;
-          s.lng = baseLng + (Math.random() - 0.5) * 0.06;
-        }
-        State.stops.push(s);
+        this.watchId = navigator.geolocation.watchPosition(
+          (pos) => this.handleSuccess(pos),
+          (err) => this.handleError(err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 2000 }
+        );
       }
 
-      renderRoute();
-      showToast(`${parsedTemp.length} paradas carregadas no mapa!`, 'success');
-    });
+      handleSuccess(position) {
+        this.currentPosition = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          heading: position.coords.heading,
+          speed: position.coords.speed
+        };
+        mapManager.updateDriverMarker(this.currentPosition);
+        this.listeners.forEach(fn => fn(this.currentPosition));
+      }
 
-    // EVENTOS DE UI
-    function bindEvents() {
-      document.getElementById('btn-toggle-menu').addEventListener('click', () => {
-        document.getElementById('app-sidebar').classList.toggle('open');
-      });
+      handleError(error) {
+        console.warn(`GPS Erro (${error.code}): ${error.message}`);
+        if (error.code === 1) {
+          alert('Permissão de GPS negada. Por favor, habilite o acesso à localização nas permissões do navegador.');
+        }
+      }
 
-      document.getElementById('btn-force-gps').addEventListener('click', initRealGPS);
-      document.getElementById('btn-cfg-use-gps').addEventListener('click', initRealGPS);
+      subscribe(callback) {
+        this.listeners.push(callback);
+      }
+    }
 
-      document.getElementById('btn-open-import').addEventListener('click', () => document.getElementById('modal-import').classList.add('show'));
-      document.getElementById('btn-menu-import').addEventListener('click', () => document.getElementById('modal-import').classList.add('show'));
-      document.getElementById('btn-close-import').addEventListener('click', () => document.getElementById('modal-import').classList.remove('show'));
-
-      document.getElementById('btn-open-cfg').addEventListener('click', () => document.getElementById('modal-cfg').classList.add('show'));
-      document.getElementById('btn-close-cfg').addEventListener('click', () => document.getElementById('modal-cfg').classList.remove('show'));
-      document.getElementById('btn-save-cfg').addEventListener('click', () => {
-        State.returnToStart = document.getElementById('cfg-return-start').value === 'true';
-        document.getElementById('modal-cfg').classList.remove('show');
-        renderRoute();
-      });
-
-      document.getElementById('btn-add-stop-manual').addEventListener('click', () => document.getElementById('modal-add-stop').classList.add('show'));
-      document.getElementById('btn-close-add').addEventListener('click', () => document.getElementById('modal-add-stop').classList.remove('show'));
-      document.getElementById('btn-save-add').addEventListener('click', async () => {
-        const name = document.getElementById('add-stop-name').value || 'Parada';
-        const addr = document.getElementById('add-stop-addr').value;
-        if (!addr) return;
-
-        let lat, lng;
+    /**
+     * Geocoder — Conversão de Endereços via Nominatim
+     */
+    class Geocoder {
+      static async search(address) {
+        if (!address || address.trim().length === 0) return null;
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr)}&limit=1`);
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+          const res = await fetch(url, { headers: { 'User-Agent': 'RouteFlow-Logistic-App' } });
           const data = await res.json();
-          lat = parseFloat(data[0].lat);
-          lng = parseFloat(data[0].lon);
-        } catch(e) {
-          lat = (State.startCoords ? State.startCoords[0] : -23.55) + 0.02;
-          lng = (State.startCoords ? State.startCoords[1] : -46.63) + 0.02;
+          if (data && data.length > 0) {
+            return {
+              lat: parseFloat(data[0].lat),
+              lng: parseFloat(data[0].lon),
+              displayName: data[0].display_name
+            };
+          }
+          return null;
+        } catch (e) {
+          console.error("Erro no Geocoding:", e);
+          return null;
+        }
+      }
+    }
+
+    /**
+     * MapManager — Gestão da visualização do Leaflet
+     */
+    class MapManager {
+      constructor() {
+        this.map = null;
+        this.driverMarker = null;
+        this.stopMarkers = [];
+        this.routePolyline = null;
+      }
+
+      init() {
+        this.map = L.map('map', { zoomControl: false }).setView([-23.55052, -46.633308], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(this.map);
+        L.control.zoom({ position: 'topright' }).addTo(this.map);
+      }
+
+      updateDriverMarker(pos) {
+        if (!this.map) return;
+        const latLng = [pos.lat, pos.lng];
+
+        if (!this.driverMarker) {
+          const icon = L.divIcon({
+            className: 'custom-driver-icon',
+            html: `<div style="background:#38bdf8; width:16px; height:16px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 10px #38bdf8;"></div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+          });
+          this.driverMarker = L.marker(latLng, { icon }).addTo(this.map);
+          this.map.setView(latLng, 14);
+        } else {
+          this.driverMarker.setLatLng(latLng);
+        }
+      }
+
+      renderStops(stops) {
+        this.stopMarkers.forEach(m => this.map.removeLayer(m));
+        this.stopMarkers = [];
+
+        stops.forEach((stop, index) => {
+          if (!stop.coords) return;
+          
+          let color = '#38bdf8';
+          if (stop.status === 'completed') color = '#10b981';
+          if (stop.status === 'skipped') color = '#ef4444';
+
+          const icon = L.divIcon({
+            className: 'custom-stop-marker',
+            html: `<div style="background:${color}; width:24px; height:24px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; color:#000; font-weight:bold; font-size:11px; box-shadow:0 2px 5px rgba(0,0,0,0.4);">${index + 1}</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+
+          const marker = L.marker([stop.coords.lat, stop.coords.lng], { icon })
+            .bindPopup(`<b>#${index + 1} - ${stop.client}</b><br>${stop.address}<br>Status: ${stop.status}`)
+            .addTo(this.map);
+
+          this.stopMarkers.push(marker);
+        });
+
+        this.fitBounds(stops);
+      }
+
+      drawPolyline(coordsArray) {
+        if (this.routePolyline) {
+          this.map.removeLayer(this.routePolyline);
+        }
+        if (coordsArray.length < 2) return;
+
+        this.routePolyline = L.polyline(coordsArray, {
+          color: '#6366f1',
+          weight: 4,
+          opacity: 0.8,
+          dashArray: '8, 4'
+        }).addTo(this.map);
+      }
+
+      fitBounds(stops) {
+        const validCoords = stops.filter(s => s.coords).map(s => [s.coords.lat, s.coords.lng]);
+        if (gpsManager.currentPosition) {
+          validCoords.push([gpsManager.currentPosition.lat, gpsManager.currentPosition.lng]);
+        }
+        if (validCoords.length > 0) {
+          this.map.fitBounds(validCoords, { padding: [40, 40] });
+        }
+      }
+    }
+
+    /**
+     * RouteManager — Estado das Paradas e Dados da Viagem
+     */
+    class RouteManager {
+      constructor() {
+        this.stops = [];
+      }
+
+      async addStop(client, address, extra = {}) {
+        const stop = {
+          id: 'stop-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+          client: client || 'Cliente Avulso',
+          address: address,
+          status: 'pending',
+          coords: null,
+          extra
+        };
+
+        this.stops.push(stop);
+        ui.renderStops();
+        
+        // Geocodificação em Background
+        const result = await Geocoder.search(address);
+        if (result) {
+          stop.coords = { lat: result.lat, lng: result.lng };
+          stop.status = 'pending';
+        } else {
+          stop.status = 'error';
+        }
+        ui.renderStops();
+        mapManager.renderStops(this.stops);
+      }
+
+      async addManualStop() {
+        const clientInput = document.getElementById('manual-client');
+        const addrInput = document.getElementById('manual-address');
+        if (!addrInput.value) return;
+
+        await this.addStop(clientInput.value, addrInput.value);
+        clientInput.value = '';
+        addrInput.value = '';
+      }
+
+      removeStop(id) {
+        this.stops = this.stops.filter(s => s.id !== id);
+        ui.renderStops();
+        mapManager.renderStops(this.stops);
+      }
+
+      clearAll() {
+        this.stops = [];
+        ui.renderStops();
+        mapManager.renderStops(this.stops);
+        if (mapManager.routePolyline) mapManager.map.removeLayer(mapManager.routePolyline);
+      }
+
+      reorder(fromIndex, toIndex) {
+        const item = this.stops.splice(fromIndex, 1)[0];
+        this.stops.splice(toIndex, 0, item);
+        ui.renderStops();
+        mapManager.renderStops(this.stops);
+        routeOptimizer.updatePolylineOnly();
+      }
+    }
+
+    /**
+     * RouteOptimizer — Motor de Otimização Euclidiana/2-Opt
+     */
+    class RouteOptimizer {
+      static calculateDistance(coord1, coord2) {
+        const R = 6371; // km
+        const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+        const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(coord1.lat * Math.PI / 180) * Math.cos(coord2.lat * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      async execute() {
+        const validStops = routeManager.stops.filter(s => s.coords !== null);
+        if (validStops.length < 2) {
+          alert('Necessário ao menos 2 paradas com geolocalização válida para otimização.');
+          return;
         }
 
-        State.stops.push({ id: 's_' + Date.now(), name, addr, lat, lng });
-        document.getElementById('modal-add-stop').classList.remove('show');
-        renderRoute();
-        showToast('Parada adicionada.', 'success');
-      });
+        ui.showOptimizerStatus('Iniciando otimização com Nearest Neighbor...');
+        await new Promise(r => setTimeout(r, 100));
 
-      document.getElementById('btn-exec-optimize').addEventListener('click', optimizeRoute);
+        let startCoord = gpsManager.currentPosition;
+        const startType = document.getElementById('route-start-type').value;
 
-      // PDF
-      document.getElementById('btn-gen-pdf').addEventListener('click', () => {
-        if (State.stops.length === 0) return showToast('Nenhuma parada para exportar.', 'error');
+        if (startType === 'manual') {
+          const manualAddr = document.getElementById('route-start-address').value;
+          const res = await Geocoder.search(manualAddr);
+          if (res) startCoord = { lat: res.lat, lng: res.lng };
+        }
+
+        if (!startCoord) {
+          alert('Ponto de partida GPS não disponível. Otimizando a partir da 1ª parada.');
+          startCoord = validStops[0].coords;
+        }
+
+        // 1. Nearest Neighbor
+        let unvisited = [...validStops];
+        let ordered = [];
+        let currentPoint = startCoord;
+
+        while (unvisited.length > 0) {
+          let nearestIdx = 0;
+          let minDist = Infinity;
+
+          for (let i = 0; i < unvisited.length; i++) {
+            const d = RouteOptimizer.calculateDistance(currentPoint, unvisited[i].coords);
+            if (d < minDist) {
+              minDist = d;
+              nearestIdx = i;
+            }
+          }
+
+          ordered.push(unvisited[nearestIdx]);
+          currentPoint = unvisited[nearestIdx].coords;
+          unvisited.splice(nearestIdx, 1);
+        }
+
+        // 2. 2-Opt Iterativo para refinamento
+        ui.showOptimizerStatus('Refinando malha com algoritmo 2-Opt...');
+        await new Promise(r => setTimeout(r, 100));
+        ordered = this.twoOpt(ordered, startCoord);
+
+        routeManager.stops = ordered;
+        ui.hideOptimizerStatus();
+        ui.renderStops();
+        mapManager.renderStops(routeManager.stops);
+        this.updatePolylineOnly(startCoord);
+      }
+
+      twoOpt(stops, startCoord) {
+        let improved = true;
+        let count = 0;
+        let best = [...stops];
+
+        const getTotalDistance = (arr) => {
+          let dist = RouteOptimizer.calculateDistance(startCoord, arr[0].coords);
+          for (let i = 0; i < arr.length - 1; i++) {
+            dist += RouteOptimizer.calculateDistance(arr[i].coords, arr[i + 1].coords);
+          }
+          return dist;
+        };
+
+        let bestDistance = getTotalDistance(best);
+
+        while (improved && count < 50) {
+          improved = false;
+          count++;
+          for (let i = 0; i < best.length - 1; i++) {
+            for (let k = i + 1; k < best.length; k++) {
+              const candidate = this.twoOptSwap(best, i, k);
+              const candidateDist = getTotalDistance(candidate);
+              if (candidateDist < bestDistance) {
+                best = candidate;
+                bestDistance = candidateDist;
+                improved = true;
+              }
+            }
+          }
+        }
+        return best;
+      }
+
+      twoOptSwap(route, i, k) {
+        const newRoute = route.slice(0, i);
+        const segment = route.slice(i, k + 1).reverse();
+        return newRoute.concat(segment).concat(route.slice(k + 1));
+      }
+
+      updatePolylineOnly(startCoord = gpsManager.currentPosition) {
+        const polyCoords = [];
+        if (startCoord) polyCoords.push([startCoord.lat, startCoord.lng]);
+        routeManager.stops.filter(s => s.coords).forEach(s => {
+          polyCoords.push([s.coords.lat, s.coords.lng]);
+        });
+        mapManager.drawPolyline(polyCoords);
+      }
+
+      recalculateFromCurrentLocation() {
+        document.getElementById('off-route-banner').style.display = 'none';
+        this.execute();
+      }
+    }
+
+    /**
+     * NavigationManager — Execução de Rota em Tempo Real e HUD
+     */
+    class NavigationManager {
+      constructor() {
+        this.currentIndex = 0;
+        this.active = false;
+      }
+
+      startRoute() {
+        if (routeManager.stops.length === 0) {
+          alert('Não há paradas para iniciar navegação.');
+          return;
+        }
+        this.active = true;
+        this.currentIndex = 0;
+        ui.setTab('nav');
+        this.updateHUD();
+
+        gpsManager.subscribe((pos) => this.onGPSUpdate(pos));
+      }
+
+      onGPSUpdate(pos) {
+        if (!this.active || this.currentIndex >= routeManager.stops.length) return;
+        const targetStop = routeManager.stops[this.currentIndex];
+        if (!targetStop || !targetStop.coords) return;
+
+        const dist = RouteOptimizer.calculateDistance(pos, targetStop.coords);
+        document.getElementById('hud-dist').innerText = `${dist.toFixed(2)} km`;
+
+        // Detecção de Desvio (> 3km de distância perpendicular intuitiva)
+        if (dist > 5.0) {
+          document.getElementById('off-route-banner').style.display = 'flex';
+        } else {
+          document.getElementById('off-route-banner').style.display = 'none';
+        }
+      }
+
+      completeCurrentStop() {
+        if (this.currentIndex < routeManager.stops.length) {
+          routeManager.stops[this.currentIndex].status = 'completed';
+          this.nextStop();
+        }
+      }
+
+      skipCurrentStop() {
+        if (this.currentIndex < routeManager.stops.length) {
+          routeManager.stops[this.currentIndex].status = 'skipped';
+          this.nextStop();
+        }
+      }
+
+      nextStop() {
+        this.currentIndex++;
+        ui.renderStops();
+        mapManager.renderStops(routeManager.stops);
+        this.updateHUD();
+      }
+
+      updateHUD() {
+        const hud = document.getElementById('nav-overlay-hud');
+        if (!this.active || this.currentIndex >= routeManager.stops.length) {
+          hud.style.display = 'none';
+          document.getElementById('nav-current-info').innerText = "Rota concluída!";
+          return;
+        }
+
+        hud.style.display = 'block';
+        const stop = routeManager.stops[this.currentIndex];
+        document.getElementById('hud-name').innerText = `#${this.currentIndex + 1} ${stop.client}`;
+        document.getElementById('hud-addr').innerText = stop.address;
+        document.getElementById('nav-current-info').innerHTML = `<b>#${this.currentIndex + 1} - ${stop.client}</b><br>${stop.address}`;
+
+        const remaining = routeManager.stops.filter(s => s.status === 'pending').length;
+        document.getElementById('nav-metric-rem').innerText = remaining;
+      }
+
+      stopRoute() {
+        this.active = false;
+        document.getElementById('nav-overlay-hud').style.display = 'none';
+        ui.setTab('stops');
+      }
+    }
+
+    /**
+     * FileImporter — Leitura XLSX com Normalização de Cabeçalhos
+     */
+    class FileImporter {
+      handleFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          const data = new Uint8Array(evt.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+
+          json.forEach(row => {
+            const keys = Object.keys(row);
+            const clientKey = keys.find(k => /cliente|nome|name/i.test(k));
+            const addrKey = keys.find(k => /endereço|endereco|address|rua|logradouro/i.test(k));
+            const numKey = keys.find(k => /número|numero|number|num/i.test(k));
+            const cityKey = keys.find(k => /cidade|city|municipio/i.test(k));
+
+            let addressBuilt = row[addrKey] || '';
+            if (row[numKey]) addressBuilt += `, ${row[numKey]}`;
+            if (row[cityKey]) addressBuilt += ` - ${row[cityKey]}`;
+
+            if (addressBuilt.trim()) {
+              routeManager.addStop(row[clientKey], addressBuilt, row);
+            }
+          });
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    }
+
+    /**
+     * PDFExporter — Geração de Relatório via jsPDF
+     */
+    class PDFExporter {
+      static generate() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFontSize(16);
-        doc.text('ROUTE FLOW — MANIFESTO DE ENTREGA', 14, 20);
+
+        doc.setFillColor(15, 23, 42);
+        doc.rect(0, 0, 210, 30, 'F');
+        
+        doc.setTextColor(56, 189, 248);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('ROUTE FLOW — Manifest de Entrega', 14, 18);
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 25);
+
+        let y = 40;
+        doc.setTextColor(0, 0, 0);
         doc.setFontSize(10);
-        doc.text(`Partida: ${State.startAddress}`, 14, 28);
-        doc.text(`Total de Paradas: ${State.stops.length}`, 14, 34);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Seq', 14, y);
+        doc.text('Cliente', 26, y);
+        doc.text('Endereço', 70, y);
+        doc.text('Status', 170, y);
+        doc.line(14, y + 2, 196, y + 2);
 
-        const rows = State.stops.map((s, idx) => [idx + 1, s.name, s.addr]);
-        doc.autoTable({
-          startY: 40,
-          head: [['#', 'Cliente / Identificador', 'Endereço Completo']],
-          body: rows
+        y += 8;
+        doc.setFont('helvetica', 'normal');
+        routeManager.stops.forEach((stop, i) => {
+          if (y > 280) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.text(String(i + 1), 14, y);
+          doc.text(String(stop.client).substring(0, 20), 26, y);
+          doc.text(String(stop.address).substring(0, 50), 70, y);
+          doc.text(String(stop.status), 170, y);
+          y += 7;
         });
-        doc.save('Rota_Otimizada.pdf');
-        showToast('PDF gerado com sucesso!', 'success');
-      });
 
-      // MODO NAVEGAÇÃO
-      document.getElementById('btn-start-nav').addEventListener('click', startNavigation);
-      document.getElementById('btn-menu-nav').addEventListener('click', startNavigation);
-      document.getElementById('btn-nav-exit').addEventListener('click', () => {
-        document.getElementById('view-navigation').classList.remove('active');
-        document.getElementById('view-optimizer').classList.add('active');
-        setTimeout(() => map.invalidateSize(), 200);
-      });
+        doc.save(`route-flow-manifest-${Date.now()}.pdf`);
+      }
+    }
 
-      document.getElementById('btn-nav-complete').addEventListener('click', () => {
-        State.navIndex++;
-        if (State.navIndex >= State.stops.length) {
-          showToast('Todas as entregas foram concluídas!', 'success');
-          document.getElementById('btn-nav-exit').click();
+    /**
+     * StorageManager — Persistência no LocalStorage
+     */
+    class StorageManager {
+      static saveCurrentRoute() {
+        if (routeManager.stops.length === 0) return;
+        const routes = JSON.parse(localStorage.getItem('rf_saved_routes') || '[]');
+        const newRecord = {
+          id: Date.now(),
+          date: new Date().toLocaleString(),
+          stops: routeManager.stops
+        };
+        routes.unshift(newRecord);
+        localStorage.setItem('rf_saved_routes', JSON.stringify(routes));
+        alert('Rota salva com sucesso no histórico local.');
+        ui.renderHistory();
+      }
+
+      static getRoutes() {
+        return JSON.parse(localStorage.getItem('rf_saved_routes') || '[]');
+      }
+
+      static loadRoute(id) {
+        const routes = this.getRoutes();
+        const found = routes.find(r => r.id === id);
+        if (found) {
+          routeManager.stops = found.stops;
+          ui.renderStops();
+          mapManager.renderStops(routeManager.stops);
+          ui.setTab('stops');
+        }
+      }
+
+      static deleteRoute(id) {
+        let routes = this.getRoutes();
+        routes = routes.filter(r => r.id !== id);
+        localStorage.setItem('rf_saved_routes', JSON.stringify(routes));
+        ui.renderHistory();
+      }
+    }
+
+    /**
+     * UIManager — Interações de Interface
+     */
+    class UIManager {
+      init() {
+        setTimeout(() => {
+          const splash = document.getElementById('splash-screen');
+          splash.style.opacity = '0';
+          setTimeout(() => splash.style.display = 'none', 600);
+        }, 1200);
+
+        this.initSortable();
+      }
+
+      setTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('nav .nav-btn').forEach(el => el.classList.remove('active'));
+        
+        const targetTab = document.getElementById(`tab-${tabId}`);
+        if (targetTab) targetTab.classList.add('active');
+
+        const tabIdx = ['stops', 'route', 'nav', 'history'].indexOf(tabId);
+        if (tabIdx >= 0) {
+          document.querySelectorAll('nav .nav-btn')[tabIdx].classList.add('active');
+        }
+
+        if (tabId === 'history') this.renderHistory();
+      }
+
+      toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+      }
+
+      toggleStartField() {
+        const val = document.getElementById('route-start-type').value;
+        document.getElementById('route-start-address').style.display = (val === 'manual') ? 'block' : 'none';
+      }
+
+      toggleEndField() {
+        const val = document.getElementById('route-end-type').value;
+        document.getElementById('route-end-address').style.display = (val === 'manual') ? 'block' : 'none';
+      }
+
+      showOptimizerStatus(text) {
+        const el = document.getElementById('optimizer-status-box');
+        document.getElementById('optimizer-status-text').innerText = text;
+        el.style.display = 'block';
+      }
+
+      hideOptimizerStatus() {
+        document.getElementById('optimizer-status-box').style.display = 'none';
+      }
+
+      initSortable() {
+        const el = document.getElementById('stop-list-ul');
+        Sortable.create(el, {
+          animation: 150,
+          onEnd: (evt) => {
+            routeManager.reorder(evt.oldIndex, evt.newIndex);
+          }
+        });
+      }
+
+      renderStops() {
+        const ul = document.getElementById('stop-list-ul');
+        ul.innerHTML = '';
+        document.getElementById('stop-counter').innerText = `${routeManager.stops.length} Paradas`;
+
+        routeManager.stops.forEach((stop, i) => {
+          const li = document.createElement('li');
+          li.className = `stop-item ${stop.status}`;
+          li.innerHTML = `
+            <div class="stop-index">${i + 1}</div>
+            <div class="stop-info">
+              <div class="stop-title">${stop.client}</div>
+              <div class="stop-desc">${stop.address}</div>
+            </div>
+            <span class="stop-status status-${stop.status}">${stop.status}</span>
+            <button class="btn btn-outline" style="width:auto; padding:4px 6px;" onclick="routeManager.removeStop('${stop.id}')">
+              <i class="fa-solid fa-trash" style="color:var(--danger)"></i>
+            </button>
+          `;
+          ul.appendChild(li);
+        });
+      }
+
+      renderHistory() {
+        const list = document.getElementById('history-list');
+        const routes = StorageManager.getRoutes();
+        list.innerHTML = '';
+
+        if (routes.length === 0) {
+          list.innerHTML = `<div style="font-size:0.8rem; color:var(--text-muted);">Nenhuma rota salva no histórico.</div>`;
           return;
         }
-        updateNavHUD();
-      });
+
+        routes.forEach(r => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <div style="font-weight:700; font-size:0.85rem;">Rota: ${r.date}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px;">${r.stops.length} Paradas registradas</div>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.loadRoute(${r.id})">Carregar</button>
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.deleteRoute(${r.id})">Excluir</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+      }
     }
 
-    function startNavigation() {
-      if (State.stops.length === 0) return showToast('Adicione paradas antes de navegar.', 'error');
-      State.navIndex = 0;
-      document.getElementById('view-optimizer').classList.remove('active');
-      document.getElementById('view-navigation').classList.add('active');
-      setTimeout(() => {
-        navMap.invalidateSize();
-        updateNavHUD();
-      }, 300);
-    }
+    // Instanciação e Inicialização
+    const gpsManager = new GPSManager();
+    const mapManager = new MapManager();
+    const routeManager = new RouteManager();
+    const routeOptimizer = new RouteOptimizer();
+    const navigationManager = new NavigationManager();
+    const fileImporter = new FileImporter();
+    const pdfExporter = PDFExporter;
+    const storageManager = StorageManager;
+    const ui = new UIManager();
 
-    function updateNavHUD() {
-      const stop = State.stops[State.navIndex];
-      if (!stop) return;
-
-      document.getElementById('nav-target-name').textContent = `Parada ${State.navIndex + 1}: ${stop.name}`;
-      document.getElementById('nav-target-addr').textContent = stop.addr;
-      navMap.setView([stop.lat, stop.lng], 16);
-    }
-
-    function showToast(msg, type = 'info') {
-      const box = document.getElementById('toast-box');
-      const item = document.createElement('div');
-      item.className = 'toast-item';
-      if (type === 'error') item.style.borderLeftColor = 'var(--accent-danger)';
-      if (type === 'success') item.style.borderLeftColor = 'var(--accent-primary)';
-      item.textContent = msg;
-      box.appendChild(item);
-      setTimeout(() => item.remove(), 3500);
-    }
+    window.addEventListener('DOMContentLoaded', () => {
+      mapManager.init();
+      ui.init();
+      document.getElementById('btn-gps-trigger').addEventListener('click', () => gpsManager.init());
+      gpsManager.init();
+    });
   </script>
 </body>
 </html>
