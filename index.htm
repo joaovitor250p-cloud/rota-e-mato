@@ -1,1764 +1,831 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>ROUTE FLOW — Roteirização & Navegação Profissional</title>
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    :root {
-      --bg-main: #090d16;
-      --panel-bg: #121929;
-      --card-bg: #1a233a;
-      --card-hover: #222e4d;
-      --border: #283655;
-      --primary: #00d2ff;
-      --primary-dark: #0090b3;
-      --primary-glow: rgba(0, 210, 255, 0.25);
-      --accent: #6366f1;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --sidebar-width: 440px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: var(--bg-main);
-      color: var(--text);
-    }
-
-    /* Splash Screen */
-    #splash {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at center, #1e293b, #090d16);
-      z-index: 100000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.4s ease, visibility 0.4s;
-    }
-    .splash-logo {
-      font-size: 2.8rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    /* Container Principal */
-    #app-container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      position: relative;
-    }
-
-    /* Sidebar Desktop */
-    #sidebar {
-      width: var(--sidebar-width);
-      height: 100%;
-      background: var(--panel-bg);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      z-index: 2000;
-      flex-shrink: 0;
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .app-header {
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      background: rgba(9, 13, 22, 0.7);
-    }
-    .brand-title {
-      font-size: 1.2rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* Status do GPS */
-    .gps-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      background: rgba(239, 68, 68, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .gps-badge.active {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--success);
-      border-color: rgba(16, 185, 129, 0.3);
-    }
-
-    /* Menu de Abas */
-    .nav-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-main);
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 12px 6px;
-      text-align: center;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: 0.2s;
-    }
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-      background: rgba(0, 210, 255, 0.04);
-    }
-
-    /* Conteúdo das Abas */
-    .tab-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: none;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .tab-content.active { display: flex; }
-
-    /* Componentes Gerais */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .card-title {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-    }
-
-    .form-control {
-      width: 100%;
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      outline: none;
-    }
-    .form-control:focus { border-color: var(--primary); }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 11px 16px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      transition: 0.2s;
-      width: 100%;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--accent)); color: #000; }
-    .btn-success { background: var(--success); color: #fff; }
-    .btn-warning { background: var(--warning); color: #000; }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-    .btn-outline:hover { background: var(--card-hover); }
-
-    /* Métricas */
-    .metrics-bar {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .metric-item {
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      padding: 10px 6px;
-      border-radius: 8px;
-      text-align: center;
-    }
-    .metric-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
-    .metric-lbl { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
-
-    /* Lista de Paradas */
-    .stops-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .stop-row {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      cursor: grab;
-      position: relative;
-    }
-    .stop-row.completed { border-left: 4px solid var(--success); opacity: 0.8; }
-    .stop-row.skipped { border-left: 4px solid var(--danger); opacity: 0.7; }
-    .stop-row.active-stop { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
-
-    .stop-num {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--bg-main);
-      border: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 0.8rem;
-      color: var(--text);
-      flex-shrink: 0;
-    }
-    .stop-row.completed .stop-num { background: var(--success); color: #fff; border-color: var(--success); }
-    .stop-row.skipped .stop-num { background: var(--danger); color: #fff; border-color: var(--danger); }
-
-    .stop-content { flex: 1; min-width: 0; }
-    .stop-title { font-weight: 700; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stop-subtitle { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-
-    .badge-status {
-      font-size: 0.65rem;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 700;
-      text-transform: uppercase;
-      display: inline-block;
-      margin-top: 4px;
-    }
-    .st-pending { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
-    .st-completed { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-    .st-skipped { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-    .st-error { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-
-    /* Área do Mapa */
-    #map-wrapper {
-      flex: 1;
-      height: 100%;
-      position: relative;
-      background: #0f172a;
-    }
-    #map { width: 100%; height: 100%; }
-
-    /* Modal de Importação XLSX */
-    #import-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(4px);
-      z-index: 10000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .modal-box {
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      width: 100%;
-      max-width: 800px;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
-    }
-    .modal-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .modal-body {
-      padding: 16px 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .modal-footer {
-      padding: 14px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
-
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      max-height: 300px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-    table.preview-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-    }
-    table.preview-table th, table.preview-table td {
-      padding: 8px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-    table.preview-table th { background: var(--bg-main); font-weight: 700; color: var(--text-muted); }
-
-    /* Alerta Desvio de Rota */
-    #off-route-alert {
-      position: absolute;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--danger);
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 30px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-      z-index: 2500;
-      display: none;
-      align-items: center;
-      gap: 12px;
-    }
-
-    /* Botão Centralizar GPS */
-    #btn-recenter-gps {
-      position: absolute;
-      bottom: 24px;
-      right: 24px;
-      width: 48px;
-      height: 48px;
-      background: var(--panel-bg);
-      border: 1px solid var(--border);
-      color: var(--primary);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      z-index: 1000;
-      transition: 0.2s;
-    }
-    #btn-recenter-gps:hover { transform: scale(1.05); border-color: var(--primary); }
-
-    /* Overlay Mobile Superior e Inferior de Navegação */
-    #mobile-nav-top {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      right: 12px;
-      background: rgba(18, 25, 41, 0.95);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 16px;
-      z-index: 1500;
-      display: none;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-    }
-    #mobile-nav-bottom {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--panel-bg);
-      border-top: 1px solid var(--border);
-      border-radius: 20px 20px 0 0;
-      padding: 16px;
-      z-index: 1500;
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 -8px 25px rgba(0,0,0,0.6);
-    }
-    .btn-nav-large {
-      padding: 16px;
-      font-size: 0.95rem;
-      font-weight: 800;
-      border-radius: 10px;
-    }
-
-    /* Custom Leaflet Marker */
-    .leaflet-div-icon { background: transparent; border: none; }
-    .custom-stop-marker {
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 11px;
-      color: #fff;
-      border: 2px solid #fff;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.5);
-    }
-    .custom-stop-marker.pending { background: #6366f1; }
-    .custom-stop-marker.current { background: #00d2ff; color: #000; transform: scale(1.25); box-shadow: 0 0 15px #00d2ff; }
-    .custom-stop-marker.completed { background: #10b981; }
-    .custom-stop-marker.skipped { background: #ef4444; }
-
-    .user-gps-dot {
-      width: 18px;
-      height: 18px;
-      background: #00d2ff;
-      border: 3px solid #fff;
-      border-radius: 50%;
-      box-shadow: 0 0 14px #00d2ff;
-      position: relative;
-    }
-
-    /* Mobile Adaptations */
-    @media (max-width: 768px) {
-      #sidebar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        transform: translateX(-100%);
-      }
-      #sidebar.open { transform: translateX(0); }
-      .mobile-header-bar {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 54px;
-        background: rgba(9, 13, 22, 0.9);
-        backdrop-filter: blur(8px);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 14px;
-        z-index: 1000;
-        border-bottom: 1px solid var(--border);
-      }
-      #btn-recenter-gps { bottom: 180px; }
-    }
-  </style>
-
-  <!-- Bibliotecas JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Finanças | João & Aquel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        joao: { light: '#EFF6FF', DEFAULT: '#2563EB', dark: '#1E40AF' },
+                        aquel: { light: '#FDF2F8', DEFAULT: '#DB2777', dark: '#9D174D' },
+                        casal: { light: '#F5F3FF', DEFAULT: '#7C3AED', dark: '#5B21B6' },
+                        dia5: '#0284C7',
+                        dia20: '#EA580C'
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Esconder barra de rolagem mas manter funcional */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .tap-highlight-transparent { -webkit-tap-highlight-color: transparent; }
+    </style>
 </head>
-<body>
-
-  <!-- Splash Screen -->
-  <div id="splash">
-    <div class="splash-logo"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
-    <div style="color:var(--text-muted); margin-top:8px; font-size:0.9rem;">Sistema Logístico de Roteirização & GPS</div>
-  </div>
-
-  <div id="app-container">
-    <!-- Barra Superior Mobile -->
-    <div class="mobile-header-bar" id="mobile-topbar" style="display:none;">
-      <div class="brand-title" style="font-size:1.05rem;"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <div id="mobile-gps-status" class="gps-badge" onclick="gpsManager.requestLocation()"><i class="fa-solid fa-location-crosshairs"></i> GPS</div>
-        <button class="btn btn-outline" style="width:auto; padding:6px 10px;" onclick="ui.toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-      </div>
-    </div>
-
-    <!-- Sidebar Principal -->
-    <aside id="sidebar">
-      <div class="app-header">
-        <div class="brand-title"><i class="fa-solid fa-route"></i> ROUTE FLOW</div>
-        <div id="desktop-gps-status" class="gps-badge" onclick="gpsManager.requestLocation()">
-          <i class="fa-solid fa-location-crosshairs"></i> <span>USAR GPS</span>
-        </div>
-      </div>
-
-      <div class="nav-tabs">
-        <div class="tab-btn active" onclick="ui.switchTab('stops')"><i class="fa-solid fa-list-check"></i> Paradas</div>
-        <div class="tab-btn" onclick="ui.switchTab('optimizer')"><i class="fa-solid fa-sliders"></i> Rota</div>
-        <div class="tab-btn" onclick="ui.switchTab('navigation')"><i class="fa-solid fa-location-arrow"></i> Navegação</div>
-        <div class="tab-btn" onclick="ui.switchTab('history')"><i class="fa-solid fa-history"></i> Histórico</div>
-      </div>
-
-      <!-- TAB 1: PARADAS & IMPORTAÇÃO -->
-      <div id="tab-stops" class="tab-content active">
-        <div class="card">
-          <div class="card-title">Importar Arquivo XLSX / XLS</div>
-          <input type="file" id="xlsx-input" accept=".xlsx, .xls" style="display:none;" onchange="fileImporter.handleFileInput(event)">
-          <button class="btn btn-primary" onclick="document.getElementById('xlsx-input').click()">
-            <i class="fa-solid fa-file-excel"></i> IMPORTAR PLANILHA XLSX
-          </button>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Adicionar Parada Manual</div>
-          <input type="text" id="manual-client" class="form-control" placeholder="Nome / Destinatário">
-          <input type="text" id="manual-address" class="form-control" placeholder="Endereço, Número, Cidade ou CEP">
-          <button class="btn btn-outline" onclick="routeManager.addManual()">
-            <i class="fa-solid fa-plus"></i> Adicionar Parada
-          </button>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span id="stops-counter" style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">0 Paradas</span>
-          <button class="btn btn-danger" style="width:auto; padding:4px 8px; font-size:0.7rem;" onclick="routeManager.clearAll()">Limpar Todas</button>
-        </div>
-
-        <ul id="stops-list-container" class="stops-list"></ul>
-      </div>
-
-      <!-- TAB 2: OTIMIZADOR & ROTA -->
-      <div id="tab-optimizer" class="tab-content">
-        <div class="metrics-bar">
-          <div class="metric-item">
-            <div id="metric-stops" class="metric-val">0</div>
-            <div class="metric-lbl">Paradas</div>
-          </div>
-          <div class="metric-item">
-            <div id="metric-dist" class="metric-val">0 km</div>
-            <div class="metric-lbl">Distância</div>
-          </div>
-          <div class="metric-item">
-            <div id="metric-time" class="metric-val">0 min</div>
-            <div class="metric-lbl">Tempo Est.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">Ponto de Partida</div>
-          <select id="start-mode" class="form-control" onchange="ui.toggleStartField()">
-            <option value="gps">Minha Localização Atual (GPS Real)</option>
-            <option value="manual">Endereço de Partida Manual</option>
-          </select>
-          <input type="text" id="start-address-manual" class="form-control" placeholder="Digite o ponto de partida..." style="display:none;">
-        </div>
-
-        <div id="optimizer-status-card" class="card" style="display:none;">
-          <div style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--primary); font-weight:700;">
-            <i class="fa-solid fa-circle-notch fa-spin"></i>
-            <span id="optimizer-status-text">Otimizando malha viária...</span>
-          </div>
-        </div>
-
-        <button class="btn btn-primary" onclick="routeOptimizer.runOptimization()">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> OTIMIZAR SEQUÊNCIA REAL
-        </button>
-
-        <button class="btn btn-success" onclick="navigationManager.startNavigation()">
-          <i class="fa-solid fa-location-arrow"></i> INICIAR NAVEGAÇÃO
-        </button>
-
-        <button class="btn btn-outline" onclick="pdfExporter.generatePDF()">
-          <i class="fa-solid fa-file-pdf"></i> BAIXAR SEQUÊNCIA EM PDF
-        </button>
-
-        <button class="btn btn-outline" onclick="storageManager.saveCurrentRoute()">
-          <i class="fa-solid fa-floppy-disk"></i> Salvar Rota no Histórico
-        </button>
-      </div>
-
-      <!-- TAB 3: NAVEGAÇÃO -->
-      <div id="tab-navigation" class="tab-content">
-        <div class="card" id="nav-target-card">
-          <div class="card-title">Parada Atual em Andamento</div>
-          <div id="nav-target-client" style="font-size:1.1rem; font-weight:800; color:var(--primary);">Nenhuma rota ativa</div>
-          <div id="nav-target-address" style="font-size:0.8rem; color:var(--text-muted);">Inicie a rota no menu para navegar.</div>
-          
-          <div style="display:flex; justify-content:space-between; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
-            <div>
-              <div class="card-title">Distância</div>
-              <div id="nav-target-dist" style="font-size:1.1rem; font-weight:800;">—</div>
-            </div>
-            <div>
-              <div class="card-title">Progresso</div>
-              <div id="nav-target-prog" style="font-size:1.1rem; font-weight:800;">0 / 0</div>
-            </div>
-          </div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:8px;">
-          <button class="btn btn-success btn-nav-large" onclick="navigationManager.completeCurrent()">
-            <i class="fa-solid fa-check"></i> CONCLUIR PARADA
-          </button>
-          <button class="btn btn-warning btn-nav-large" onclick="navigationManager.skipCurrent()">
-            <i class="fa-solid fa-forward"></i> PULAR PARADA
-          </button>
-          <button class="btn btn-outline" onclick="routeOptimizer.recalculateFromCurrentLocation()">
-            <i class="fa-solid fa-arrows-rotate"></i> RECALCULAR ROTA
-          </button>
-          <button class="btn btn-danger" onclick="navigationManager.terminateNavigation()">
-            <i class="fa-solid fa-stop"></i> ENCERRAR NAVEGAÇÃO
-          </button>
-        </div>
-      </div>
-
-      <!-- TAB 4: HISTÓRICO -->
-      <div id="tab-history" class="tab-content">
-        <div class="card-title">Minhas Rotas Salvas</div>
-        <div id="history-items-container" style="display:flex; flex-direction:column; gap:8px;"></div>
-      </div>
-    </aside>
-
-    <!-- Área do Mapa & Overlays -->
-    <main id="map-wrapper">
-      <div id="off-route-alert">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-        <span>VOCÊ SAIU DA ROTA!</span>
-        <button class="btn btn-outline" style="width:auto; padding:4px 8px; font-size:0.75rem; border-color:#fff;" onclick="routeOptimizer.recalculateFromCurrentLocation()">RECALCULAR</button>
-      </div>
-
-      <!-- Mobile Nav Top Display -->
-      <div id="mobile-nav-top">
-        <div style="font-size:0.7rem; font-weight:700; color:var(--primary); text-transform:uppercase;">PRÓXIMA PARADA</div>
-        <div id="mobile-hud-name" style="font-size:1.1rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
-        <div id="mobile-hud-addr" style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
-        <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:0.85rem; font-weight:700;">
-          <span id="mobile-hud-dist" style="color:var(--primary);">—</span>
-          <span id="mobile-hud-prog">0 / 0</span>
-        </div>
-      </div>
-
-      <div id="map"></div>
-      <button id="btn-recenter-gps" onclick="gpsManager.recenterMap()"><i class="fa-solid fa-crosshairs"></i></button>
-
-      <!-- Mobile Nav Bottom Actions -->
-      <div id="mobile-nav-bottom">
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; color:var(--text-muted);">
-          <span id="mobile-bottom-dist-rem">0 km restantes</span>
-          <span id="mobile-bottom-time-rem">0 min restantes</span>
-        </div>
-        <button class="btn btn-success btn-nav-large" onclick="navigationManager.completeCurrent()">
-          <i class="fa-solid fa-check"></i> CONCLUIR PARADA
-        </button>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <button class="btn btn-warning" onclick="navigationManager.skipCurrent()">
-            <i class="fa-solid fa-forward"></i> PULAR
-          </button>
-          <button class="btn btn-outline" onclick="routeOptimizer.recalculateFromCurrentLocation()">
-            <i class="fa-solid fa-arrows-rotate"></i> RECALCULAR
-          </button>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <!-- MODAL DE PRÉ-VISUALIZAÇÃO E MAPEAMENTO XLSX -->
-  <div id="import-modal">
-    <div class="modal-box">
-      <div class="modal-header">
-        <div style="font-weight:800; font-size:1.1rem;"><i class="fa-solid fa-file-circle-check"></i> CONFERIR IMPORTAÇÃO XLSX</div>
-        <button class="btn-outline" style="width:auto; padding:4px 8px; border:none; cursor:pointer;" onclick="fileImporter.closeModal()"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        <div id="import-sheet-select-row" style="display:flex; gap:10px; align-items:center;">
-          <label style="font-size:0.85rem; font-weight:700;">Selecione a Aba:</label>
-          <select id="import-sheet-selector" class="form-control" style="width:auto; flex:1;" onchange="fileImporter.onSheetChange()"></select>
-        </div>
-
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <div>
-            <label class="card-title">Coluna do Cliente / Nome</label>
-            <select id="map-col-client" class="form-control" onchange="fileImporter.rebuildPreview()"></select>
-          </div>
-          <div>
-            <label class="card-title">Coluna Principal de Endereço</label>
-            <select id="map-col-address" class="form-control" onchange="fileImporter.rebuildPreview()"></select>
-          </div>
-        </div>
-
-        <div id="import-summary-text" style="font-size:0.85rem; font-weight:600; color:var(--primary);"></div>
-        <div id="duplicate-warning-banner" style="display:none; background:rgba(245,158,11,0.15); border:1px solid var(--warning); padding:8px 12px; border-radius:8px; font-size:0.8rem; justify-content:space-between; align-items:center;">
-          <span id="duplicate-warning-msg">Endereços duplicados encontrados.</span>
-          <button class="btn btn-warning" style="width:auto; padding:4px 8px; font-size:0.75rem;" onclick="fileImporter.removeDuplicates()">Remover Duplicados</button>
-        </div>
-
-        <div class="table-container">
-          <table class="preview-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Cliente</th>
-                <th>Endereço Completo Formatado</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="preview-table-body"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" style="width:auto;" onclick="fileImporter.closeModal()">Cancelar</button>
-        <button class="btn btn-primary" style="width:auto;" onclick="fileImporter.confirmImport()">Confirmar e Importar Paradas</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    /**
-     * GPSManager — Manipulação Real de Localização
-     */
-    class GPSManager {
-      constructor() {
-        this.currentPosition = null;
-        this.watchId = null;
-        this.callbacks = [];
-      }
-
-      init() {
-        this.requestLocation();
-      }
-
-      requestLocation() {
-        if (!navigator.geolocation) {
-          this.updateBadge(false, 'GPS Não Suportado');
-          return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          pos => this.handleSuccess(pos),
-          err => this.handleError(err),
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-
-        if (!this.watchId) {
-          this.watchId = navigator.geolocation.watchPosition(
-            pos => this.handleSuccess(pos),
-            err => this.handleError(err),
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 }
-          );
-        }
-      }
-
-      handleSuccess(position) {
-        this.currentPosition = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          heading: position.coords.heading,
-          speed: position.coords.speed,
-          accuracy: position.coords.accuracy
-        };
-        this.updateBadge(true, 'GPS ATIVO');
-        mapManager.updateDriverMarker(this.currentPosition);
-        this.callbacks.forEach(cb => cb(this.currentPosition));
-      }
-
-      handleError(error) {
-        console.warn('GPS Error:', error);
-        let msg = 'GPS Inativo';
-        if (error.code === 1) msg = 'GPS Negado';
-        this.updateBadge(false, msg);
-      }
-
-      updateBadge(active, text) {
-        ['desktop-gps-status', 'mobile-gps-status'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.className = `gps-badge ${active ? 'active' : ''}`;
-            const span = el.querySelector('span');
-            if (span) span.innerText = text;
-          }
-        });
-      }
-
-      recenterMap() {
-        if (this.currentPosition) {
-          mapManager.map.setView([this.currentPosition.lat, this.currentPosition.lng], 16);
-        } else {
-          this.requestLocation();
-        }
-      }
-
-      onPositionChange(cb) {
-        this.callbacks.push(cb);
-      }
-    }
-
-    /**
-     * Geocoder — Conversão em Lote Resiliente
-     */
-    class Geocoder {
-      static async searchAddress(address) {
-        if (!address || address.trim().length === 0) return null;
-        try {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-          const res = await fetch(url, { headers: { 'User-Agent': 'RouteFlow-V3-Production' } });
-          const data = await res.json();
-          if (data && data.length > 0) {
-            return {
-              lat: parseFloat(data[0].lat),
-              lng: parseFloat(data[0].lon)
-            };
-          }
-          return null;
-        } catch (e) {
-          console.error("Geocoding exception:", e);
-          return null;
-        }
-      }
-
-      static async geocodeAll(stops, onProgress) {
-        for (let i = 0; i < stops.length; i++) {
-          const s = stops[i];
-          if (!s.coords) {
-            if (onProgress) onProgress(i + 1, stops.length, s.address);
-            const res = await this.searchAddress(s.address);
-            if (res) {
-              s.coords = res;
-              s.status = 'pending';
-            } else {
-              s.status = 'error';
-            }
-            await new Promise(r => setTimeout(r, 800)); // Respeito ao limite do Nominatim
-          }
-        }
-      }
-    }
-
-    /**
-     * MapManager — Gestão Completa de Leaflet e Linhas OSRM
-     */
-    class MapManager {
-      constructor() {
-        this.map = null;
-        this.driverMarker = null;
-        this.markers = [];
-        this.routePolyline = null;
-      }
-
-      init() {
-        this.map = L.map('map', { zoomControl: false }).setView([-23.55052, -46.633308], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(this.map);
-
-        L.control.zoom({ position: 'topright' }).addTo(this.map);
-        setTimeout(() => this.map.invalidateSize(), 300);
-        window.addEventListener('resize', () => this.map.invalidateSize());
-      }
-
-      updateDriverMarker(pos) {
-        if (!this.map) return;
-        const latLng = [pos.lat, pos.lng];
-
-        if (!this.driverMarker) {
-          const icon = L.divIcon({
-            className: 'driver-marker-box',
-            html: '<div class="user-gps-dot"></div>',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-          });
-          this.driverMarker = L.marker(latLng, { icon, zIndexOffset: 2000 }).addTo(this.map);
-          if (routeManager.stops.length === 0) {
-            this.map.setView(latLng, 15);
-          }
-        } else {
-          this.driverMarker.setLatLng(latLng);
-        }
-      }
-
-      renderStops(stops, currentIndex = -1) {
-        this.markers.forEach(m => this.map.removeLayer(m));
-        this.markers = [];
-
-        stops.forEach((stop, i) => {
-          if (!stop.coords) return;
-          const isCurrent = (i === currentIndex);
-          let markerClass = `custom-stop-marker ${stop.status}`;
-          if (isCurrent) markerClass = 'custom-stop-marker current';
-
-          const icon = L.divIcon({
-            className: 'stop-marker-wrapper',
-            html: `<div class="${markerClass}" style="width:26px; height:26px;">${i + 1}</div>`,
-            iconSize: [26, 26],
-            iconAnchor: [13, 13]
-          });
-
-          const m = L.marker([stop.coords.lat, stop.coords.lng], { icon })
-            .bindPopup(`<b>#${i + 1} - ${stop.client}</b><br>${stop.address}<br>Status: ${stop.status}`)
-            .addTo(this.map);
-
-          this.markers.push(m);
-        });
-      }
-
-      drawRouteLine(points) {
-        if (this.routePolyline) {
-          this.map.removeLayer(this.routePolyline);
-        }
-        if (!points || points.length < 2) return;
-
-        this.routePolyline = L.polyline(points, {
-          color: '#00d2ff',
-          weight: 5,
-          opacity: 0.85,
-          lineJoin: 'round'
-        }).addTo(this.map);
-      }
-
-      fitBounds(latLngs) {
-        if (!this.map || latLngs.length === 0) return;
-        this.map.fitBounds(latLngs, { padding: [50, 50], maxZoom: 16 });
-      }
-    }
-
-    /**
-     * FileImporter — Leitura Inteligente XLSX & Mapeamento Flexível
-     */
-    class FileImporter {
-      constructor() {
-        this.workbook = null;
-        this.currentRows = [];
-        this.detectedColumns = [];
-        this.mappedStops = [];
-      }
-
-      normalizeKey(key) {
-        return String(key).toLowerCase()
-          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9]/g, '');
-      }
-
-      handleFileInput(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          try {
-            const data = new Uint8Array(evt.target.result);
-            this.workbook = XLSX.read(data, { type: 'array' });
-            
-            // Popula seletor de abas
-            const sheetSelector = document.getElementById('import-sheet-selector');
-            sheetSelector.innerHTML = '';
-            this.workbook.SheetNames.forEach(sheetName => {
-              const opt = document.createElement('option');
-              opt.value = sheetName;
-              opt.innerText = sheetName;
-              sheetSelector.appendChild(opt);
-            });
-
-            this.parseSelectedSheet(this.workbook.SheetNames[0]);
-            document.getElementById('import-modal').style.display = 'flex';
-          } catch (err) {
-            alert('Falha ao processar arquivo XLSX: ' + err.message);
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      }
-
-      onSheetChange() {
-        const selSheet = document.getElementById('import-sheet-selector').value;
-        this.parseSelectedSheet(selSheet);
-      }
-
-      parseSelectedSheet(sheetName) {
-        const sheet = this.workbook.Sheets[sheetName];
-        const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '', blankrows: false });
-
-        if (rawRows.length === 0) {
-          alert('A aba selecionada não contém linhas de dados.');
-          return;
-        }
-
-        // Filtra linhas completamente vazias
-        this.currentRows = rawRows.filter(row => {
-          return Object.values(row).some(v => String(v).trim().length > 0);
-        });
-
-        this.detectedColumns = Object.keys(this.currentRows[0]);
-        this.populateColumnSelectors();
-        this.rebuildPreview();
-      }
-
-      populateColumnSelectors() {
-        const clientSel = document.getElementById('map-col-client');
-        const addressSel = document.getElementById('map-col-address');
-        clientSel.innerHTML = '<option value="">-- Detectar Automaticamente --</option>';
-        addressSel.innerHTML = '<option value="">-- Detectar Automaticamente --</option>';
-
-        this.detectedColumns.forEach(col => {
-          const opt1 = document.createElement('option');
-          opt1.value = col;
-          opt1.innerText = col;
-          clientSel.appendChild(opt1);
-
-          const opt2 = document.createElement('option');
-          opt2.value = col;
-          opt2.innerText = col;
-          addressSel.appendChild(opt2);
-        });
-
-        // Auto-seleção de colunas com heurística normalizada
-        this.detectedColumns.forEach(col => {
-          const n = this.normalizeKey(col);
-          if (/cliente|nome|destinatario|customer|name/.test(n)) clientSel.value = col;
-          if (/endereco|rua|logradouro|address|localizacao|local/.test(n)) addressSel.value = col;
-        });
-      }
-
-      rebuildPreview() {
-        const manualClientCol = document.getElementById('map-col-client').value;
-        const manualAddrCol = document.getElementById('map-col-address').value;
-
-        this.mappedStops = [];
-        let duplicateCount = 0;
-        const seenAddresses = new Set();
-
-        this.currentRows.forEach(row => {
-          const keys = Object.keys(row);
-
-          // Identificação de Nome
-          let client = manualClientCol ? row[manualClientCol] : '';
-          if (!client) {
-            const cKey = keys.find(k => /cliente|nome|destinatario|customer|name/i.test(this.normalizeKey(k)));
-            client = cKey ? row[cKey] : 'Cliente Sem Nome';
-          }
-
-          // Montagem de Endereço Completo
-          let fullAddress = '';
-          if (manualAddrCol && row[manualAddrCol]) {
-            fullAddress = String(row[manualAddrCol]).trim();
-          } else {
-            const addrKey = keys.find(k => /endereco|rua|logradouro|address|local/i.test(this.normalizeKey(k)));
-            const numKey = keys.find(k => /numero|num|number|n/i.test(this.normalizeKey(k)));
-            const cityKey = keys.find(k => /cidade|city|municipio/i.test(this.normalizeKey(k)));
-            const cepKey = keys.find(k => /cep|postalcode|zip/i.test(this.normalizeKey(k)));
-
-            let parts = [];
-            if (addrKey && row[addrKey]) parts.push(row[addrKey]);
-            if (numKey && row[numKey]) parts.push(row[numKey]);
-            if (cityKey && row[cityKey]) parts.push(row[cityKey]);
-            if (cepKey && row[cepKey]) parts.push(`CEP ${row[cepKey]}`);
-            fullAddress = parts.join(', ');
-          }
-
-          if (fullAddress.trim().length > 0) {
-            if (seenAddresses.has(fullAddress.toLowerCase())) {
-              duplicateCount++;
-            }
-            seenAddresses.add(fullAddress.toLowerCase());
-
-            this.mappedStops.push({
-              client: String(client).trim() || 'Cliente XLSX',
-              address: fullAddress.trim(),
-              status: 'pending',
-              coords: null
-            });
-          }
-        });
-
-        // Atualização da Tabela de Preview
-        const tbody = document.getElementById('preview-table-body');
-        tbody.innerHTML = '';
-        this.mappedStops.slice(0, 100).forEach((stop, idx) => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${idx + 1}</td>
-            <td>${stop.client}</td>
-            <td>${stop.address}</td>
-            <td><span class="badge-status st-pending">Válido</span></td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        document.getElementById('import-summary-text').innerText = 
-          `Linhas lidas: ${this.currentRows.length} | Paradas válidas identificadas: ${this.mappedStops.length}`;
-
-        const dupBanner = document.getElementById('duplicate-warning-banner');
-        if (duplicateCount > 0) {
-          dupBanner.style.display = 'flex';
-          document.getElementById('duplicate-warning-msg').innerText = `${duplicateCount} endereços duplicados encontrados.`;
-        } else {
-          dupBanner.style.display = 'none';
-        }
-      }
-
-      removeDuplicates() {
-        const unique = [];
-        const seen = new Set();
-        this.mappedStops.forEach(s => {
-          const k = s.address.toLowerCase();
-          if (!seen.has(k)) {
-            seen.add(k);
-            unique.push(s);
-          }
-        });
-        this.mappedStops = unique;
-        document.getElementById('duplicate-warning-banner').style.display = 'none';
-        this.rebuildPreview();
-      }
-
-      async confirmImport() {
-        this.closeModal();
-        if (this.mappedStops.length === 0) return;
-
-        routeManager.stops = this.mappedStops.map(s => ({
-          ...s,
-          id: 's-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4)
-        }));
-
-        ui.renderStopsList();
-        ui.showOptimizerStatus(`Geocodificando ${routeManager.stops.length} endereços...`);
-
-        await Geocoder.geocodeAll(routeManager.stops, (curr, total, addr) => {
-          ui.showOptimizerStatus(`Geocodificando (${curr}/${total}): ${addr.substring(0, 30)}...`);
-          ui.renderStopsList();
-        });
-
-        ui.hideOptimizerStatus();
-        ui.renderStopsList();
-        mapManager.renderStops(routeManager.stops);
-        ui.updateMetrics();
-      }
-
-      closeModal() {
-        document.getElementById('import-modal').style.display = 'none';
-      }
-    }
-
-    /**
-     * RouteManager — Estado das Paradas
-     */
-    class RouteManager {
-      constructor() {
-        this.stops = [];
-      }
-
-      async addManual() {
-        const cIn = document.getElementById('manual-client');
-        const aIn = document.getElementById('manual-address');
-        if (!aIn.value.trim()) return;
-
-        const stop = {
-          id: 's-' + Date.now(),
-          client: cIn.value.trim() || 'Cliente Avulso',
-          address: aIn.value.trim(),
-          status: 'pending',
-          coords: null
-        };
-
-        this.stops.push(stop);
-        cIn.value = '';
-        aIn.value = '';
-        ui.renderStopsList();
-
-        const geo = await Geocoder.searchAddress(stop.address);
-        if (geo) {
-          stop.coords = geo;
-          stop.status = 'pending';
-        } else {
-          stop.status = 'error';
-        }
-
-        ui.renderStopsList();
-        mapManager.renderStops(this.stops);
-        ui.updateMetrics();
-      }
-
-      removeStop(id) {
-        this.stops = this.stops.filter(s => s.id !== id);
-        ui.renderStopsList();
-        mapManager.renderStops(this.stops);
-        routeOptimizer.drawCurrentSequenceLine();
-        ui.updateMetrics();
-      }
-
-      clearAll() {
-        this.stops = [];
-        ui.renderStopsList();
-        mapManager.renderStops(this.stops);
-        if (mapManager.routePolyline) mapManager.map.removeLayer(mapManager.routePolyline);
-        ui.updateMetrics();
-      }
-
-      reorder(from, to) {
-        const item = this.stops.splice(from, 1)[0];
-        this.stops.splice(to, 0, item);
-        ui.renderStopsList();
-        mapManager.renderStops(this.stops);
-        routeOptimizer.drawCurrentSequenceLine();
-      }
-    }
-
-    /**
-     * RouteOptimizer — Motor de Roteirização Real (Nearest Neighbor + 2-Opt)
-     */
-    class RouteOptimizer {
-      static calculateHaversine(a, b) {
-        const R = 6371;
-        const dLat = (b.lat - a.lat) * (Math.PI / 180);
-        const dLng = (b.lng - a.lng) * (Math.PI / 180);
-        const sa = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                   Math.cos(a.lat * (Math.PI / 180)) * Math.cos(b.lat * (Math.PI / 180)) *
-                   Math.sin(dLng / 2) * Math.sin(dLng / 2);
-        return R * 2 * Math.atan2(Math.sqrt(sa), Math.sqrt(1 - sa));
-      }
-
-      async getStartCoord() {
-        const mode = document.getElementById('start-mode').value;
-        if (mode === 'gps' && gpsManager.currentPosition) {
-          return gpsManager.currentPosition;
-        } else if (mode === 'manual') {
-          const addr = document.getElementById('start-address-manual').value;
-          const res = await Geocoder.searchAddress(addr);
-          if (res) return res;
-        }
-        const first = routeManager.stops.find(s => s.coords);
-        return first ? first.coords : null;
-      }
-
-      async runOptimization() {
-        const valid = routeManager.stops.filter(s => s.coords);
-        if (valid.length < 2) {
-          alert('Necessário ter no mínimo 2 paradas geocodificadas para otimizar.');
-          return;
-        }
-
-        ui.showOptimizerStatus('Obtendo ponto de partida...');
-        const startCoord = await this.getStartCoord();
-        if (!startCoord) {
-          ui.hideOptimizerStatus();
-          alert('Ponto de partida não disponível. Habilite o GPS ou digite um endereço.');
-          return;
-        }
-
-        // 1. Nearest Neighbor
-        ui.showOptimizerStatus('Calculando sequência inicial...');
-        await new Promise(r => setTimeout(r, 60));
-
-        let unvisited = [...valid];
-        let route = [];
-        let curr = startCoord;
-
-        while (unvisited.length > 0) {
-          let bestIdx = 0;
-          let minDist = Infinity;
-          for (let i = 0; i < unvisited.length; i++) {
-            const d = RouteOptimizer.calculateHaversine(curr, unvisited[i].coords);
-            if (d < minDist) {
-              minDist = d;
-              bestIdx = i;
-            }
-          }
-          route.push(unvisited[bestIdx]);
-          curr = unvisited[bestIdx].coords;
-          unvisited.splice(bestIdx, 1);
-        }
-
-        // 2. 2-Opt Iterativo
-        ui.showOptimizerStatus('Refinando malha com algoritmo 2-Opt...');
-        await new Promise(r => setTimeout(r, 60));
-        route = this.execute2Opt(route, startCoord);
-
-        routeManager.stops = route;
-        ui.hideOptimizerStatus();
-        ui.renderStopsList();
-        mapManager.renderStops(routeManager.stops);
-
-        await this.drawCurrentSequenceLine(startCoord);
-      }
-
-      execute2Opt(route, startCoord) {
-        let best = [...route];
-        let count = 0;
-        let improved = true;
-
-        const evalDist = (arr) => {
-          let d = RouteOptimizer.calculateHaversine(startCoord, arr[0].coords);
-          for (let i = 0; i < arr.length - 1; i++) {
-            d += RouteOptimizer.calculateHaversine(arr[i].coords, arr[i + 1].coords);
-          }
-          return d;
-        };
-
-        let bestDist = evalDist(best);
-
-        while (improved && count < 50) {
-          improved = false;
-          count++;
-          for (let i = 0; i < best.length - 1; i++) {
-            for (let k = i + 1; k < best.length; k++) {
-              const candidate = this.twoOptSwap(best, i, k);
-              const d = evalDist(candidate);
-              if (d < bestDist) {
-                best = candidate;
-                bestDist = d;
-                improved = true;
-              }
-            }
-          }
-        }
-        return best;
-      }
-
-      twoOptSwap(route, i, k) {
-        const p1 = route.slice(0, i);
-        const p2 = route.slice(i, k + 1).reverse();
-        const p3 = route.slice(k + 1);
-        return p1.concat(p2).concat(p3);
-      }
-
-      async drawCurrentSequenceLine(startCoord = null) {
-        if (!startCoord) startCoord = await this.getStartCoord();
-        const points = [];
-        if (startCoord) points.push(startCoord);
-        routeManager.stops.filter(s => s.coords).forEach(s => points.push(s.coords));
-
-        if (points.length < 2) return;
-
-        try {
-          const coordsStr = points.map(p => `${p.lng},${p.lat}`).join(';');
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`);
-          const data = await res.json();
-          if (data && data.routes && data.routes.length > 0) {
-            const line = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-            mapManager.drawRouteLine(line);
-            mapManager.fitBounds(points.map(p => [p.lat, p.lng]));
-
-            const km = (data.routes[0].distance / 1000).toFixed(1);
-            const min = Math.round(data.routes[0].duration / 60);
-            ui.setMetrics(routeManager.stops.length, km, min);
-            return;
-          }
-        } catch (e) {
-          console.warn('Fallback rota direta Haversine:', e);
-        }
-
-        const direct = points.map(p => [p.lat, p.lng]);
-        mapManager.drawRouteLine(direct);
-        mapManager.fitBounds(direct);
-        ui.updateMetrics();
-      }
-
-      async recalculateFromCurrentLocation() {
-        document.getElementById('off-route-alert').style.display = 'none';
-        if (!gpsManager.currentPosition) {
-          alert('Aguardando sinal GPS real.');
-          return;
-        }
-        await this.runOptimization();
-      }
-    }
-
-    /**
-     * NavigationManager — Execução Real da Rota em Tempo Real
-     */
-    class NavigationManager {
-      constructor() {
-        this.active = false;
-        this.currentIndex = 0;
-      }
-
-      startNavigation() {
-        if (routeManager.stops.length === 0) {
-          alert('Não há paradas para navegar.');
-          return;
-        }
-        this.active = true;
-        this.currentIndex = 0;
-        ui.switchTab('navigation');
-        this.updateHUD();
-
-        gpsManager.onPositionChange(pos => this.track(pos));
-        gpsManager.recenterMap();
-
-        if (window.innerWidth <= 768) {
-          document.getElementById('mobile-nav-top').style.display = 'block';
-          document.getElementById('mobile-nav-bottom').style.display = 'flex';
-        }
-      }
-
-      track(pos) {
-        if (!this.active || this.currentIndex >= routeManager.stops.length) return;
-        const currentStop = routeManager.stops[this.currentIndex];
-        if (!currentStop || !currentStop.coords) return;
-
-        const d = RouteOptimizer.calculateHaversine(pos, currentStop.coords);
-        const distStr = d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`;
-
-        document.getElementById('nav-target-dist').innerText = distStr;
-        document.getElementById('mobile-hud-dist').innerText = distStr;
-
-        // Detecção de Desvio (> 3km de distância do destino)
-        if (d > 4.0) {
-          document.getElementById('off-route-alert').style.display = 'flex';
-        } else {
-          document.getElementById('off-route-alert').style.display = 'none';
-        }
-      }
-
-      completeCurrent() {
-        if (!this.active) this.startNavigation();
-        if (this.currentIndex < routeManager.stops.length) {
-          routeManager.stops[this.currentIndex].status = 'completed';
-          this.advance();
-        }
-      }
-
-      skipCurrent() {
-        if (!this.active) this.startNavigation();
-        if (this.currentIndex < routeManager.stops.length) {
-          routeManager.stops[this.currentIndex].status = 'skipped';
-          this.advance();
-        }
-      }
-
-      advance() {
-        this.currentIndex++;
-        ui.renderStopsList();
-        mapManager.renderStops(routeManager.stops, this.currentIndex);
-        this.updateHUD();
-        routeOptimizer.drawCurrentSequenceLine();
-
-        if (this.currentIndex < routeManager.stops.length) {
-          const next = routeManager.stops[this.currentIndex];
-          if (next.coords) {
-            mapManager.map.setView([next.coords.lat, next.coords.lng], 15);
-          }
-        }
-      }
-
-      updateHUD() {
-        const isDone = this.currentIndex >= routeManager.stops.length;
-        const total = routeManager.stops.length;
-        const num = isDone ? total : this.currentIndex + 1;
-
-        if (this.active && !isDone) {
-          const stop = routeManager.stops[this.currentIndex];
-          document.getElementById('nav-target-client').innerText = `#${num} ${stop.client}`;
-          document.getElementById('nav-target-address').innerText = stop.address;
-          document.getElementById('nav-target-prog').innerText = `${num} / ${total}`;
-
-          document.getElementById('mobile-hud-name').innerText = `#${num} ${stop.client}`;
-          document.getElementById('mobile-hud-addr').innerText = stop.address;
-          document.getElementById('mobile-hud-prog').innerText = `${num}/${total}`;
-        } else {
-          document.getElementById('nav-target-client').innerText = isDone ? "Rota Concluída!" : "Nenhuma Rota Ativa";
-          document.getElementById('nav-target-address').innerText = isDone ? "Todas as paradas foram finalizadas." : "Inicie para navegar.";
-          document.getElementById('mobile-nav-top').style.display = 'none';
-          document.getElementById('mobile-nav-bottom').style.display = 'none';
-        }
-      }
-
-      terminateNavigation() {
-        this.active = false;
-        document.getElementById('mobile-nav-top').style.display = 'none';
-        document.getElementById('mobile-nav-bottom').style.display = 'none';
-        document.getElementById('off-route-alert').style.display = 'none';
-        ui.switchTab('stops');
-      }
-    }
-
-    /**
-     * PDFExporter — Geração de Manifesto Fiel à Rota
-     */
-    class PDFExporter {
-      static generatePDF() {
-        if (routeManager.stops.length === 0) {
-          alert('Não há paradas para gerar PDF.');
-          return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        // Cabeçalho
-        doc.setFillColor(15, 23, 42);
-        doc.rect(0, 0, 210, 32, 'F');
-        doc.setTextColor(0, 210, 255);
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text('ROUTE FLOW — Manifesto de Entrega', 14, 16);
-
-        doc.setTextColor(241, 245, 249);
-        doc.setFontSize(9);
-        doc.text(`Data: ${new Date().toLocaleString()} | Total de Paradas: ${routeManager.stops.length}`, 14, 25);
-
-        let y = 42;
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Seq', 14, y);
-        doc.text('Cliente', 26, y);
-        doc.text('Endereço', 75, y);
-        doc.text('Status', 170, y);
-        doc.line(14, y + 2, 196, y + 2);
-
-        y += 8;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-
-        routeManager.stops.forEach((stop, i) => {
-          if (y > 275) {
-            doc.addPage();
-            y = 20;
-          }
-          doc.text(String(i + 1), 14, y);
-          doc.text(String(stop.client).substring(0, 22), 26, y);
-          doc.text(String(stop.address).substring(0, 48), 75, y);
-          doc.text(String(stop.status), 170, y);
-          y += 7;
-        });
-
-        doc.save(`route-flow-manifesto-${Date.now()}.pdf`);
-      }
-    }
-
-    /**
-     * StorageManager — Persistência no LocalStorage
-     */
-    class StorageManager {
-      static saveCurrentRoute() {
-        if (routeManager.stops.length === 0) return;
-        const list = JSON.parse(localStorage.getItem('rf_saved_routes_v3') || '[]');
-        list.unshift({
-          id: Date.now(),
-          date: new Date().toLocaleString(),
-          stops: routeManager.stops
-        });
-        localStorage.setItem('rf_saved_routes_v3', JSON.stringify(list));
-        alert('Rota salva com sucesso no histórico!');
-        ui.renderHistory();
-      }
-
-      static loadRoute(id) {
-        const list = JSON.parse(localStorage.getItem('rf_saved_routes_v3') || '[]');
-        const found = list.find(r => r.id === id);
-        if (found) {
-          routeManager.stops = found.stops;
-          ui.renderStopsList();
-          mapManager.renderStops(routeManager.stops);
-          routeOptimizer.drawCurrentSequenceLine();
-          ui.switchTab('stops');
-        }
-      }
-
-      static deleteRoute(id) {
-        let list = JSON.parse(localStorage.getItem('rf_saved_routes_v3') || '[]');
-        list = list.filter(r => r.id !== id);
-        localStorage.setItem('rf_saved_routes_v3', JSON.stringify(list));
-        ui.renderHistory();
-      }
-    }
-
-    /**
-     * UIManager — Coordenação de Telas e Interatividade
-     */
-    class UIManager {
-      init() {
-        setTimeout(() => {
-          const s = document.getElementById('splash');
-          s.style.opacity = '0';
-          setTimeout(() => s.style.display = 'none', 400);
-        }, 800);
-
-        if (window.innerWidth <= 768) {
-          document.getElementById('mobile-topbar').style.display = 'flex';
-        }
-
-        this.initSortable();
-      }
-
-      switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-        const target = document.getElementById(`tab-${tabId}`);
-        if (target) target.classList.add('active');
-
-        const tabs = ['stops', 'optimizer', 'navigation', 'history'];
-        const idx = tabs.indexOf(tabId);
-        if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
-
-        if (tabId === 'history') this.renderHistory();
-        if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
-      }
-
-      toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-      }
-
-      toggleStartField() {
-        const val = document.getElementById('start-mode').value;
-        document.getElementById('start-address-manual').style.display = (val === 'manual') ? 'block' : 'none';
-      }
-
-      showOptimizerStatus(msg) {
-        const card = document.getElementById('optimizer-status-card');
-        document.getElementById('optimizer-status-text').innerText = msg;
-        card.style.display = 'block';
-      }
-
-      hideOptimizerStatus() {
-        document.getElementById('optimizer-status-card').style.display = 'none';
-      }
-
-      setMetrics(count, km, min) {
-        document.getElementById('metric-stops').innerText = count;
-        document.getElementById('metric-dist').innerText = `${km} km`;
-        document.getElementById('metric-time').innerText = `${min} min`;
-        document.getElementById('mobile-bottom-dist-rem').innerText = `${km} km restantes`;
-        document.getElementById('mobile-bottom-time-rem').innerText = `${min} min restantes`;
-      }
-
-      updateMetrics() {
-        const valid = routeManager.stops.filter(s => s.coords);
-        let dist = 0;
-        for (let i = 0; i < valid.length - 1; i++) {
-          dist += RouteOptimizer.calculateHaversine(valid[i].coords, valid[i + 1].coords);
-        }
-        const min = Math.round((dist / 35) * 60 + valid.length * 4);
-        this.setMetrics(routeManager.stops.length, dist.toFixed(1), min);
-      }
-
-      initSortable() {
-        const el = document.getElementById('stops-list-container');
-        Sortable.create(el, {
-          animation: 150,
-          onEnd: evt => routeManager.reorder(evt.oldIndex, evt.newIndex)
-        });
-      }
-
-      renderStopsList() {
-        const ul = document.getElementById('stops-list-container');
-        ul.innerHTML = '';
-        document.getElementById('stops-counter').innerText = `${routeManager.stops.length} Paradas`;
-
-        routeManager.stops.forEach((stop, i) => {
-          const li = document.createElement('li');
-          li.className = `stop-row ${stop.status}`;
-          
-          let tagClass = 'st-pending';
-          let tagLabel = 'Pendente';
-          if (stop.status === 'completed') { tagClass = 'st-completed'; tagLabel = 'Concluída'; }
-          if (stop.status === 'skipped') { tagClass = 'st-skipped'; tagLabel = 'Pulada'; }
-          if (stop.status === 'error') { tagClass = 'st-error'; tagLabel = 'Não Localizado'; }
-
-          li.innerHTML = `
-            <div class="stop-num">${i + 1}</div>
-            <div class="stop-content">
-              <div class="stop-title">${stop.client}</div>
-              <div class="stop-subtitle">${stop.address}</div>
-              <span class="badge-status ${tagClass}">${tagLabel}</span>
-            </div>
-            <button class="btn-outline" style="width:auto; padding:4px 6px; border:none; cursor:pointer;" onclick="routeManager.removeStop('${stop.id}')">
-              <i class="fa-solid fa-trash" style="color:var(--danger)"></i>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans pb-24 select-none">
+
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <button onclick="mudarMes(-1)" class="p-2 hover:bg-slate-100 rounded-full active:scale-95 transition">
+                <i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i>
             </button>
-          `;
-          ul.appendChild(li);
-        });
-      }
+            <div class="text-center">
+                <h1 id="label-mes-ano" class="font-bold text-base text-slate-800 capitalize">Carregando...</h1>
+                <p class="text-[11px] text-slate-400 font-medium">Controle Mensal do Casal</p>
+            </div>
+            <button onclick="mudarMes(1)" class="p-2 hover:bg-slate-100 rounded-full active:scale-95 transition">
+                <i data-lucide="chevron-right" class="w-5 h-5 text-slate-600"></i>
+            </button>
+        </div>
+    </header>
 
-      renderHistory() {
-        const container = document.getElementById('history-items-container');
-        const list = JSON.parse(localStorage.getItem('rf_saved_routes_v3') || '[]');
-        container.innerHTML = '';
+    <main class="max-w-md mx-auto px-4 pt-4">
 
-        if (list.length === 0) {
-          container.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted);">Nenhuma rota salva no histórico.</div>';
-          return;
+        <section id="tab-inicio" class="space-y-4">
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-3xl shadow-xl">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total a Pagar no Mês</span>
+                        <div class="text-3xl font-extrabold mt-1" id="dash-total-mes">R$ 0,00</div>
+                    </div>
+                    <span class="px-2.5 py-1 bg-white/10 rounded-full text-[11px] font-medium text-slate-200">Geral Casal</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-700/60">
+                    <div>
+                        <span class="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Já Pago
+                        </span>
+                        <p class="text-sm font-bold text-slate-100 mt-0.5" id="dash-pago">R$ 0,00</p>
+                    </div>
+                    <div>
+                        <span class="text-[11px] text-amber-400 flex items-center gap-1 font-medium">
+                            <i data-lucide="clock" class="w-3.5 h-3.5"></i> Pendente
+                        </span>
+                        <p class="text-sm font-bold text-slate-100 mt-0.5" id="dash-pendente">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-blue-50 rounded-full opacity-60 pointer-events-none"></div>
+                    <span class="text-xs font-bold text-blue-600 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-600"></span> João
+                    </span>
+                    <p class="text-lg font-extrabold text-slate-800 mt-2" id="dash-total-joao">R$ 0,00</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5" id="dash-sub-joao">Dia 5: R$ 0 | Dia 20: R$ 0</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-pink-100 shadow-sm relative overflow-hidden">
+                    <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-pink-50 rounded-full opacity-60 pointer-events-none"></div>
+                    <span class="text-xs font-bold text-pink-600 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-pink-600"></span> Aquel
+                    </span>
+                    <p class="text-lg font-extrabold text-slate-800 mt-2" id="dash-total-aquel">R$ 0,00</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5" id="dash-sub-aquel">Dia 5: R$ 0 | Dia 20: R$ 0</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-sm">
+                        05
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-500 font-medium">Vence Dia 5</p>
+                        <p class="text-sm font-bold text-slate-800" id="dash-total-dia5">R$ 0,00</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
+                        20
+                    </div>
+                    <div>
+                        <p class="text-[11px] text-slate-500 font-medium">Vence Dia 20</p>
+                        <p class="text-sm font-bold text-slate-800" id="dash-total-dia20">R$ 0,00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Divisão dos Gastos</h3>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-600 flex items-center gap-2">
+                            <i data-lucide="receipt" class="w-4 h-4 text-purple-500"></i> Contas Fixas
+                        </span>
+                        <span class="font-bold text-slate-800" id="dash-total-fixas">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-600 flex items-center gap-2">
+                            <i data-lucide="credit-card" class="w-4 h-4 text-indigo-500"></i> Faturas dos Cartões
+                        </span>
+                        <span class="font-bold text-slate-800" id="dash-total-cartoes">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-slate-600 flex items-center gap-2">
+                            <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-500"></i> Compras Avulsas
+                        </span>
+                        <span class="font-bold text-slate-800" id="dash-total-avulsas">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-contas" class="space-y-5 hidden">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-sky-600 px-4 py-3 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-white animate-pulse"></span>
+                        <h2 class="font-bold text-sm">VENCIMENTO DIA 05</h2>
+                    </div>
+                    <span class="font-extrabold text-sm" id="bloco-total-dia5">R$ 0,00</span>
+                </div>
+                <div class="p-3 space-y-3" id="lista-vencimento-dia5">
+                    </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-orange-600 px-4 py-3 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-white animate-pulse"></span>
+                        <h2 class="font-bold text-sm">VENCIMENTO DIA 20</h2>
+                    </div>
+                    <span class="font-extrabold text-sm" id="bloco-total-dia20">R$ 0,00</span>
+                </div>
+                <div class="p-3 space-y-3" id="lista-vencimento-dia20">
+                    </div>
+            </div>
+        </section>
+
+        <section id="tab-cartoes" class="space-y-4 hidden">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cartões de Crédito</h2>
+            
+            <div class="grid grid-cols-1 gap-3">
+                <div class="bg-white p-4 rounded-2xl border-l-4 border-blue-600 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-blue-600">JOÃO</span>
+                            <h3 class="font-bold text-sm text-slate-800">Cartão João — Dia 5</h3>
+                        </div>
+                        <span class="text-sm font-extrabold text-slate-800" id="card-total-cj5">R$ 0,00</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-cj5"></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border-l-4 border-blue-600 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-blue-600">JOÃO</span>
+                            <h3 class="font-bold text-sm text-slate-800">Cartão João — Dia 20</h3>
+                        </div>
+                        <span class="text-sm font-extrabold text-slate-800" id="card-total-cj20">R$ 0,00</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-cj20"></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border-l-4 border-pink-600 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-pink-600">AQUEL</span>
+                            <h3 class="font-bold text-sm text-slate-800">Cartão Aquel — Dia 5</h3>
+                        </div>
+                        <span class="text-sm font-extrabold text-slate-800" id="card-total-ca5">R$ 0,00</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-ca5"></div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border-l-4 border-pink-600 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-pink-600">AQUEL</span>
+                            <h3 class="font-bold text-sm text-slate-800">Cartão Aquel — Dia 20</h3>
+                        </div>
+                        <span class="text-sm font-extrabold text-slate-800" id="card-total-ca20">R$ 0,00</span>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-ca20"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-compras" class="space-y-4 hidden">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Todos os Lançamentos do Mês</h2>
+            </div>
+            <div id="lista-geral-gastos" class="space-y-2">
+                </div>
+        </section>
+
+        <section id="tab-resumo" class="space-y-4 hidden">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Fechamento do Mês</h2>
+            
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="pb-3 border-b border-slate-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-blue-600 text-sm">JOÃO</span>
+                        <span class="font-extrabold text-slate-800 text-sm" id="resumo-total-joao">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Vencimento Dia 05: <b class="text-slate-700" id="resumo-j5">R$ 0,00</b></span>
+                        <span>Vencimento Dia 20: <b class="text-slate-700" id="resumo-j20">R$ 0,00</b></span>
+                    </div>
+                </div>
+
+                <div class="pb-3 border-b border-slate-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-pink-600 text-sm">AQUEL</span>
+                        <span class="font-extrabold text-slate-800 text-sm" id="resumo-total-aquel">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Vencimento Dia 05: <b class="text-slate-700" id="resumo-a5">R$ 0,00</b></span>
+                        <span>Vencimento Dia 20: <b class="text-slate-700" id="resumo-a20">R$ 0,00</b></span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-purple-600 text-sm">CASAL (COMPARTILHADO)</span>
+                        <span class="font-extrabold text-slate-800 text-sm" id="resumo-total-casal">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500">
+                        <span>Vencimento Dia 05: <b class="text-slate-700" id="resumo-c5">R$ 0,00</b></span>
+                        <span>Vencimento Dia 20: <b class="text-slate-700" id="resumo-c20">R$ 0,00</b></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-4 rounded-2xl text-white text-center shadow-lg">
+                <p class="text-xs uppercase font-medium tracking-wider text-white/80">TOTAL CONSOLIDADO DO MÊS</p>
+                <h3 class="text-2xl font-black mt-1" id="resumo-total-geral">R$ 0,00</h3>
+            </div>
+        </section>
+
+    </main>
+
+    <button onclick="abrirModal()" class="fixed right-5 bottom-20 z-40 bg-slate-900 text-white rounded-full p-4 shadow-2xl flex items-center gap-2 hover:bg-slate-800 active:scale-90 transition tap-highlight-transparent">
+        <i data-lucide="plus" class="w-6 h-6"></i>
+        <span class="text-xs font-bold pr-1">Adicionar</span>
+    </button>
+
+    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2">
+        <div class="max-w-md mx-auto grid grid-cols-5 text-[10px] font-medium text-slate-400">
+            <button onclick="trocarAba('inicio')" id="nav-inicio" class="flex flex-col items-center gap-1 text-blue-600">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span>Início</span>
+            </button>
+            <button onclick="trocarAba('contas')" id="nav-contas" class="flex flex-col items-center gap-1 hover:text-slate-600">
+                <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                <span>Contas</span>
+            </button>
+            <button onclick="trocarAba('cartoes')" id="nav-cartoes" class="flex flex-col items-center gap-1 hover:text-slate-600">
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+                <span>Cartões</span>
+            </button>
+            <button onclick="trocarAba('compras')" id="nav-compras" class="flex flex-col items-center gap-1 hover:text-slate-600">
+                <i data-lucide="receipt" class="w-5 h-5"></i>
+                <span>Gastos</span>
+            </button>
+            <button onclick="trocarAba('resumo')" id="nav-resumo" class="flex flex-col items-center gap-1 hover:text-slate-600">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                <span>Resumo</span>
+            </button>
+        </div>
+    </nav>
+
+    <div id="modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar animate-in slide-in-from-bottom duration-200">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-base text-slate-800" id="modal-titulo">Novo Lançamento</h3>
+                <button onclick="fecharModal()" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div>
+                <label class="text-[11px] font-bold text-slate-400 uppercase">O que deseja adicionar?</label>
+                <div class="grid grid-cols-3 gap-2 mt-1">
+                    <button type="button" onclick="setTipoForm('fixa')" id="btn-tipo-fixa" class="py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700">Conta Fixa</button>
+                    <button type="button" onclick="setTipoForm('avulsa')" id="btn-tipo-avulsa" class="py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700">Compra Avulsa</button>
+                    <button type="button" onclick="setTipoForm('cartao')" id="btn-tipo-cartao" class="py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700">No Cartão</button>
+                </div>
+            </div>
+
+            <form id="form-gasto" onsubmit="salvarGasto(event)" class="space-y-3">
+                <input type="hidden" id="gasto-id">
+
+                <div>
+                    <label class="text-xs font-medium text-slate-600">Descrição / Nome</label>
+                    <input type="text" id="gasto-nome" required placeholder="Ex: Aluguel, Supermercado, Tênis..." class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">Valor (R$)</label>
+                        <input type="number" step="0.01" id="gasto-valor" required placeholder="0,00" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">Data da Compra</label>
+                        <input type="date" id="gasto-data" required class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-slate-600">Pessoa Responsável</label>
+                    <select id="gasto-pessoa" onchange="atualizarOpcoesCartao()" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                        <option value="João">João</option>
+                        <option value="Aquel">Aquel</option>
+                        <option value="Casal">Casal (Compartilhado)</option>
+                    </select>
+                </div>
+
+                <div id="campo-cartao" class="space-y-3 hidden">
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">Cartão Utilizado</label>
+                        <select id="gasto-cartao" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                            </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-medium text-slate-600">Número de Parcelas</label>
+                        <input type="number" min="1" max="48" id="gasto-parcelas" value="1" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                    </div>
+                </div>
+
+                <div id="campo-vencimento">
+                    <label class="text-xs font-medium text-slate-600">Dia de Vencimento</label>
+                    <select id="gasto-vencimento-dia" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                        <option value="5">Dia 05</option>
+                        <option value="20">Dia 20</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-slate-600">Categoria</label>
+                    <select id="gasto-categoria" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                        <option value="Moradia">Moradia / Casa</option>
+                        <option value="Alimentação">Alimentação / Mercado</option>
+                        <option value="Transporte">Transporte / Combustível</option>
+                        <option value="Lazer">Lazer / Delivery / Restaurante</option>
+                        <option value="Saúde">Saúde / Farmácia</option>
+                        <option value="Serviços">Streaming / Contas / Internet</option>
+                        <option value="Compras">Compras Pessoais / Roupas</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-xs font-medium text-slate-600">Observação (Opcional)</label>
+                    <input type="text" id="gasto-obs" placeholder="Detalhes adicionais..." class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 active:scale-98 transition mt-2">
+                    Salvar Lançamento
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Estado Global
+        let dataAtual = new Date();
+        let mesSelecionado = dataAtual.getMonth(); // 0 - 11
+        let anoSelecionado = dataAtual.getFullYear();
+        let tipoFormAtual = 'fixa';
+
+        const MESES = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+
+        // Inicializar Banco de Dados
+        function getGastos() {
+            return JSON.parse(localStorage.getItem('financas_casal_dados') || '[]');
         }
 
-        list.forEach(r => {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.innerHTML = `
-            <div style="font-weight:700; font-size:0.85rem;">Rota de ${r.date}</div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">${r.stops.length} Paradas cadastradas</div>
-            <div style="display:flex; gap:8px; margin-top:6px;">
-              <button class="btn btn-primary" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.loadRoute(${r.id})">Carregar</button>
-              <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem;" onclick="StorageManager.deleteRoute(${r.id})">Excluir</button>
-            </div>
-          `;
-          container.appendChild(div);
+        function setGastos(gastos) {
+            localStorage.setItem('financas_casal_dados', JSON.stringify(gastos));
+        }
+
+        // Navegação de Abas
+        function trocarAba(aba) {
+            const abas = ['inicio', 'contas', 'cartoes', 'compras', 'resumo'];
+            abas.forEach(a => {
+                document.getElementById(`tab-${a}`).classList.toggle('hidden', a !== aba);
+                const navBtn = document.getElementById(`nav-${a}`);
+                if (a === aba) {
+                    navBtn.className = "flex flex-col items-center gap-1 text-blue-600";
+                } else {
+                    navBtn.className = "flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600";
+                }
+            });
+            lucide.createIcons();
+        }
+
+        // Controle do Mês
+        function mudarMes(delta) {
+            mesSelecionado += delta;
+            if (mesSelecionado < 0) {
+                mesSelecionado = 11;
+                anoSelecionado--;
+            } else if (mesSelecionado > 11) {
+                mesSelecionado = 0;
+                anoSelecionado++;
+            }
+            renderApp();
+        }
+
+        // Tipo de Formulário
+        function setTipoForm(tipo) {
+            tipoFormAtual = tipo;
+            ['fixa', 'avulsa', 'cartao'].forEach(t => {
+                const btn = document.getElementById(`btn-tipo-${t}`);
+                if (t === tipo) {
+                    btn.className = "py-2 text-xs font-bold rounded-xl border border-blue-600 bg-blue-50 text-blue-700";
+                } else {
+                    btn.className = "py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700";
+                }
+            });
+
+            const campoCartao = document.getElementById('campo-cartao');
+            const campoVencimento = document.getElementById('campo-vencimento');
+
+            if (tipo === 'cartao') {
+                campoCartao.classList.remove('hidden');
+                campoVencimento.classList.add('hidden');
+                atualizarOpcoesCartao();
+            } else {
+                campoCartao.classList.add('hidden');
+                campoVencimento.classList.remove('hidden');
+            }
+        }
+
+        function atualizarOpcoesCartao() {
+            const pessoa = document.getElementById('gasto-pessoa').value;
+            const selectCartao = document.getElementById('gasto-cartao');
+            selectCartao.innerHTML = '';
+
+            const cartoes = [
+                { id: 'cj5', nome: 'Cartão João — Dia 5', pessoa: 'João', venc: 5 },
+                { id: 'cj20', nome: 'Cartão João — Dia 20', pessoa: 'João', venc: 20 },
+                { id: 'ca5', nome: 'Cartão Aquel — Dia 5', pessoa: 'Aquel', venc: 5 },
+                { id: 'ca20', nome: 'Cartão Aquel — Dia 20', pessoa: 'Aquel', venc: 20 },
+            ];
+
+            const filtrados = (pessoa === 'Casal') ? cartoes : cartoes.filter(c => c.pessoa === pessoa);
+            filtrados.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = c.nome;
+                selectCartao.appendChild(opt);
+            });
+        }
+
+        // Modal
+        function abrirModal(gastoParaEditar = null) {
+            const modal = document.getElementById('modal');
+            const form = document.getElementById('form-gasto');
+            form.reset();
+
+            if (gastoParaEditar) {
+                document.getElementById('modal-titulo').innerText = "Editar Lançamento";
+                document.getElementById('gasto-id').value = gastoParaEditar.id;
+                document.getElementById('gasto-nome').value = gastoParaEditar.nome;
+                document.getElementById('gasto-valor').value = gastoParaEditar.valor;
+                document.getElementById('gasto-data').value = gastoParaEditar.data;
+                document.getElementById('gasto-pessoa').value = gastoParaEditar.pessoa;
+                document.getElementById('gasto-categoria').value = gastoParaEditar.categoria;
+                document.getElementById('gasto-obs').value = gastoParaEditar.obs || '';
+                setTipoForm(gastoParaEditar.tipo);
+
+                if (gastoParaEditar.tipo === 'cartao') {
+                    document.getElementById('gasto-cartao').value = gastoParaEditar.cartaoId;
+                    document.getElementById('gasto-parcelas').value = gastoParaEditar.totalParcelas || 1;
+                } else {
+                    document.getElementById('gasto-vencimento-dia').value = gastoParaEditar.vencimentoDia;
+                }
+            } else {
+                document.getElementById('modal-titulo').innerText = "Novo Lançamento";
+                document.getElementById('gasto-id').value = '';
+                document.getElementById('gasto-data').value = new Date().toISOString().split('T')[0];
+                setTipoForm('fixa');
+            }
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function fecharModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+
+        // Salvar Lançamento
+        function salvarGasto(e) {
+            e.preventDefault();
+            const id = document.getElementById('gasto-id').value || Date.now().toString();
+            const nome = document.getElementById('gasto-nome').value;
+            const valorTotal = parseFloat(document.getElementById('gasto-valor').value);
+            const data = document.getElementById('gasto-data').value;
+            const pessoa = document.getElementById('gasto-pessoa').value;
+            const categoria = document.getElementById('gasto-categoria').value;
+            const obs = document.getElementById('gasto-obs').value;
+
+            let todosGastos = getGastos();
+
+            if (document.getElementById('gasto-id').value) {
+                // Modo Edição
+                todosGastos = todosGastos.filter(g => g.id !== id && g.parentId !== id);
+            }
+
+            if (tipoFormAtual === 'cartao') {
+                const cartaoId = document.getElementById('gasto-cartao').value;
+                const parcelas = parseInt(document.getElementById('gasto-parcelas').value) || 1;
+                const valorParcela = valorTotal / parcelas;
+                const vencDia = (cartaoId === 'cj5' || cartaoId === 'ca5') ? 5 : 20;
+
+                const [anoComp, mesComp, diaComp] = data.split('-').map(Number);
+                let baseDate = new Date(anoComp, mesComp - 1, diaComp);
+
+                for (let i = 0; i < parcelas; i++) {
+                    let d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+                    todosGastos.push({
+                        id: (parcelas === 1) ? id : `${id}_p${i+1}`,
+                        parentId: id,
+                        nome: parcelas > 1 ? `${nome} (${i+1}/${parcelas})` : nome,
+                        valor: valorParcela,
+                        data: data,
+                        pessoa: pessoa,
+                        tipo: 'cartao',
+                        cartaoId: cartaoId,
+                        vencimentoDia: vencDia,
+                        categoria: categoria,
+                        obs: obs,
+                        mesRef: d.getMonth(),
+                        anoRef: d.getFullYear(),
+                        pago: false,
+                        dataPago: null,
+                        parcelaAtual: i + 1,
+                        totalParcelas: parcelas
+                    });
+                }
+            } else {
+                const vencDia = parseInt(document.getElementById('gasto-vencimento-dia').value);
+                const [anoComp, mesComp] = data.split('-').map(Number);
+
+                todosGastos.push({
+                    id: id,
+                    parentId: null,
+                    nome: nome,
+                    valor: valorTotal,
+                    data: data,
+                    pessoa: pessoa,
+                    tipo: tipoFormAtual,
+                    cartaoId: null,
+                    vencimentoDia: vencDia,
+                    categoria: categoria,
+                    obs: obs,
+                    mesRef: mesComp - 1,
+                    anoRef: anoComp,
+                    pago: false,
+                    dataPago: null
+                });
+            }
+
+            setGastos(todosGastos);
+            fecharModal();
+            renderApp();
+        }
+
+        // Toggle Status Pago
+        function togglePago(id) {
+            const gastos = getGastos();
+            const item = gastos.find(g => g.id === id);
+            if (item) {
+                item.pago = !item.pago;
+                item.dataPago = item.pago ? new Date().toISOString() : null;
+                setGastos(gastos);
+                renderApp();
+            }
+        }
+
+        // Excluir Lançamento
+        function excluirGasto(id) {
+            if (confirm('Tem certeza que deseja excluir este lançamento?')) {
+                let gastos = getGastos();
+                const item = gastos.find(g => g.id === id);
+                if (item && item.parentId) {
+                    gastos = gastos.filter(g => g.parentId !== item.parentId && g.id !== item.parentId);
+                } else {
+                    gastos = gastos.filter(g => g.id !== id && g.parentId !== id);
+                }
+                setGastos(gastos);
+                renderApp();
+            }
+        }
+
+        // Formatador Moeda
+        const formatBRL = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        // RENDER PRINCIPAL DO APLICATIVO
+        function renderApp() {
+            document.getElementById('label-mes-ano').innerText = `${MESES[mesSelecionado]} ${anoSelecionado}`;
+            
+            const todosGastos = getGastos();
+            // Filtrar apenas para o mês selecionado
+            const gastosDoMes = todosGastos.filter(g => g.mesRef === mesSelecionado && g.anoRef === anoSelecionado);
+
+            // Variáveis de Cálculo
+            let totalMes = 0;
+            let totalPago = 0;
+            let totalPendente = 0;
+
+            let totalJoao = 0, joaoDia5 = 0, joaoDia20 = 0;
+            let totalAquel = 0, aquelDia5 = 0, aquelDia20 = 0;
+            let totalCasal = 0, casalDia5 = 0, casalDia20 = 0;
+
+            let totalDia5 = 0, totalDia20 = 0;
+            let totalFixas = 0, totalCartoes = 0, totalAvulsas = 0;
+
+            let cartaoTotals = { cj5: 0, cj20: 0, ca5: 0, ca20: 0 };
+            let cartaoItens = { cj5: [], cj20: [], ca5: [], ca20: [] };
+
+            gastosDoMes.forEach(g => {
+                const val = g.valor;
+                totalMes += val;
+                if (g.pago) totalPago += val; else totalPendente += val;
+
+                // Tipos
+                if (g.tipo === 'fixa') totalFixas += val;
+                if (g.tipo === 'cartao') totalCartoes += val;
+                if (g.tipo === 'avulsa') totalAvulsas += val;
+
+                // Vencimentos
+                if (g.vencimentoDia === 5) totalDia5 += val;
+                if (g.vencimentoDia === 20) totalDia20 += val;
+
+                // Por Pessoa e Vencimento
+                if (g.pessoa === 'João') {
+                    totalJoao += val;
+                    if (g.vencimentoDia === 5) joaoDia5 += val;
+                    if (g.vencimentoDia === 20) joaoDia20 += val;
+                } else if (g.pessoa === 'Aquel') {
+                    totalAquel += val;
+                    if (g.vencimentoDia === 5) aquelDia5 += val;
+                    if (g.vencimentoDia === 20) aquelDia20 += val;
+                } else if (g.pessoa === 'Casal') {
+                    totalCasal += val;
+                    if (g.vencimentoDia === 5) casalDia5 += val;
+                    if (g.vencimentoDia === 20) casalDia20 += val;
+                }
+
+                // Por Cartão
+                if (g.tipo === 'cartao' && cartaoTotals[g.cartaoId] !== undefined) {
+                    cartaoTotals[g.cartaoId] += val;
+                    cartaoItens[g.cartaoId].push(g);
+                }
+            });
+
+            // Atualizar Dashboard
+            document.getElementById('dash-total-mes').innerText = formatBRL(totalMes);
+            document.getElementById('dash-pago').innerText = formatBRL(totalPago);
+            document.getElementById('dash-pendente').innerText = formatBRL(totalPendente);
+
+            document.getElementById('dash-total-joao').innerText = formatBRL(totalJoao);
+            document.getElementById('dash-sub-joao').innerText = `Dia 5: ${formatBRL(joaoDia5)} | Dia 20: ${formatBRL(joaoDia20)}`;
+
+            document.getElementById('dash-total-aquel').innerText = formatBRL(totalAquel);
+            document.getElementById('dash-sub-aquel').innerText = `Dia 5: ${formatBRL(aquelDia5)} | Dia 20: ${formatBRL(aquelDia20)}`;
+
+            document.getElementById('dash-total-dia5').innerText = formatBRL(totalDia5);
+            document.getElementById('dash-total-dia20').innerText = formatBRL(totalDia20);
+
+            document.getElementById('dash-total-fixas').innerText = formatBRL(totalFixas);
+            document.getElementById('dash-total-cartoes').innerText = formatBRL(totalCartoes);
+            document.getElementById('dash-total-avulsas').innerText = formatBRL(totalAvulsas);
+
+            // Atualizar Bloco Dia 5 & 20
+            document.getElementById('bloco-total-dia5').innerText = formatBRL(totalDia5);
+            document.getElementById('bloco-total-dia20').innerText = formatBRL(totalDia20);
+
+            renderListaVencimento('lista-vencimento-dia5', gastosDoMes.filter(g => g.vencimentoDia === 5));
+            renderListaVencimento('lista-vencimento-dia20', gastosDoMes.filter(g => g.vencimentoDia === 20));
+
+            // Atualizar Cartões
+            ['cj5', 'cj20', 'ca5', 'ca20'].forEach(cId => {
+                document.getElementById(`card-total-${cId}`).innerText = formatBRL(cartaoTotals[cId]);
+                const container = document.getElementById(`itens-${cId}`);
+                if (cartaoItens[cId].length === 0) {
+                    container.innerHTML = '<span class="text-slate-400 italic">Nenhum gasto neste cartão</span>';
+                } else {
+                    container.innerHTML = cartaoItens[cId].map(item => `
+                        <div class="flex justify-between items-center py-1">
+                            <span class="truncate pr-2">${item.nome}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="font-semibold text-slate-700">${formatBRL(item.valor)}</span>
+                                <button onclick="togglePago('${item.id}')" class="text-[10px] px-1.5 py-0.5 rounded font-bold ${item.pago ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${item.pago ? 'PAGO' : 'PENDENTE'}</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            });
+
+            // Atualizar Geral Gastos
+            renderListaGeral(gastosDoMes);
+
+            // Atualizar Resumo
+            document.getElementById('resumo-total-joao').innerText = formatBRL(totalJoao);
+            document.getElementById('resumo-j5').innerText = formatBRL(joaoDia5);
+            document.getElementById('resumo-j20').innerText = formatBRL(joaoDia20);
+
+            document.getElementById('resumo-total-aquel').innerText = formatBRL(totalAquel);
+            document.getElementById('resumo-a5').innerText = formatBRL(aquelDia5);
+            document.getElementById('resumo-a20').innerText = formatBRL(aquelDia20);
+
+            document.getElementById('resumo-total-casal').innerText = formatBRL(totalCasal);
+            document.getElementById('resumo-c5').innerText = formatBRL(casalDia5);
+            document.getElementById('resumo-c20').innerText = formatBRL(casalDia20);
+
+            document.getElementById('resumo-total-geral').innerText = formatBRL(totalMes);
+
+            lucide.createIcons();
+        }
+
+        // Renderizadores Auxiliares
+        function renderListaVencimento(elemId, lista) {
+            const container = document.getElementById(elemId);
+            if (lista.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-3">Nenhuma conta para este vencimento.</p>';
+                return;
+            }
+
+            container.innerHTML = lista.map(item => `
+                <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                        <button onclick="togglePago('${item.id}')" class="w-6 h-6 rounded-full flex items-center justify-center border transition ${item.pago ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent'}">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <div>
+                            <p class="text-xs font-bold text-slate-800 leading-tight ${item.pago ? 'line-through text-slate-400' : ''}">${item.nome}</p>
+                            <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-md ${item.pessoa === 'João' ? 'bg-blue-100 text-blue-700' : (item.pessoa === 'Aquel' ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700')}">${item.pessoa}</span>
+                            <span class="text-[10px] text-slate-400 ml-1">${item.categoria}</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-extrabold text-slate-800 ${item.pago ? 'line-through text-slate-400' : ''}">${formatBRL(item.valor)}</span>
+                        <div class="flex gap-2 justify-end mt-1">
+                            <button onclick="excluirGasto('${item.id}')" class="text-slate-300 hover:text-rose-500">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderListaGeral(lista) {
+            const container = document.getElementById('lista-geral-gastos');
+            if (lista.length === 0) {
+                container.innerHTML = '<div class="bg-white p-6 rounded-2xl text-center text-slate-400 text-xs border border-slate-200">Nenhum lançamento cadastrado neste mês.</div>';
+                return;
+            }
+
+            container.innerHTML = lista.map(item => `
+                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <button onclick="togglePago('${item.id}')" class="w-7 h-7 rounded-full flex items-center justify-center border transition ${item.pago ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent'}">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                        </button>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-800 ${item.pago ? 'line-through text-slate-400' : ''}">${item.nome}</h4>
+                            <div class="flex items-center gap-1.5 mt-0.5">
+                                <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${item.pessoa === 'João' ? 'bg-blue-100 text-blue-700' : (item.pessoa === 'Aquel' ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700')}">${item.pessoa}</span>
+                                <span class="text-[10px] text-slate-400">Venc. Dia ${item.vencimentoDia}</span>
+                                ${item.tipo === 'cartao' ? '<span class="text-[9px] bg-slate-100 text-slate-600 px-1 rounded font-medium">Cartão</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-extrabold text-slate-800 ${item.pago ? 'line-through text-slate-400' : ''}">${formatBRL(item.valor)}</p>
+                        <div class="flex items-center gap-2 justify-end mt-1">
+                            <button onclick="excluirGasto('${item.id}')" class="text-slate-300 hover:text-rose-500 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Inicialização
+        window.addEventListener('DOMContentLoaded', () => {
+            renderApp();
         });
-      }
-    }
-
-    // Instanciação e Inicialização
-    const gpsManager = new GPSManager();
-    const mapManager = new MapManager();
-    const routeManager = new RouteManager();
-    const routeOptimizer = new RouteOptimizer();
-    const navigationManager = new NavigationManager();
-    const fileImporter = new FileImporter();
-    const pdfExporter = PDFExporter;
-    const storageManager = StorageManager;
-    const ui = new UIManager();
-
-    window.addEventListener('DOMContentLoaded', () => {
-      mapManager.init();
-      ui.init();
-      gpsManager.init();
-    });
-  </script>
+    </script>
 </body>
 </html>
