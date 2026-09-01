@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Contas João & Raquel</title>
+  <title>Finanças João & Raquel</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- React & Babel CDNs -->
@@ -29,21 +29,22 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
-    // --- DADOS INICIAIS / PADRÃO ---
+    // --- CONFIGURAÇÃO E DADOS BASE ---
     const CATEGORIAS = [
+      { id: 'Apartamento', label: 'Apartamento', icon: '🏠' },
+      { id: 'Mão de Obra', label: 'Mão de Obra', icon: '🔨' },
       { id: 'Delivery', label: 'Delivery', icon: '🍔' },
       { id: 'Mercado', label: 'Mercado', icon: '🛒' },
       { id: 'Combustível', label: 'Combustível', icon: '⛽' },
-      { id: 'Casa', label: 'Casa', icon: '🏠' },
       { id: 'Lazer', label: 'Lazer', icon: '🎮' },
       { id: 'Outros', label: 'Outros', icon: '📦' }
     ];
 
     const CONTAS_FIXAS_BASE = [
-      { id: 'f1', nome: 'Aluguel', valor: 1500, dia: 5, responsavel: 'Casal', categoria: 'Casa', ativa: true },
-      { id: 'f2', nome: 'Energia', valor: 250, dia: 5, responsavel: 'Casal', categoria: 'Casa', ativa: true },
-      { id: 'f3', nome: 'Internet', valor: 120, dia: 20, responsavel: 'Casal', categoria: 'Casa', ativa: true },
-      { id: 'f4', nome: 'Água', valor: 80, dia: 20, responsavel: 'Casal', categoria: 'Casa', ativa: true },
+      { id: 'f_internet', nome: 'Internet', valorPadrao: 120, dia: 5, responsavel: 'Casal', categoria: 'Apartamento' },
+      { id: 'f_aluguel', nome: 'Aluguel', valorPadrao: 1500, dia: 20, responsavel: 'Casal', categoria: 'Apartamento' },
+      { id: 'f_luz', nome: 'Luz', valorPadrao: 180, dia: 20, responsavel: 'Casal', categoria: 'Apartamento' },
+      { id: 'f_agua', nome: 'Água', valorPadrao: 80, dia: 20, responsavel: 'Casal', categoria: 'Apartamento' },
     ];
 
     const CARTAO_OPCOES = [
@@ -55,57 +56,58 @@
     ];
 
     function App() {
-      // Estado de Data
       const [dataAtual, setDataAtual] = useState(() => {
         const now = new Date();
         return { mes: now.getMonth(), ano: now.getFullYear() };
       });
 
-      // Estados Principais com Persistência
+      const [abaAtiva, setAbaAtiva] = useState('inicio');
+      const [modalTipo, setModalTipo] = useState(null); // 'gasto' | 'renda_extra' | null
+
+      // Estados Persistidos
       const [gastos, setGastos] = useState(() => {
-        const saved = localStorage.getItem('jr_gastos');
-        return saved ? JSON.parse(saved) : [];
+        const s = localStorage.getItem('jr_fin_gastos');
+        return s ? JSON.parse(s) : [];
       });
 
-      const [contasFixas, setContasFixas] = useState(() => {
-        const saved = localStorage.getItem('jr_contas_fixas');
-        return saved ? JSON.parse(saved) : CONTAS_FIXAS_BASE;
+      const [rendasExtras, setRendasExtras] = useState(() => {
+        const s = localStorage.getItem('jr_fin_rendas_extras');
+        return s ? JSON.parse(s) : [];
+      });
+
+      const [valoresFixasMes, setValoresFixasMes] = useState(() => {
+        const s = localStorage.getItem('jr_fin_fixas_mes');
+        return s ? JSON.parse(s) : {}; // Chave: "ano-mes-idConta": valor
       });
 
       const [statusPagamento, setStatusPagamento] = useState(() => {
-        const saved = localStorage.getItem('jr_status_pagamento');
-        return saved ? JSON.parse(saved) : {}; // chave: "ano-mes-idConta" -> boolean
+        const s = localStorage.getItem('jr_fin_pagos');
+        return s ? JSON.parse(s) : {};
       });
 
-      const [abaAtiva, setAbaAtiva] = useState('inicio');
-      const [modalAberto, setModalAberto] = useState(false);
-      const [modoEdicaoFixa, setModoEdicaoFixa] = useState(null);
-
-      // Formulário de Gasto
+      // Formulário Novo Gasto
       const [inputRapido, setInputRapido] = useState('');
-      const [descricao, setDescricao] = useState('');
-      const [valor, setValor] = useState('');
-      const [responsavel, setResponsavel] = useState('João');
-      const [categoria, setCategoria] = useState('Mercado');
-      const [cartaoSelecionado, setCartaoSelecionado] = useState('nenhum');
-      const [parcelas, setParcelas] = useState(1);
+      const [descGasto, setDescGasto] = useState('');
+      const [valorGasto, setValorGasto] = useState('');
+      const [respGasto, setRespGasto] = useState('João');
+      const [catGasto, setCatGasto] = useState('Mercado');
+      const [quinzenaGasto, setQuinzenaGasto] = useState(() => (new Date().getDate() <= 12 ? 5 : 20));
+      const [cartaoGasto, setCartaoGasto] = useState('nenhum');
+      const [parcelasGasto, setParcelasGasto] = useState(1);
 
-      useEffect(() => {
-        localStorage.setItem('jr_gastos', JSON.stringify(gastos));
-      }, [gastos]);
+      // Formulário Renda Extra
+      const [descExtra, setDescExtra] = useState('Shopee');
+      const [valorExtra, setValorExtra] = useState('');
+      const [quinzenaExtra, setQuinzenaExtra] = useState(() => (new Date().getDate() <= 12 ? 5 : 20));
 
-      useEffect(() => {
-        localStorage.setItem('jr_contas_fixas', JSON.stringify(contasFixas));
-      }, [contasFixas]);
+      useEffect(() => { localStorage.setItem('jr_fin_gastos', JSON.stringify(gastos)); }, [gastos]);
+      useEffect(() => { localStorage.setItem('jr_fin_rendas_extras', JSON.stringify(rendasExtras)); }, [rendasExtras]);
+      useEffect(() => { localStorage.setItem('jr_fin_fixas_mes', JSON.stringify(valoresFixasMes)); }, [valoresFixasMes]);
+      useEffect(() => { localStorage.setItem('jr_fin_pagos', JSON.stringify(statusPagamento)); }, [statusPagamento]);
 
-      useEffect(() => {
-        localStorage.setItem('jr_status_pagamento', JSON.stringify(statusPagamento));
-      }, [statusPagamento]);
-
-      // Navegação do Mês
-      const trocarMes = (direcao) => {
+      const trocarMes = (dir) => {
         setDataAtual(prev => {
-          let novoMes = prev.mes + direcao;
+          let novoMes = prev.mes + dir;
           let novoAno = prev.ano;
           if (novoMes > 11) { novoMes = 0; novoAno++; }
           if (novoMes < 0) { novoMes = 11; novoAno--; }
@@ -118,93 +120,101 @@
         return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
       }, [dataAtual]);
 
-      // Parser Inteligente de Texto (WhatsApp Style)
+      // Parser Inteligente
       const parseTextoRapido = (texto) => {
         setInputRapido(texto);
         if (!texto.trim()) return;
+        const limpo = texto.toLowerCase();
 
-        let limpo = texto.toLowerCase();
-        
-        // Identificar Responsável
-        let respDetectado = null;
-        if (limpo.includes('joão') || limpo.includes('joao')) respDetectado = 'João';
-        else if (limpo.includes('raquel')) respDetectado = 'Raquel';
-        else if (limpo.includes('casal')) respDetectado = 'Casal';
+        if (limpo.includes('joão') || limpo.includes('joao')) setRespGasto('João');
+        else if (limpo.includes('raquel')) setRespGasto('Raquel');
+        else if (limpo.includes('casal')) setRespGasto('Casal');
 
-        // Identificar Categoria
-        let catDetectada = null;
-        CATEGORIAS.forEach(cat => {
-          if (limpo.includes(cat.label.toLowerCase()) || limpo.includes(cat.id.toLowerCase())) {
-            catDetectada = cat.id;
-          }
-        });
-        if (limpo.includes('ifood') || limpo.includes('lanche') || limpo.includes('pizza') || limpo.includes('hamburguer')) {
-          catDetectada = 'Delivery';
-        }
+        if (limpo.includes('dia 5') || limpo.includes('quinzena 5')) setQuinzenaGasto(5);
+        else if (limpo.includes('dia 20') || limpo.includes('quinzena 20')) setQuinzenaGasto(20);
 
-        // Identificar Valor
+        if (limpo.includes('ifood') || limpo.includes('lanche') || limpo.includes('pizza') || limpo.includes('delivery')) setCatGasto('Delivery');
+        else if (limpo.includes('pedreiro') || limpo.includes('pintor') || limpo.includes('eletricista') || limpo.includes('obra')) setCatGasto('Mão de Obra');
+        else if (limpo.includes('apartamento') || limpo.includes('móveis') || limpo.includes('moveis')) setCatGasto('Apartamento');
+        else if (limpo.includes('mercado')) setCatGasto('Mercado');
+        else if (limpo.includes('gasolina') || limpo.includes('combustivel')) setCatGasto('Combustível');
+
         const matchValor = texto.match(/(\d+[.,]?\d*)/);
-        let valorDetectado = matchValor ? matchValor[0].replace(',', '.') : '';
+        if (matchValor) setValorGasto(matchValor[0].replace(',', '.'));
 
-        // Limpeza da Descrição
-        let desc = texto
-          .replace(/joão|joao|raquel|casal/gi, '')
-          .replace(/delivery|mercado|combustível|combustivel|casa|lazer|outros/gi, '')
-          .replace(/(\d+[.,]?\d*)/g, '')
-          .trim();
-
-        if (respDetectado) setResponsavel(respDetectado);
-        if (catDetectada) setCategoria(catDetectada);
-        if (valorDetectado) setValor(valorDetectado);
-        if (desc) setDescricao(desc.charAt(0).toUpperCase() + desc.slice(1));
-        else if (catDetectada) setDescricao(catDetectada);
+        const desc = texto.replace(/joão|joao|raquel|casal|dia 5|dia 20|delivery|ifood|mercado|obra/gi, '').replace(/(\d+[.,]?\d*)/g, '').trim();
+        if (desc) setDescGasto(desc.charAt(0).toUpperCase() + desc.slice(1));
       };
 
-      // Salvar Novo Gasto / Parcelas
       const salvarGasto = () => {
-        const numValor = parseFloat(valor);
+        const numValor = parseFloat(valorGasto);
         if (isNaN(numValor) || numValor <= 0) return;
 
-        const numParcelas = parseInt(parcelas) || 1;
-        const valorParcela = numValor / numParcelas;
-        const novosGastos = [];
+        const numParcelas = parseInt(parcelasGasto) || 1;
+        const valorPorParcela = numValor / numParcelas;
         const baseId = Date.now().toString();
+        const novos = [];
 
         for (let i = 0; i < numParcelas; i++) {
-          let mesParcela = dataAtual.mes + i;
-          let anoParcela = dataAtual.ano;
-          while (mesParcela > 11) {
-            mesParcela -= 12;
-            anoParcela += 1;
-          }
+          let m = dataAtual.mes + i;
+          let a = dataAtual.ano;
+          while (m > 11) { m -= 12; a += 1; }
 
-          novosGastos.push({
+          novos.push({
             id: `${baseId}_${i}`,
-            descricao: numParcelas > 1 ? `${descricao || categoria} (${i + 1}/${numParcelas})` : (descricao || categoria),
-            valor: valorParcela,
-            responsavel,
-            categoria,
-            cartao: cartaoSelecionado,
-            mes: mesParcela,
-            ano: anoParcela,
-            pago: false,
+            descricao: numParcelas > 1 ? `${descGasto || catGasto} (${i + 1}/${numParcelas})` : (descGasto || catGasto),
+            valor: valorPorParcela,
+            responsavel: respGasto,
+            categoria: catGasto,
+            quinzena: quinzenaGasto,
+            cartao: cartaoGasto,
+            mes: m,
+            ano: a,
             dataRegistro: new Date().toISOString()
           });
         }
 
-        setGastos(prev => [...novosGastos, ...prev]);
+        setGastos(prev => [...novos, ...prev]);
+        fecharModal();
+      };
+
+      const salvarRendaExtra = () => {
+        const num = parseFloat(valorExtra);
+        if (isNaN(num) || num <= 0) return;
+
+        setRendasExtras(prev => [{
+          id: Date.now().toString(),
+          descricao: descExtra || 'Shopee',
+          valor: num,
+          quinzena: quinzenaExtra,
+          responsavel: 'João',
+          mes: dataAtual.mes,
+          ano: dataAtual.ano,
+          dataRegistro: new Date().toISOString()
+        }, ...prev]);
+
         fecharModal();
       };
 
       const fecharModal = () => {
-        setModalAberto(false);
+        setModalTipo(null);
         setInputRapido('');
-        setDescricao('');
-        setValor('');
-        setResponsavel('João');
-        setCategoria('Mercado');
-        setCartaoSelecionado('nenhum');
-        setParcelas(1);
+        setDescGasto('');
+        setValorGasto('');
+        setValorExtra('');
+        setDescExtra('Shopee');
+        setCartaoGasto('nenhum');
+        setParcelasGasto(1);
+      };
+
+      const getValorContaFixa = (idConta, valorPadrao) => {
+        const chave = `${dataAtual.ano}-${dataAtual.mes}-${idConta}`;
+        return valoresFixasMes[chave] !== undefined ? valoresFixasMes[chave] : valorPadrao;
+      };
+
+      const atualizarValorContaFixa = (idConta, novoValor) => {
+        const chave = `${dataAtual.ano}-${dataAtual.mes}-${idConta}`;
+        setValoresFixasMes(prev => ({ ...prev, [chave]: parseFloat(novoValor) || 0 }));
       };
 
       const toggleStatus = (id) => {
@@ -212,385 +222,437 @@
         setStatusPagamento(prev => ({ ...prev, [chave]: !prev[chave] }));
       };
 
-      const toggleGastoPago = (id) => {
-        setGastos(prev => prev.map(g => g.id === id ? { ...g, pago: !g.pago } : g));
-      };
+      // Cálculos do Mês
+      const gastosMes = useMemo(() => gastos.filter(g => g.mes === dataAtual.mes && g.ano === dataAtual.ano), [gastos, dataAtual]);
+      const extrasMes = useMemo(() => rendasExtras.filter(r => r.mes === dataAtual.mes && r.ano === dataAtual.ano), [rendasExtras, dataAtual]);
 
-      const excluirGasto = (id) => {
-        setGastos(prev => prev.filter(g => g.id !== id));
-      };
-
-      // Cálculos do Mês Selecionado
-      const gastosMes = useMemo(() => {
-        return gastos.filter(g => g.mes === dataAtual.mes && g.ano === dataAtual.ano);
-      }, [gastos, dataAtual]);
-
-      // Faturas de Cartão Agrupadas por Dia (5 e 20)
-      const faturas = useMemo(() => {
-        const res = { j5: 0, j20: 0, r5: 0, r20: 0 };
-        gastosMes.forEach(g => {
-          if (g.cartao && res[g.cartao] !== undefined) {
-            res[g.cartao] += g.valor;
-          }
-        });
-        return res;
-      }, [gastosMes]);
-
-      // Totais Consolidados (Contas Fixas + Cartões + Gastos Avulsos)
       const metricas = useMemo(() => {
-        const fixasAtivas = contasFixas.filter(f => f.ativa);
-        
-        let totalFixas = fixasAtivas.reduce((acc, cur) => acc + cur.valor, 0);
-        let totalGastosForaCartao = gastosMes.filter(g => g.cartao === 'nenhum').reduce((acc, cur) => acc + cur.valor, 0);
-        let totalCartoes = Object.values(faturas).reduce((a, b) => a + b, 0);
+        // ENTRADAS
+        const salariosD5 = 2300;
+        const salariosD20 = 2000;
+        const extraD5 = extrasMes.filter(e => e.quinzena === 5).reduce((a, b) => a + b.valor, 0);
+        const extraD20 = extrasMes.filter(e => e.quinzena === 20).reduce((a, b) => a + b.valor, 0);
 
-        let totalGeral = totalFixas + totalGastosForaCartao + totalCartoes;
+        const totalEntradasD5 = salariosD5 + extraD5;
+        const totalEntradasD20 = salariosD20 + extraD20;
+        const totalEntradasMes = totalEntradasD5 + totalEntradasD20;
 
-        // Cálculo de Pagos vs A Pagar
-        let pago = 0;
-        fixasAtivas.forEach(f => {
-          const chave = `${dataAtual.ano}-${dataAtual.mes}-${f.id}`;
-          if (statusPagamento[chave]) pago += f.valor;
-        });
-        ['j5', 'j20', 'r5', 'r20'].forEach(cId => {
-          const chave = `${dataAtual.ano}-${dataAtual.mes}-${cId}`;
-          if (statusPagamento[chave]) pago += faturas[cId];
-        });
-        gastosMes.filter(g => g.cartao === 'nenhum' && g.pago).forEach(g => {
-          pago += g.valor;
-        });
+        // CONTAS FIXAS
+        const fixaInternet = getValorContaFixa('f_internet', 120);
+        const fixaAluguel = getValorContaFixa('f_aluguel', 1500);
+        const fixaLuz = getValorContaFixa('f_luz', 180);
+        const fixaAgua = getValorContaFixa('f_agua', 80);
 
-        const aPagar = Math.max(0, totalGeral - pago);
+        const totalFixasD5 = fixaInternet;
+        const totalFixasD20 = fixaAluguel + fixaLuz + fixaAgua;
 
-        // Subtotais Dia 5 e Dia 20
-        const fixasDia5 = fixasAtivas.filter(f => f.dia === 5).reduce((a, b) => a + b.valor, 0);
-        const totalDia5 = fixasDia5 + faturas.j5 + faturas.r5;
+        // CARTÕES
+        const cartoesD5 = gastosMes.filter(g => g.cartao === 'j5' || g.cartao === 'r5').reduce((a, b) => a + b.valor, 0);
+        const cartoesD20 = gastosMes.filter(g => g.cartao === 'j20' || g.cartao === 'r20').reduce((a, b) => a + b.valor, 0);
 
-        const fixasDia20 = fixasAtivas.filter(f => f.dia === 20).reduce((a, b) => a + b.valor, 0);
-        const totalDia20 = fixasDia20 + faturas.j20 + faturas.r20;
+        // GASTOS AVULSOS
+        const avulsosD5 = gastosMes.filter(g => g.quinzena === 5 && g.cartao === 'nenhum').reduce((a, b) => a + b.valor, 0);
+        const avulsosD20 = gastosMes.filter(g => g.quinzena === 20 && g.cartao === 'nenhum').reduce((a, b) => a + b.valor, 0);
 
-        // Por Pessoa
-        let totalJoao = 0;
-        let totalRaquel = 0;
-        let totalCasal = 0;
+        // TOTAIS DE SAÍDA POR QUINZENA
+        const totalSaidasD5 = totalFixasD5 + cartoesD5 + avulsosD5;
+        const totalSaidasD20 = totalFixasD20 + cartoesD20 + avulsosD20;
+        const totalSaidasGeral = totalSaidasD5 + totalSaidasD20;
 
-        fixasAtivas.forEach(f => {
-          if (f.responsavel === 'João') totalJoao += f.valor;
-          else if (f.responsavel === 'Raquel') totalRaquel += f.valor;
-          else totalCasal += f.valor;
-        });
+        // DISPONÍVEL
+        const disponivelD5 = totalEntradasD5 - totalSaidasD5;
+        const disponivelD20 = totalEntradasD20 - totalSaidasD20;
+        const disponivelTotal = disponivelD5 + disponivelD20;
 
-        gastosMes.forEach(g => {
-          if (g.responsavel === 'João') totalJoao += g.valor;
-          else if (g.responsavel === 'Raquel') totalRaquel += g.valor;
-          else totalCasal += g.valor;
-        });
-
-        // Delivery
+        // DELIVERY
         const deliveryGastos = gastosMes.filter(g => g.categoria === 'Delivery');
         const deliveryTotal = deliveryGastos.reduce((a, b) => a + b.valor, 0);
         const deliveryCount = deliveryGastos.length;
         const deliveryJoao = deliveryGastos.filter(g => g.responsavel === 'João').reduce((a, b) => a + b.valor, 0);
         const deliveryRaquel = deliveryGastos.filter(g => g.responsavel === 'Raquel').reduce((a, b) => a + b.valor, 0);
 
+        // APARTAMENTO & MÃO DE OBRA
+        const apAvulsoMes = gastosMes.filter(g => g.categoria === 'Apartamento').reduce((a, b) => a + b.valor, 0);
+        const apTotalMes = totalFixasD5 + totalFixasD20 + apAvulsoMes;
+        const maoObraMes = gastosMes.filter(g => g.categoria === 'Mão de Obra').reduce((a, b) => a + b.valor, 0);
+
+        const apTotalHistorico = gastos.filter(g => g.categoria === 'Apartamento').reduce((a, b) => a + b.valor, 0)
+          + (CONTAS_FIXAS_BASE.reduce((a, b) => a + b.valorPadrao, 0) * (gastos.length > 0 ? 1 : 1));
+
         return {
-          totalGeral,
-          pago,
-          aPagar,
-          totalDia5,
-          totalDia20,
-          totalJoao,
-          totalRaquel,
-          totalCasal,
+          totalEntradasMes,
+          totalSaidasGeral,
+          disponivelTotal,
+          totalEntradasD5,
+          totalSaidasD5,
+          disponivelD5,
+          totalEntradasD20,
+          totalSaidasD20,
+          disponivelD20,
+          extraTotal: extraD5 + extraD20,
+          totalFixasMes: totalFixasD5 + totalFixasD20,
+          totalCartoesMes: cartoesD5 + cartoesD20,
           deliveryTotal,
           deliveryCount,
           deliveryJoao,
-          deliveryRaquel
+          deliveryRaquel,
+          apTotalMes,
+          apTotalHistorico,
+          maoObraMes,
+          fixaInternet,
+          fixaAluguel,
+          fixaLuz,
+          fixaAgua
         };
-      }, [gastosMes, contasFixas, statusPagamento, faturas, dataAtual]);
+      }, [gastosMes, extrasMes, valoresFixasMes, gastos]);
 
       return (
         <div className="flex flex-col flex-1">
           {/* TOPO: SELETOR DE MÊS */}
           <header className="bg-slate-900 text-white p-4 pt-6 sticky top-0 z-30 shadow-md flex items-center justify-between">
-            <button onClick={() => trocarMes(-1)} className="p-2 rounded-full hover:bg-slate-800 text-xl font-bold">←</button>
-            <h1 className="text-sm font-extrabold tracking-wider">{nomeMes}</h1>
-            <button onClick={() => trocarMes(1)} className="p-2 rounded-full hover:bg-slate-800 text-xl font-bold">→</button>
+            <button onClick={() => trocarMes(-1)} className="p-2 rounded-full hover:bg-slate-800 text-lg font-bold">←</button>
+            <div className="text-center">
+              <span className="text-[10px] tracking-widest text-slate-400 font-bold block">CONTROLE QUINZENAL</span>
+              <h1 className="text-sm font-extrabold">{nomeMes}</h1>
+            </div>
+            <button onClick={() => trocarMes(1)} className="p-2 rounded-full hover:bg-slate-800 text-lg font-bold">→</button>
           </header>
 
-          {/* CONTEÚDO PRINCIPAL DAS ABAS */}
-          <main className="p-4 flex-1">
+          {/* CONTEÚDO PRINCIPAL */}
+          <main className="p-4 flex-1 space-y-4">
             {/* --- ABA INÍCIO --- */}
             {abaAtiva === 'inicio' && (
               <div className="space-y-4">
-                {/* BOTÃO PRINCIPAL NOVO GASTO */}
-                <button 
-                  onClick={() => setModalAberto(true)}
-                  className="w-full bg-emerald-500 active:bg-emerald-600 text-white font-black text-lg py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition-all transform active:scale-98"
-                >
-                  <span className="text-2xl">+</span>
-                  <span>NOVO GASTO</span>
-                </button>
-
-                {/* CARD RESUMO PRINCIPAL */}
-                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200">
-                  <span className="text-xs font-bold text-slate-400 tracking-wider">TOTAL DO MÊS</span>
-                  <div className="text-3xl font-extrabold text-slate-800 my-1">
-                    R$ {metricas.totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-100">
-                    <div className="bg-rose-50 p-3 rounded-2xl">
-                      <span className="text-xs font-bold text-rose-500 flex items-center gap-1">🔴 A PAGAR</span>
-                      <span className="text-base font-bold text-rose-700 mt-0.5 block">
-                        R$ {metricas.aPagar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="bg-emerald-50 p-3 rounded-2xl">
-                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">🟢 JÁ PAGO</span>
-                      <span className="text-base font-bold text-emerald-800 mt-0.5 block">
-                        R$ {metricas.pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* PRÓXIMO VENCIMENTO */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-slate-400 block">PRÓXIMO VENCIMENTO</span>
-                    <span className="text-sm font-extrabold text-slate-800">Dia 5 • R$ {metricas.totalDia5.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
+                {/* BOTÕES DE ENTRADA RÁPIDA */}
+                <div className="grid grid-cols-2 gap-3">
                   <button 
-                    onClick={() => setAbaAtiva('contas')}
-                    className="bg-slate-100 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl"
+                    onClick={() => { setModalTipo('gasto'); setQuinzenaGasto(5); }}
+                    className="bg-emerald-500 active:bg-emerald-600 text-white font-extrabold py-3.5 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5"
                   >
-                    VER CONTAS
+                    <span className="text-xl">+</span>
+                    <span className="text-sm">NOVO GASTO</span>
+                  </button>
+                  <button 
+                    onClick={() => setModalTipo('renda_extra')}
+                    className="bg-amber-500 active:bg-amber-600 text-white font-extrabold py-3.5 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5"
+                  >
+                    <span className="text-xl">💰</span>
+                    <span className="text-sm">RENDA EXTRA</span>
                   </button>
                 </div>
 
-                {/* ALERTA / RESUMO DELIVERY */}
-                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">🍔</span>
-                      <div>
-                        <span className="text-xs font-bold text-amber-900 block">DELIVERY NO MÊS</span>
-                        <span className="text-lg font-black text-amber-900">
-                          R$ {metricas.deliveryTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold bg-amber-200 text-amber-800 px-2 py-1 rounded-lg">
-                      {metricas.deliveryCount} pedidos
-                    </span>
+                {/* CARD DISPONÍVEL TOTAL */}
+                <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg relative overflow-hidden">
+                  <span className="text-xs font-bold text-slate-400">DINHEIRO DISPONÍVEL (MÊS)</span>
+                  <div className={`text-3xl font-black mt-1 ${metricas.disponivelTotal < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    R$ {metricas.disponivelTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </div>
-                  {metricas.deliveryTotal > 400 && (
-                    <div className="mt-3 text-xs font-semibold text-amber-800 bg-amber-100/70 p-2 rounded-xl">
-                      ⚠️ Vocês já gastaram R$ {metricas.deliveryTotal.toFixed(0)} em Delivery este mês.
-                    </div>
-                  )}
-                  <div className="flex justify-between text-xs text-amber-900/80 pt-2 mt-2 border-t border-amber-200/60 font-medium">
-                    <span>João: R$ {metricas.deliveryJoao.toFixed(2)}</span>
-                    <span>Raquel: R$ {metricas.deliveryRaquel.toFixed(2)}</span>
+                  <div className="flex justify-between text-xs text-slate-400 mt-4 pt-3 border-t border-slate-800">
+                    <span>Entradas: <strong className="text-white">R$ {metricas.totalEntradasMes.toFixed(2)}</strong></span>
+                    <span>Saídas: <strong className="text-white">R$ {metricas.totalSaidasGeral.toFixed(2)}</strong></span>
                   </div>
                 </div>
 
-                {/* DIVISÃO RÁPIDA JOÃO E RAQUEL */}
+                {/* DIVISÃO DAS QUINZENAS */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200">
-                    <span className="text-xs font-bold text-slate-400 block">👨 JOÃO</span>
-                    <span className="text-lg font-black text-slate-800">
-                      R$ {metricas.totalJoao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
+                  {/* QUINZENA DIA 5 */}
+                  <div className={`p-4 rounded-2xl border ${metricas.disponivelD5 < 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'} shadow-sm`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-slate-500">DIA 5</span>
+                      {metricas.disponivelD5 < 0 && <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">NEGATIVO</span>}
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">Disponível</span>
+                    <div className={`text-lg font-black ${metricas.disponivelD5 < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                      R$ {metricas.disponivelD5.toFixed(2)}
+                    </div>
+                    <div className="mt-2 text-[10px] text-slate-500 pt-2 border-t border-slate-100 space-y-0.5">
+                      <div>Entrou: R$ {metricas.totalEntradasD5.toFixed(0)}</div>
+                      <div>Saiu: R$ {metricas.totalSaidasD5.toFixed(0)}</div>
+                    </div>
                   </div>
-                  <div className="bg-white p-4 rounded-2xl border border-slate-200">
-                    <span className="text-xs font-bold text-slate-400 block">👩 RAQUEL</span>
-                    <span className="text-lg font-black text-slate-800">
-                      R$ {metricas.totalRaquel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
+
+                  {/* QUINZENA DIA 20 */}
+                  <div className={`p-4 rounded-2xl border ${metricas.disponivelD20 < 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'} shadow-sm`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-black text-slate-500">DIA 20</span>
+                      {metricas.disponivelD20 < 0 && <span className="text-[10px] font-black text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">NEGATIVO</span>}
+                    </div>
+                    <span className="text-[10px] text-slate-400 block">Disponível</span>
+                    <div className={`text-lg font-black ${metricas.disponivelD20 < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                      R$ {metricas.disponivelD20.toFixed(2)}
+                    </div>
+                    <div className="mt-2 text-[10px] text-slate-500 pt-2 border-t border-slate-100 space-y-0.5">
+                      <div>Entrou: R$ {metricas.totalEntradasD20.toFixed(0)}</div>
+                      <div>Saiu: R$ {metricas.totalSaidasD20.toFixed(0)}</div>
+                    </div>
                   </div>
+                </div>
+
+                {/* ALERTAS DE QUINZENA */}
+                {metricas.disponivelD5 > 0 && metricas.disponivelD5 <= 400 && (
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-xs font-semibold text-amber-800 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>Atenção: Restam apenas R$ {metricas.disponivelD5.toFixed(2)} na quinzena do Dia 5.</span>
+                  </div>
+                )}
+                {metricas.disponivelD20 > 0 && metricas.disponivelD20 <= 400 && (
+                  <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-xs font-semibold text-amber-800 flex items-center gap-2">
+                    <span>⚠️</span>
+                    <span>Atenção: Restam apenas R$ {metricas.disponivelD20.toFixed(2)} na quinzena do Dia 20.</span>
+                  </div>
+                )}
+
+                {/* RESUMO RÁPIDO: DELIVERY & APARTAMENTO */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <span className="text-xl block mb-1">🍔</span>
+                    <span className="text-xs font-bold text-slate-400 block">DELIVERY</span>
+                    <span className="text-base font-extrabold text-slate-800">R$ {metricas.deliveryTotal.toFixed(2)}</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">{metricas.deliveryCount} pedidos</span>
+                  </div>
+
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <span className="text-xl block mb-1">🏠</span>
+                    <span className="text-xs font-bold text-slate-400 block">APARTAMENTO</span>
+                    <span className="text-base font-extrabold text-slate-800">R$ {metricas.apTotalMes.toFixed(2)}</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">+ Mão de Obra: R$ {metricas.maoObraMes.toFixed(0)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- ABA GASTOS & HISTÓRICO --- */}
+            {abaAtiva === 'gastos' && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                  <h2 className="text-xs font-black text-slate-400 mb-3 tracking-wider">RESUMO DO CASAL</h2>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="font-semibold text-slate-600">Salários Fixos</span>
+                      <span className="font-bold text-slate-800">R$ 4.300,00</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="font-semibold text-slate-600">Renda Extra (Shopee)</span>
+                      <span className="font-bold text-emerald-600">+ R$ {metricas.extraTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="font-semibold text-slate-600">Contas Fixas</span>
+                      <span className="font-bold text-rose-500">- R$ {metricas.totalFixasMes.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="font-semibold text-slate-600">Cartões</span>
+                      <span className="font-bold text-rose-500">- R$ {metricas.totalCartoesMes.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b border-slate-100">
+                      <span className="font-semibold text-slate-600">Apartamento & Reforma</span>
+                      <span className="font-bold text-rose-500">- R$ {(metricas.apTotalMes + metricas.maoObraMes).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between py-1.5 font-bold text-sm">
+                      <span className="text-slate-800">SOBRA TOTAL:</span>
+                      <span className={metricas.disponivelTotal < 0 ? 'text-rose-600' : 'text-emerald-600'}>
+                        R$ {metricas.disponivelTotal.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* HISTÓRICO DE LANÇAMENTOS */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                  <h2 className="text-xs font-black text-slate-400 mb-3 tracking-wider">HISTÓRICO DO MÊS</h2>
+                  {gastosMes.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">Nenhum gasto avulso registrado.</span>
+                  ) : (
+                    <div className="space-y-2">
+                      {gastosMes.map(g => (
+                        <div key={g.id} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
+                          <div>
+                            <span className="text-xs font-bold text-slate-800 block">{g.descricao}</span>
+                            <span className="text-[10px] text-slate-400">{g.responsavel} • {g.categoria} • Dia {g.quinzena}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-black text-slate-800">R$ {g.valor.toFixed(2)}</span>
+                            <button 
+                              onClick={() => setGastos(prev => prev.filter(item => item.id !== g.id))}
+                              className="text-slate-300 hover:text-rose-500 font-bold text-xs p-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* --- ABA CONTAS (DIA 5 & DIA 20) --- */}
             {abaAtiva === 'contas' && (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {/* BLOCO DIA 5 */}
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
-                    <span className="text-sm font-black text-slate-800">DIA 5</span>
-                    <span className="text-sm font-black text-slate-600">
-                      Total: R$ {metricas.totalDia5.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {contasFixas.filter(f => f.ativa && f.dia === 5).map(item => {
-                      const pago = statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-${item.id}`];
-                      return (
-                        <div key={item.id} onClick={() => toggleStatus(item.id)} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
-                          <div className="flex items-center space-x-2">
-                            <span>{pago ? '🟢' : '🔴'}</span>
-                            <span className={`text-sm font-semibold ${pago ? 'line-through text-slate-400' : 'text-slate-700'}`}>{item.nome}</span>
-                          </div>
-                          <span className="text-sm font-bold text-slate-800">R$ {item.valor.toFixed(2)}</span>
-                        </div>
-                      );
-                    })}
-                    {/* Cartão João Dia 5 */}
-                    <div onClick={() => toggleStatus('j5')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer border-t border-slate-50">
-                      <div className="flex items-center space-x-2">
-                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-j5`] ? '🟢' : '🔴'}</span>
-                        <span className="text-sm font-semibold text-slate-700">Cartão João (Dia 5)</span>
-                      </div>
-                      <span className="text-sm font-bold text-slate-800">R$ {faturas.j5.toFixed(2)}</span>
+                  <div className="flex justify-between items-center pb-2 mb-3 border-b border-slate-100">
+                    <div>
+                      <span className="text-sm font-black text-slate-800 block">QUINZENA DIA 5</span>
+                      <span className="text-[10px] text-slate-400">Salários: R$ 2.300 (João 1.150 + Raquel 1.150)</span>
                     </div>
-                    {/* Cartão Raquel Dia 5 */}
-                    <div onClick={() => toggleStatus('r5')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="text-xs font-extrabold text-slate-700">R$ {metricas.totalSaidasD5.toFixed(2)}</span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {/* Internet */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl">
                       <div className="flex items-center space-x-2">
-                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-r5`] ? '🟢' : '🔴'}</span>
-                        <span className="text-sm font-semibold text-slate-700">Cartão Raquel (Dia 5)</span>
+                        <span onClick={() => toggleStatus('f_internet')} className="cursor-pointer">
+                          {statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-f_internet`] ? '🟢' : '🔴'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">Internet</span>
                       </div>
-                      <span className="text-sm font-bold text-slate-800">R$ {faturas.r5.toFixed(2)}</span>
+                      <input 
+                        type="number" 
+                        value={metricas.fixaInternet}
+                        onChange={(e) => atualizarValorContaFixa('f_internet', e.target.value)}
+                        className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold"
+                      />
+                    </div>
+
+                    {/* Cartões Dia 5 */}
+                    <div className="flex items-center justify-between p-2 text-xs">
+                      <div className="flex items-center space-x-2">
+                        <span onClick={() => toggleStatus('cartao5')} className="cursor-pointer">
+                          {statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-cartao5`] ? '🟢' : '🔴'}
+                        </span>
+                        <span className="font-semibold text-slate-600">Faturas Cartões (Dia 5)</span>
+                      </div>
+                      <span className="font-bold text-slate-800">
+                        R$ {gastosMes.filter(g => g.cartao === 'j5' || g.cartao === 'r5').reduce((a, b) => a + b.valor, 0).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* BLOCO DIA 20 */}
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
-                    <span className="text-sm font-black text-slate-800">DIA 20</span>
-                    <span className="text-sm font-black text-slate-600">
-                      Total: R$ {metricas.totalDia20.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <div className="space-y-2">
-                    {contasFixas.filter(f => f.ativa && f.dia === 20).map(item => {
-                      const pago = statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-${item.id}`];
-                      return (
-                        <div key={item.id} onClick={() => toggleStatus(item.id)} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
-                          <div className="flex items-center space-x-2">
-                            <span>{pago ? '🟢' : '🔴'}</span>
-                            <span className={`text-sm font-semibold ${pago ? 'line-through text-slate-400' : 'text-slate-700'}`}>{item.nome}</span>
-                          </div>
-                          <span className="text-sm font-bold text-slate-800">R$ {item.valor.toFixed(2)}</span>
-                        </div>
-                      );
-                    })}
-                    {/* Cartão João Dia 20 */}
-                    <div onClick={() => toggleStatus('j20')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer border-t border-slate-50">
-                      <div className="flex items-center space-x-2">
-                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-j20`] ? '🟢' : '🔴'}</span>
-                        <span className="text-sm font-semibold text-slate-700">Cartão João (Dia 20)</span>
-                      </div>
-                      <span className="text-sm font-bold text-slate-800">R$ {faturas.j20.toFixed(2)}</span>
+                  <div className="flex justify-between items-center pb-2 mb-3 border-b border-slate-100">
+                    <div>
+                      <span className="text-sm font-black text-slate-800 block">QUINZENA DIA 20</span>
+                      <span className="text-[10px] text-slate-400">Salários: R$ 2.000 (João 1.000 + Raquel 1.000)</span>
                     </div>
-                    {/* Cartão Raquel Dia 20 */}
-                    <div onClick={() => toggleStatus('r20')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                    <span className="text-xs font-extrabold text-slate-700">R$ {metricas.totalSaidasD20.toFixed(2)}</span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    {/* Aluguel */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl">
                       <div className="flex items-center space-x-2">
-                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-r20`] ? '🟢' : '🔴'}</span>
-                        <span className="text-sm font-semibold text-slate-700">Cartão Raquel (Dia 20)</span>
+                        <span onClick={() => toggleStatus('f_aluguel')} className="cursor-pointer">
+                          {statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-f_aluguel`] ? '🟢' : '🔴'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">Aluguel</span>
                       </div>
-                      <span className="text-sm font-bold text-slate-800">R$ {faturas.r20.toFixed(2)}</span>
+                      <input 
+                        type="number" 
+                        value={metricas.fixaAluguel}
+                        onChange={(e) => atualizarValorContaFixa('f_aluguel', e.target.value)}
+                        className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold"
+                      />
+                    </div>
+
+                    {/* Luz */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl">
+                      <div className="flex items-center space-x-2">
+                        <span onClick={() => toggleStatus('f_luz')} className="cursor-pointer">
+                          {statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-f_luz`] ? '🟢' : '🔴'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">Luz</span>
+                      </div>
+                      <input 
+                        type="number" 
+                        value={metricas.fixaLuz}
+                        onChange={(e) => atualizarValorContaFixa('f_luz', e.target.value)}
+                        className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold"
+                      />
+                    </div>
+
+                    {/* Água */}
+                    <div className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl">
+                      <div className="flex items-center space-x-2">
+                        <span onClick={() => toggleStatus('f_agua')} className="cursor-pointer">
+                          {statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-f_agua`] ? '🟢' : '🔴'}
+                        </span>
+                        <span className="text-xs font-bold text-slate-700">Água</span>
+                      </div>
+                      <input 
+                        type="number" 
+                        value={metricas.fixaAgua}
+                        onChange={(e) => atualizarValorContaFixa('f_agua', e.target.value)}
+                        className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold"
+                      />
+                    </div>
+
+                    {/* Cartões Dia 20 */}
+                    <div className="flex items-center justify-between p-2 text-xs">
+                      <div className="flex items-center space-x-2">
+                        <span onClick={() => toggleStatus('cartao20')} className="cursor-pointer">
+                          {statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-cartao20`] ? '🟢' : '🔴'}
+                        </span>
+                        <span className="font-semibold text-slate-600">Faturas Cartões (Dia 20)</span>
+                      </div>
+                      <span className="font-bold text-slate-800">
+                        R$ {gastosMes.filter(g => g.cartao === 'j20' || g.cartao === 'r20').reduce((a, b) => a + b.valor, 0).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* --- ABA RELATÓRIO DE GASTOS --- */}
-            {abaAtiva === 'gastos' && (
-              <div className="space-y-4">
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">ONDE ESTAMOS GASTANDO?</h2>
-                  <div className="space-y-3">
-                    {CATEGORIAS.map(cat => {
-                      // Totaliza fixa + lançamentos daquela categoria
-                      const totalCat = gastosMes
-                        .filter(g => g.categoria === cat.id)
-                        .reduce((acc, cur) => acc + cur.valor, 0)
-                        + contasFixas.filter(f => f.ativa && f.categoria === cat.id).reduce((acc, cur) => acc + cur.valor, 0);
-
-                      return (
-                        <div key={cat.id} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-lg">{cat.icon}</span>
-                            <span className="text-sm font-semibold text-slate-700">{cat.label}</span>
-                          </div>
-                          <span className="text-sm font-bold text-slate-900">
-                            R$ {totalCat.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">DIVISÃO GERAL</h2>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm py-1 border-b border-slate-50">
-                      <span className="font-semibold text-slate-700">👨 João</span>
-                      <span className="font-bold text-slate-900">R$ {metricas.totalJoao.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm py-1 border-b border-slate-50">
-                      <span className="font-semibold text-slate-700">👩 Raquel</span>
-                      <span className="font-bold text-slate-900">R$ {metricas.totalRaquel.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm py-1">
-                      <span className="font-semibold text-slate-700">👥 Compartilhado (Casal)</span>
-                      <span className="font-bold text-slate-900">R$ {metricas.totalCasal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* --- ABA MAIS / HISTÓRICO & CONTAS FIXAS --- */}
+            {/* --- ABA MAIS / APARTAMENTO & EXTRAS --- */}
             {abaAtiva === 'mais' && (
-              <div className="space-y-5">
-                {/* GERENCIADOR DE CONTAS FIXAS */}
+              <div className="space-y-4">
+                {/* PAINEL APARTAMENTO */}
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">CONFIGURAR CONTAS FIXAS</h2>
-                  <div className="space-y-3">
-                    {contasFixas.map(f => (
-                      <div key={f.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
-                        <div>
-                          <span className="text-sm font-bold text-slate-800 block">{f.nome} (Dia {f.dia})</span>
-                          <span className="text-xs text-slate-400">{f.responsavel} • {f.categoria}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="number" 
-                            value={f.valor} 
-                            onChange={(e) => {
-                              const val = parseFloat(e.target.value) || 0;
-                              setContasFixas(prev => prev.map(item => item.id === f.id ? { ...item, valor: val } : item));
-                            }}
-                            className="w-20 bg-white border border-slate-300 rounded-lg p-1 text-right text-sm font-bold"
-                          />
-                        </div>
-                      </div>
-                    ))}
+                  <h2 className="text-xs font-black text-slate-400 mb-2 tracking-wider">🏠 CONTROLE DO APARTAMENTO</h2>
+                  <div className="grid grid-cols-2 gap-2 my-3">
+                    <div className="bg-slate-50 p-3 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block font-bold">ESTE MÊS</span>
+                      <span className="text-sm font-black text-slate-800">R$ {metricas.apTotalMes.toFixed(2)}</span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl">
+                      <span className="text-[10px] text-slate-400 block font-bold">HISTÓRICO TOTAL</span>
+                      <span className="text-sm font-black text-slate-800">R$ {metricas.apTotalHistorico.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-xs space-y-1 pt-2 border-t border-slate-100">
+                    <div className="flex justify-between py-0.5">
+                      <span className="text-slate-500">Mão de Obra (Mês):</span>
+                      <span className="font-bold text-slate-800">R$ {metricas.maoObraMes.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* HISTÓRICO COMPLETO DE GASTOS AVULSOS */}
+                {/* HISTÓRICO DE RENDA EXTRA */}
                 <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">HISTÓRICO DO MÊS</h2>
-                  {gastosMes.length === 0 ? (
-                    <span className="text-xs text-slate-400 italic">Nenhum gasto avulso registrado.</span>
+                  <h2 className="text-xs font-black text-slate-400 mb-2 tracking-wider">💰 RENDAS EXTRAS DO MÊS</h2>
+                  {extrasMes.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">Nenhuma renda extra adicionada.</span>
                   ) : (
                     <div className="space-y-2">
-                      {gastosMes.map(g => (
-                        <div key={g.id} className="flex items-center justify-between p-2 border-b border-slate-100 last:border-0">
+                      {extrasMes.map(r => (
+                        <div key={r.id} className="flex justify-between items-center p-2 rounded-xl bg-amber-50/50 border border-amber-100">
                           <div>
-                            <span className="text-sm font-bold text-slate-800 block">{g.descricao}</span>
-                            <span className="text-xs text-slate-400">{g.responsavel} • {g.categoria}</span>
+                            <span className="text-xs font-bold text-amber-900 block">{r.descricao}</span>
+                            <span className="text-[10px] text-amber-700">Dia {r.quinzena} • {r.responsavel}</span>
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <span className="text-sm font-black text-slate-800">R$ {g.valor.toFixed(2)}</span>
-                            <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 text-xs font-bold">✕</button>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-black text-emerald-700">+ R$ {r.valor.toFixed(2)}</span>
+                            <button 
+                              onClick={() => setRendasExtras(prev => prev.filter(item => item.id !== r.id))}
+                              className="text-slate-300 hover:text-rose-500 font-bold text-xs"
+                            >
+                              ✕
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -601,105 +663,124 @@
             )}
           </main>
 
-          {/* MODAL REGISTRO SIMPLES / LANÇAMENTO RÁPIDO */}
-          {modalAberto && (
+          {/* MODAL NOVO GASTO */}
+          {modalTipo === 'gasto' && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-black text-slate-800">Novo Gasto</h2>
+                  <h2 className="text-base font-black text-slate-800">+ Adicionar Gasto</h2>
                   <button onClick={fecharModal} className="text-slate-400 text-xl font-bold">✕</button>
                 </div>
 
-                {/* ENTRADA TIPO WHATSAPP */}
-                <div className="mb-4">
-                  <label className="text-xs font-bold text-slate-400 block mb-1">LANÇAMENTO INTELIGENTE</label>
-                  <input 
-                    type="text" 
-                    placeholder='Ex: "Delivery 52,90 João"' 
-                    value={inputRapido}
-                    onChange={(e) => parseTextoRapido(e.target.value)}
-                    className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                {/* CAMPOS REFINADOS AUTOMATICAMENTE */}
                 <div className="space-y-4">
+                  {/* Atalho WhatsApp */}
                   <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1">O que você gastou?</label>
                     <input 
                       type="text" 
-                      placeholder="Ex: Mercado" 
-                      value={descricao}
-                      onChange={(e) => setDescricao(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-semibold"
+                      placeholder='Ex: "Mercado 150 João dia 5"' 
+                      value={inputRapido}
+                      onChange={(e) => parseTextoRapido(e.target.value)}
+                      className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1">Valor (R$)</label>
-                    <input 
-                      type="number" 
-                      step="0.01" 
-                      placeholder="0,00" 
-                      value={valor}
-                      onChange={(e) => setValor(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xl font-black text-slate-800"
-                    />
+                  {/* Descrição & Valor */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 block mb-1">O QUE GASTOU?</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ex: Mercado" 
+                        value={descGasto}
+                        onChange={(e) => setDescGasto(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 block mb-1">VALOR (R$)</label>
+                      <input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="0,00" 
+                        value={valorGasto}
+                        onChange={(e) => setValorGasto(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-black text-slate-800"
+                      />
+                    </div>
                   </div>
 
-                  {/* QUEM GASTOU */}
+                  {/* Quinzena de Débito */}
                   <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1">Quem gastou?</label>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">DE QUAL QUINZENA VAI SAIR?</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => setQuinzenaGasto(5)}
+                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaGasto === 5 ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}`}
+                      >
+                        📅 Quinzena Dia 5
+                      </button>
+                      <button 
+                        onClick={() => setQuinzenaGasto(20)}
+                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaGasto === 20 ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}`}
+                      >
+                        📅 Quinzena Dia 20
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quem Gastou */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">QUEM GASTOU?</label>
                     <div className="grid grid-cols-3 gap-2">
                       {['João', 'Raquel', 'Casal'].map(p => (
                         <button 
                           key={p}
-                          onClick={() => setResponsavel(p)}
-                          className={`py-2 rounded-xl text-sm font-bold border ${responsavel === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}`}
+                          onClick={() => setRespGasto(p)}
+                          className={`py-2 rounded-xl text-xs font-bold border ${respGasto === p ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200'}`}
                         >
-                          {p.toUpperCase()}
+                          {p}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* CATEGORIAS */}
+                  {/* Categoria */}
                   <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1">Categoria</label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">CATEGORIA</label>
+                    <div className="grid grid-cols-3 gap-1.5">
                       {CATEGORIAS.map(c => (
                         <button 
                           key={c.id}
-                          onClick={() => setCategoria(c.id)}
-                          className={`py-2 px-1 rounded-xl text-xs font-bold border flex items-center justify-center space-x-1 ${categoria === c.id ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'}`}
+                          onClick={() => setCatGasto(c.id)}
+                          className={`py-2 px-1 rounded-xl text-[11px] font-bold border flex items-center justify-center space-x-1 ${catGasto === c.id ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'}`}
                         >
                           <span>{c.icon}</span>
-                          <span>{c.label}</span>
+                          <span className="truncate">{c.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* CARTÃO & PARCELAMENTO */}
+                  {/* Cartão e Parcelas */}
                   <div>
-                    <label className="text-xs font-bold text-slate-400 block mb-1">Forma de Pagamento</label>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">PAGAMENTO / CARTÃO</label>
                     <select 
-                      value={cartaoSelecionado} 
-                      onChange={(e) => setCartaoSelecionado(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-semibold mb-2"
+                      value={cartaoGasto} 
+                      onChange={(e) => setCartaoGasto(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold mb-2"
                     >
                       {CARTAO_OPCOES.map(opt => (
                         <option key={opt.id} value={opt.id}>{opt.label}</option>
                       ))}
                     </select>
 
-                    {cartaoSelecionado !== 'nenhum' && (
+                    {cartaoGasto !== 'nenhum' && (
                       <div className="flex items-center space-x-2">
                         <label className="text-xs font-bold text-slate-400">Parcelas:</label>
                         <select 
-                          value={parcelas} 
-                          onChange={(e) => setParcelas(e.target.value)}
-                          className="bg-slate-50 border border-slate-200 rounded-xl p-2 text-sm font-bold"
+                          value={parcelasGasto} 
+                          onChange={(e) => setParcelasGasto(e.target.value)}
+                          className="bg-slate-50 border border-slate-200 rounded-xl p-1.5 text-xs font-bold"
                         >
                           {[1, 2, 3, 4, 5, 6, 10, 12].map(n => (
                             <option key={n} value={n}>{n}x</option>
@@ -709,12 +790,72 @@
                     )}
                   </div>
 
-                  {/* BOTÃO SALVAR */}
                   <button 
                     onClick={salvarGasto}
-                    className="w-full bg-slate-900 text-white font-extrabold text-base py-4 rounded-2xl shadow-lg mt-2 active:bg-slate-800"
+                    className="w-full bg-emerald-500 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg mt-2 active:bg-emerald-600"
                   >
                     SALVAR GASTO
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL RENDA EXTRA */}
+          {modalTipo === 'renda_extra' && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-base font-black text-slate-800">💰 Adicionar Renda Extra</h2>
+                  <button onClick={fecharModal} className="text-slate-400 text-xl font-bold">✕</button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">ORIGEM / DESCRIÇÃO</label>
+                    <input 
+                      type="text" 
+                      value={descExtra} 
+                      onChange={(e) => setDescExtra(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">VALOR RECEBIDO (R$)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="Ex: 180,00" 
+                      value={valorExtra}
+                      onChange={(e) => setValorExtra(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-lg font-black text-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-1">ENTROU EM QUAL QUINZENA?</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        onClick={() => setQuinzenaExtra(5)}
+                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaExtra === 5 ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-200'}`}
+                      >
+                        Dia 5
+                      </button>
+                      <button 
+                        onClick={() => setQuinzenaExtra(20)}
+                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaExtra === 20 ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-200'}`}
+                      >
+                        Dia 20
+                      </button>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={salvarRendaExtra}
+                    className="w-full bg-amber-500 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg mt-2 active:bg-amber-600"
+                  >
+                    SOMAR AO SALDO
                   </button>
                 </div>
               </div>
@@ -731,30 +872,30 @@
               <span className="text-[10px]">Início</span>
             </button>
             <button 
-              onClick={() => setAbaAtiva('contas')} 
-              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'contas' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
+              onClick={() => setAbaAtiva('gastos')} 
+              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'gastos' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
             >
-              <span className="text-xl">📋</span>
-              <span className="text-[10px]">Contas</span>
+              <span className="text-xl">💸</span>
+              <span className="text-[10px]">Gastos</span>
             </button>
             <button 
-              onClick={() => setModalAberto(true)} 
+              onClick={() => { setModalTipo('gasto'); setQuinzenaGasto(5); }} 
               className="bg-emerald-500 text-white rounded-full p-3 shadow-lg -translate-y-3 flex items-center justify-center border-4 border-slate-50"
             >
               <span className="text-2xl font-bold leading-none">➕</span>
             </button>
             <button 
-              onClick={() => setAbaAtiva('gastos')} 
-              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'gastos' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
+              onClick={() => setAbaAtiva('contas')} 
+              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'contas' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
             >
-              <span className="text-xl">📊</span>
-              <span className="text-[10px]">Gastos</span>
+              <span className="text-xl">📅</span>
+              <span className="text-[10px]">Contas</span>
             </button>
             <button 
               onClick={() => setAbaAtiva('mais')} 
               className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'mais' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
             >
-              <span className="text-xl">⚙️</span>
+              <span className="text-xl">☰</span>
               <span className="text-[10px]">Mais</span>
             </button>
           </nav>
