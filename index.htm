@@ -3,56 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Lista de Gastos João & Raquel</title>
+  <title>Gastos João & Raquel — Controle por Quinzena</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, select, textarea {
+      user-select: text;
     }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 flex justify-center min-h-screen">
 
-  <div id="root" class="w-full max-w-md bg-slate-50 min-h-screen pb-24 shadow-lg flex flex-col"></div>
+  <div id="root" class="w-full max-w-md bg-slate-50 min-h-screen pb-12 shadow-xl flex flex-col"></div>
 
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
-    const FIXOS_ESTRUTURA = {
+    // ESTRUTURA DOS GASTOS FIXOS DO CASAL POR DIA
+    const ESTRUTURA_FIXOS = {
       5: [
-        { id: 'fixo_internet', nome: 'Internet', padrao: 120 }
+        { id: 'fixo_internet', nome: 'Internet', padrao: 126 },
+        { id: 'fixo_ap5', nome: 'Apartamento', padrao: 0 }
       ],
       20: [
-        { id: 'fixo_aluguel', nome: 'Aluguel', padrao: 1200 },
-        { id: 'fixo_agua', nome: 'Água', padrao: 80 },
-        { id: 'fixo_luz', nome: 'Luz', padrao: 200 },
-        { id: 'fixo_mao_obra', nome: 'Mão de obra', padrao: 500 },
-        { id: 'fixo_apartamento', nome: 'Apartamento', padrao: 300 }
+        { id: 'fixo_aluguel', nome: 'Aluguel', padrao: 500 },
+        { id: 'fixo_agua', nome: 'Água', padrao: 75 },
+        { id: 'fixo_energia', nome: 'Energia', padrao: 75 },
+        { id: 'fixo_mao_obra', nome: 'Mão de obra', padrao: 0 }
       ]
     };
 
     function App() {
+      // Estado do Mês Selecionado
       const [dataAtual, setDataAtual] = useState(() => {
         const now = new Date();
         return { mes: now.getMonth(), ano: now.getFullYear() };
       });
 
+      // Gastos Individuais Salvos
       const [gastos, setGastos] = useState(() => {
-        const s = localStorage.getItem('jr_lista_gastos');
+        const s = localStorage.getItem('jr_quinzena_gastos_v2');
         return s ? JSON.parse(s) : [];
       });
 
+      // Valores dos Fixos Salvos (com suporte a edição mensal)
       const [valoresFixos, setValoresFixos] = useState(() => {
-        const s = localStorage.getItem('jr_lista_fixos');
+        const s = localStorage.getItem('jr_quinzena_fixos_v2');
         return s ? JSON.parse(s) : {};
       });
 
-      // Modal de Adicionar / Editar
+      // Estado do Modal
       const [modalAberto, setModalAberto] = useState(false);
       const [editandoId, setEditandoId] = useState(null);
       const [quem, setQuem] = useState('João');
@@ -61,22 +69,24 @@
       const [valor, setValor] = useState('');
       const [isDelivery, setIsDelivery] = useState(false);
 
+      // Persistência
       useEffect(() => {
-        localStorage.setItem('jr_lista_gastos', JSON.stringify(gastos));
+        localStorage.setItem('jr_quinzena_gastos_v2', JSON.stringify(gastos));
       }, [gastos]);
 
       useEffect(() => {
-        localStorage.setItem('jr_lista_fixos', JSON.stringify(valoresFixos));
+        localStorage.setItem('jr_quinzena_fixos_v2', JSON.stringify(valoresFixos));
       }, [valoresFixos]);
 
+      // Nome do Mês Formatado
       const nomeMes = useMemo(() => {
         const d = new Date(dataAtual.ano, dataAtual.mes, 1);
         return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
       }, [dataAtual]);
 
-      const trocarMes = (dir) => {
+      const trocarMes = (direcao) => {
         setDataAtual(prev => {
-          let m = prev.mes + dir;
+          let m = prev.mes + direcao;
           let a = prev.ano;
           if (m > 11) { m = 0; a++; }
           if (m < 0) { m = 11; a--; }
@@ -84,6 +94,7 @@
         });
       };
 
+      // Leitura e Escrita de Fixos por Mês
       const getValorFixo = (id, padrao) => {
         const chave = `${dataAtual.ano}-${dataAtual.mes}-${id}`;
         return valoresFixos[chave] !== undefined ? valoresFixos[chave] : padrao;
@@ -97,6 +108,7 @@
         }));
       };
 
+      // Modal Handlers
       const abrirModalNovo = (diaPadrao = 5, quemPadrao = 'João') => {
         setEditandoId(null);
         setQuem(quemPadrao);
@@ -107,13 +119,13 @@
         setModalAberto(true);
       };
 
-      const abrirModalEditar = (gasto) => {
-        setEditandoId(gasto.id);
-        setQuem(gasto.quem);
-        setDia(gasto.dia);
-        setDescricao(gasto.descricao);
-        setValor(gasto.valor.toString());
-        setIsDelivery(Boolean(gasto.isDelivery));
+      const abrirModalEditar = (g) => {
+        setEditandoId(g.id);
+        setQuem(g.quem);
+        setDia(g.dia);
+        setDescricao(g.descricao);
+        setValor(g.valor.toString());
+        setIsDelivery(Boolean(g.isDelivery));
         setModalAberto(true);
       };
 
@@ -151,287 +163,370 @@
         setGastos(prev => prev.filter(g => g.id !== id));
       };
 
-      // Cálculos da Lista
+      // Gastos Filtrados do Mês
       const gastosMes = useMemo(() => {
         return gastos.filter(g => g.mes === dataAtual.mes && g.ano === dataAtual.ano);
       }, [gastos, dataAtual]);
 
-      // DIA 5
-      const joaoDia5 = useMemo(() => gastosMes.filter(g => g.dia === 5 && g.quem === 'João'), [gastosMes]);
-      const totalJoaoDia5 = useMemo(() => joaoDia5.reduce((a, b) => a + b.valor, 0), [joaoDia5]);
+      // ================= CÁLCULOS QUINZENA DIA 5 =================
+      const joaoD5 = useMemo(() => gastosMes.filter(g => g.dia === 5 && g.quem === 'João'), [gastosMes]);
+      const totalJoaoD5 = useMemo(() => joaoD5.reduce((a, b) => a + b.valor, 0), [joaoD5]);
 
-      const raquelDia5 = useMemo(() => gastosMes.filter(g => g.dia === 5 && g.quem === 'Raquel'), [gastosMes]);
-      const totalRaquelDia5 = useMemo(() => raquelDia5.reduce((a, b) => a + b.valor, 0), [raquelDia5]);
+      const raquelD5 = useMemo(() => gastosMes.filter(g => g.dia === 5 && g.quem === 'Raquel'), [gastosMes]);
+      const totalRaquelD5 = useMemo(() => raquelD5.reduce((a, b) => a + b.valor, 0), [raquelD5]);
 
-      const totalFixosDia5 = useMemo(() => {
-        return FIXOS_ESTRUTURA[5].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
+      const totalFixosD5 = useMemo(() => {
+        return ESTRUTURA_FIXOS[5].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
       }, [valoresFixos, dataAtual]);
 
-      const totalDia5 = totalJoaoDia5 + totalRaquelDia5 + totalFixosDia5;
+      // TOTAL COMBINADO DA QUINZENA DIA 5
+      const totalQuinzenaD5 = totalJoaoD5 + totalRaquelD5 + totalFixosD5;
 
-      // DIA 20
-      const joaoDia20 = useMemo(() => gastosMes.filter(g => g.dia === 20 && g.quem === 'João'), [gastosMes]);
-      const totalJoaoDia20 = useMemo(() => joaoDia20.reduce((a, b) => a + b.valor, 0), [joaoDia20]);
+      // ================= CÁLCULOS QUINZENA DIA 20 =================
+      const joaoD20 = useMemo(() => gastosMes.filter(g => g.dia === 20 && g.quem === 'João'), [gastosMes]);
+      const totalJoaoD20 = useMemo(() => joaoD20.reduce((a, b) => a + b.valor, 0), [joaoD20]);
 
-      const raquelDia20 = useMemo(() => gastosMes.filter(g => g.dia === 20 && g.quem === 'Raquel'), [gastosMes]);
-      const totalRaquelDia20 = useMemo(() => raquelDia20.reduce((a, b) => a + b.valor, 0), [raquelDia20]);
+      const raquelD20 = useMemo(() => gastosMes.filter(g => g.dia === 20 && g.quem === 'Raquel'), [gastosMes]);
+      const totalRaquelD20 = useMemo(() => raquelD20.reduce((a, b) => a + b.valor, 0), [raquelD20]);
 
-      const totalFixosDia20 = useMemo(() => {
-        return FIXOS_ESTRUTURA[20].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
+      const totalFixosD20 = useMemo(() => {
+        return ESTRUTURA_FIXOS[20].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
       }, [valoresFixos, dataAtual]);
 
-      const totalDia20 = totalJoaoDia20 + totalRaquelDia20 + totalFixosDia20;
+      // TOTAL COMBINADO DA QUINZENA DIA 20
+      const totalQuinzenaD20 = totalJoaoD20 + totalRaquelD20 + totalFixosD20;
 
-      // TOTAIS GERAIS
-      const totalGeralMes = totalDia5 + totalDia20;
-      const totalDelivery = useMemo(() => gastosMes.filter(g => g.isDelivery).reduce((a, b) => a + b.valor, 0), [gastosMes]);
+      // ================= TOTAL GERAL DO MÊS =================
+      const totalGeralMes = totalQuinzenaD5 + totalQuinzenaD20;
+
+      const totalDelivery = useMemo(() => {
+        return gastosMes.filter(g => g.isDelivery).reduce((a, b) => a + b.valor, 0);
+      }, [gastosMes]);
 
       return (
         <div className="flex flex-col flex-1">
           {/* TOPO: SELETOR DE MÊS */}
-          <header className="bg-slate-900 text-white p-4 sticky top-0 z-30 shadow flex items-center justify-between">
-            <button onClick={() => trocarMes(-1)} className="p-2 text-xl font-bold hover:bg-slate-800 rounded-full">←</button>
-            <h1 className="text-sm font-extrabold tracking-wider">{nomeMes}</h1>
-            <button onClick={() => trocarMes(1)} className="p-2 text-xl font-bold hover:bg-slate-800 rounded-full">→</button>
+          <header className="bg-slate-900 text-white p-4 sticky top-0 z-30 shadow-md flex items-center justify-between">
+            <button onClick={() => trocarMes(-1)} className="p-2 text-xl font-bold hover:bg-slate-800 rounded-full transition-colors">←</button>
+            <div className="text-center">
+              <span className="text-[10px] font-bold text-slate-400 block tracking-widest">CONTROLE FINANCEIRO</span>
+              <h1 className="text-sm font-extrabold tracking-wider">{nomeMes}</h1>
+            </div>
+            <button onClick={() => trocarMes(1)} className="p-2 text-xl font-bold hover:bg-slate-800 rounded-full transition-colors">→</button>
           </header>
 
-          {/* BOTÃO PRINCIPAL FIXO NO TOPO */}
+          {/* BOTÃO ADICIONAR GASTO */}
           <div className="p-4 pb-2">
             <button 
               onClick={() => abrirModalNovo()}
-              className="w-full bg-emerald-600 active:bg-emerald-700 text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center space-x-2 text-base"
+              className="w-full bg-emerald-600 active:bg-emerald-700 text-white font-black py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-base tracking-wide active:scale-[0.99] transition-all"
             >
-              <span className="text-xl">+</span>
+              <span className="text-2xl leading-none">+</span>
               <span>ADICIONAR GASTO</span>
             </button>
           </div>
 
-          {/* RESUMO RÁPIDO DE DELIVERY */}
+          {/* RESUMO RÁPIDO DE DELIVERY (SE HOUVER) */}
           {totalDelivery > 0 && (
-            <div className="mx-4 mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex justify-between items-center text-xs font-bold text-amber-900">
-              <span>🍔 Total Delivery no mês:</span>
-              <span>R$ {totalDelivery.toFixed(2)}</span>
+            <div className="mx-4 mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-2xl flex justify-between items-center text-xs font-bold text-amber-900">
+              <span className="flex items-center gap-1.5">🍔 Delivery / Lanches no mês:</span>
+              <span className="font-extrabold">R$ {totalDelivery.toFixed(2)}</span>
             </div>
           )}
 
           <main className="p-4 pt-1 space-y-6 flex-1">
-            {/* ======================= BLOCO DIA 5 ======================= */}
+
+            {/* ============================================================== */}
+            {/* 📅 QUINZENA DO DIA 5                                          */}
+            {/* ============================================================== */}
             <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-4">
               <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
-                <span className="text-lg font-black text-slate-900">📅 DIA 5</span>
-                <span className="text-xs font-bold text-slate-400">PRIMEIRA QUINZENA</span>
+                <span className="text-base font-black text-blue-900 flex items-center gap-1.5">
+                  <span>📅</span> QUINZENA DO DIA 5
+                </span>
+                <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                  1ª Quinzena
+                </span>
               </div>
 
-              {/* JOÃO - DIA 5 */}
-              <div className="space-y-2">
+              {/* JOÃO — DIA 5 */}
+              <div className="space-y-2 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-blue-600 uppercase tracking-wide">JOÃO</span>
-                  <button onClick={() => abrirModalNovo(5, 'João')} className="text-xs text-blue-500 font-bold hover:underline">+ item</button>
+                  <span className="text-xs font-black text-blue-600 uppercase tracking-wide">JOÃO — DIA 5</span>
+                  <button onClick={() => abrirModalNovo(5, 'João')} className="text-xs text-blue-600 font-bold hover:underline">+ Adicionar</button>
                 </div>
-                {joaoDia5.length === 0 ? (
-                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+
+                {joaoD5.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic py-1">Nenhum gasto cadastrado</div>
                 ) : (
-                  <div className="space-y-1">
-                    {joaoDia5.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                  <div className="space-y-1.5">
+                    {joaoD5.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
                         <div className="flex items-center space-x-1.5 truncate">
-                          {g.isDelivery && <span>🍔</span>}
-                          <span className="font-semibold text-slate-800">{g.descricao}</span>
+                          {g.isDelivery && <span title="Delivery">🍔</span>}
+                          <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
                         </div>
                         <div className="flex items-center space-x-2 shrink-0">
-                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
-                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <span className="font-extrabold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-700">✏️</button>
                           <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="text-right text-xs font-bold text-slate-600 pt-1">
-                  TOTAL JOÃO DIA 5: <strong className="text-slate-900">R$ {totalJoaoDia5.toFixed(2)}</strong>
+
+                <div className="text-right text-xs font-extrabold text-slate-600 pt-1 border-t border-slate-200/60">
+                  TOTAL JOÃO DIA 5: <span className="text-slate-900 font-black">R$ {totalJoaoD5.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* RAQUEL - DIA 5 */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
+              {/* RAQUEL — DIA 5 */}
+              <div className="space-y-2 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-purple-600 uppercase tracking-wide">RAQUEL</span>
-                  <button onClick={() => abrirModalNovo(5, 'Raquel')} className="text-xs text-purple-500 font-bold hover:underline">+ item</button>
+                  <span className="text-xs font-black text-purple-600 uppercase tracking-wide">RAQUEL — DIA 5</span>
+                  <button onClick={() => abrirModalNovo(5, 'Raquel')} className="text-xs text-purple-600 font-bold hover:underline">+ Adicionar</button>
                 </div>
-                {raquelDia5.length === 0 ? (
-                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+
+                {raquelD5.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic py-1">Nenhum gasto cadastrado</div>
                 ) : (
-                  <div className="space-y-1">
-                    {raquelDia5.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                  <div className="space-y-1.5">
+                    {raquelD5.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
                         <div className="flex items-center space-x-1.5 truncate">
-                          {g.isDelivery && <span>🍔</span>}
-                          <span className="font-semibold text-slate-800">{g.descricao}</span>
+                          {g.isDelivery && <span title="Delivery">🍔</span>}
+                          <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
                         </div>
                         <div className="flex items-center space-x-2 shrink-0">
-                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
-                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <span className="font-extrabold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-700">✏️</button>
                           <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="text-right text-xs font-bold text-slate-600 pt-1">
-                  TOTAL RAQUEL DIA 5: <strong className="text-slate-900">R$ {totalRaquelDia5.toFixed(2)}</strong>
+
+                <div className="text-right text-xs font-extrabold text-slate-600 pt-1 border-t border-slate-200/60">
+                  TOTAL RAQUEL DIA 5: <span className="text-slate-900 font-black">R$ {totalRaquelD5.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* FIXOS DO CASAL - DIA 5 */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 bg-amber-50/50 p-3 rounded-2xl border border-amber-100">
-                <span className="text-xs font-black text-amber-900 uppercase tracking-wide block">FIXOS DO CASAL</span>
-                <div className="space-y-1.5">
-                  {FIXOS_ESTRUTURA[5].map(f => (
-                    <div key={f.id} className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-slate-700">{f.nome}</span>
+              {/* FIXOS DO CASAL — DIA 5 */}
+              <div className="space-y-2 bg-amber-50/60 p-3 rounded-2xl border border-amber-200/80">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-amber-900 uppercase tracking-wide">FIXOS DO CASAL — DIA 5</span>
+                  <span className="text-[10px] text-amber-700 font-bold">Permanentes</span>
+                </div>
+
+                <div className="space-y-2">
+                  {ESTRUTURA_FIXOS[5].map(f => (
+                    <div key={f.id} className="flex justify-between items-center text-xs bg-white/80 p-2 rounded-xl border border-amber-200/60">
+                      <span className="font-bold text-slate-800">{f.nome}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-slate-400 font-bold">R$</span>
                         <input 
                           type="number" 
                           value={getValorFixo(f.id, f.padrao)}
                           onChange={(e) => setValorFixo(f.id, e.target.value)}
-                          className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold text-slate-900"
+                          className="w-20 bg-white border border-slate-300 rounded-lg p-1 text-right text-xs font-black text-slate-900 focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="text-right text-xs font-bold text-amber-950 pt-1">
-                  TOTAL FIXOS DIA 5: R$ {totalFixosDia5.toFixed(2)}
+
+                <div className="text-right text-xs font-extrabold text-amber-950 pt-1 border-t border-amber-200/70">
+                  TOTAL FIXOS DIA 5: <span className="font-black">R$ {totalFixosD5.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* TOTAL DIA 5 */}
-              <div className="bg-slate-900 text-white p-3 rounded-2xl flex justify-between items-center">
-                <span className="text-xs font-black">TOTAL DIA 5</span>
-                <span className="text-sm font-black text-emerald-400">R$ {totalDia5.toFixed(2)}</span>
+              {/* 🔵 TOTAL DA QUINZENA — DIA 5 (EM DESTAQUE) */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-2xl shadow-md space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-blue-100">
+                    🔵 TOTAL QUINZENA DIA 5
+                  </span>
+                  <span className="text-xl font-black text-white">
+                    R$ {totalQuinzenaD5.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="text-[11px] text-blue-200 flex justify-between pt-1 border-t border-blue-500/50">
+                  <span>João: R$ {totalJoaoD5.toFixed(0)}</span>
+                  <span>•</span>
+                  <span>Raquel: R$ {totalRaquelD5.toFixed(0)}</span>
+                  <span>•</span>
+                  <span>Fixos: R$ {totalFixosD5.toFixed(0)}</span>
+                </div>
               </div>
             </section>
 
-            {/* ======================= BLOCO DIA 20 ======================= */}
+
+            {/* ============================================================== */}
+            {/* 📅 QUINZENA DO DIA 20                                         */}
+            {/* ============================================================== */}
             <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-4">
               <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
-                <span className="text-lg font-black text-slate-900">📅 DIA 20</span>
-                <span className="text-xs font-bold text-slate-400">SEGUNDA QUINZENA</span>
+                <span className="text-base font-black text-orange-950 flex items-center gap-1.5">
+                  <span>📅</span> QUINZENA DO DIA 20
+                </span>
+                <span className="text-[11px] font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full">
+                  2ª Quinzena
+                </span>
               </div>
 
-              {/* JOÃO - DIA 20 */}
-              <div className="space-y-2">
+              {/* JOÃO — DIA 20 */}
+              <div className="space-y-2 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-blue-600 uppercase tracking-wide">JOÃO</span>
-                  <button onClick={() => abrirModalNovo(20, 'João')} className="text-xs text-blue-500 font-bold hover:underline">+ item</button>
+                  <span className="text-xs font-black text-blue-600 uppercase tracking-wide">JOÃO — DIA 20</span>
+                  <button onClick={() => abrirModalNovo(20, 'João')} className="text-xs text-blue-600 font-bold hover:underline">+ Adicionar</button>
                 </div>
-                {joaoDia20.length === 0 ? (
-                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+
+                {joaoD20.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic py-1">Nenhum gasto cadastrado</div>
                 ) : (
-                  <div className="space-y-1">
-                    {joaoDia20.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                  <div className="space-y-1.5">
+                    {joaoD20.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
                         <div className="flex items-center space-x-1.5 truncate">
-                          {g.isDelivery && <span>🍔</span>}
-                          <span className="font-semibold text-slate-800">{g.descricao}</span>
+                          {g.isDelivery && <span title="Delivery">🍔</span>}
+                          <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
                         </div>
                         <div className="flex items-center space-x-2 shrink-0">
-                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
-                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <span className="font-extrabold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-700">✏️</button>
                           <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="text-right text-xs font-bold text-slate-600 pt-1">
-                  TOTAL JOÃO DIA 20: <strong className="text-slate-900">R$ {totalJoaoDia20.toFixed(2)}</strong>
+
+                <div className="text-right text-xs font-extrabold text-slate-600 pt-1 border-t border-slate-200/60">
+                  TOTAL JOÃO DIA 20: <span className="text-slate-900 font-black">R$ {totalJoaoD20.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* RAQUEL - DIA 20 */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
+              {/* RAQUEL — DIA 20 */}
+              <div className="space-y-2 bg-slate-50/70 p-3 rounded-2xl border border-slate-100">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-purple-600 uppercase tracking-wide">RAQUEL</span>
-                  <button onClick={() => abrirModalNovo(20, 'Raquel')} className="text-xs text-purple-500 font-bold hover:underline">+ item</button>
+                  <span className="text-xs font-black text-purple-600 uppercase tracking-wide">RAQUEL — DIA 20</span>
+                  <button onClick={() => abrirModalNovo(20, 'Raquel')} className="text-xs text-purple-600 font-bold hover:underline">+ Adicionar</button>
                 </div>
-                {raquelDia20.length === 0 ? (
-                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+
+                {raquelD20.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic py-1">Nenhum gasto cadastrado</div>
                 ) : (
-                  <div className="space-y-1">
-                    {raquelDia20.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                  <div className="space-y-1.5">
+                    {raquelD20.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
                         <div className="flex items-center space-x-1.5 truncate">
-                          {g.isDelivery && <span>🍔</span>}
-                          <span className="font-semibold text-slate-800">{g.descricao}</span>
+                          {g.isDelivery && <span title="Delivery">🍔</span>}
+                          <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
                         </div>
                         <div className="flex items-center space-x-2 shrink-0">
-                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
-                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <span className="font-extrabold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-700">✏️</button>
                           <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="text-right text-xs font-bold text-slate-600 pt-1">
-                  TOTAL RAQUEL DIA 20: <strong className="text-slate-900">R$ {totalRaquelDia20.toFixed(2)}</strong>
+
+                <div className="text-right text-xs font-extrabold text-slate-600 pt-1 border-t border-slate-200/60">
+                  TOTAL RAQUEL DIA 20: <span className="text-slate-900 font-black">R$ {totalRaquelD20.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* FIXOS DO CASAL - DIA 20 */}
-              <div className="space-y-2 pt-2 border-t border-slate-100 bg-amber-50/50 p-3 rounded-2xl border border-amber-100">
-                <span className="text-xs font-black text-amber-900 uppercase tracking-wide block">FIXOS DO CASAL</span>
-                <div className="space-y-1.5">
-                  {FIXOS_ESTRUTURA[20].map(f => (
-                    <div key={f.id} className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-slate-700">{f.nome}</span>
+              {/* FIXOS DO CASAL — DIA 20 */}
+              <div className="space-y-2 bg-amber-50/60 p-3 rounded-2xl border border-amber-200/80">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-amber-900 uppercase tracking-wide">FIXOS DO CASAL — DIA 20</span>
+                  <span className="text-[10px] text-amber-700 font-bold">Permanentes</span>
+                </div>
+
+                <div className="space-y-2">
+                  {ESTRUTURA_FIXOS[20].map(f => (
+                    <div key={f.id} className="flex justify-between items-center text-xs bg-white/80 p-2 rounded-xl border border-amber-200/60">
+                      <span className="font-bold text-slate-800">{f.nome}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-slate-400 font-bold">R$</span>
                         <input 
                           type="number" 
                           value={getValorFixo(f.id, f.padrao)}
                           onChange={(e) => setValorFixo(f.id, e.target.value)}
-                          className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold text-slate-900"
+                          className="w-20 bg-white border border-slate-300 rounded-lg p-1 text-right text-xs font-black text-slate-900 focus:ring-1 focus:ring-amber-500"
                         />
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="text-right text-xs font-bold text-amber-950 pt-1">
-                  TOTAL FIXOS DIA 20: R$ {totalFixosDia20.toFixed(2)}
+
+                <div className="text-right text-xs font-extrabold text-amber-950 pt-1 border-t border-amber-200/70">
+                  TOTAL FIXOS DIA 20: <span className="font-black">R$ {totalFixosD20.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* TOTAL DIA 20 */}
-              <div className="bg-slate-900 text-white p-3 rounded-2xl flex justify-between items-center">
-                <span className="text-xs font-black">TOTAL DIA 20</span>
-                <span className="text-sm font-black text-emerald-400">R$ {totalDia20.toFixed(2)}</span>
+              {/* 🟠 TOTAL DA QUINZENA — DIA 20 (EM DESTAQUE) */}
+              <div className="bg-gradient-to-r from-orange-500 to-amber-600 text-white p-4 rounded-2xl shadow-md space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-extrabold tracking-wider uppercase text-orange-100">
+                    🟠 TOTAL QUINZENA DIA 20
+                  </span>
+                  <span className="text-xl font-black text-white">
+                    R$ {totalQuinzenaD20.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+                <div className="text-[11px] text-orange-100 flex justify-between pt-1 border-t border-orange-400/50">
+                  <span>João: R$ {totalJoaoD20.toFixed(0)}</span>
+                  <span>•</span>
+                  <span>Raquel: R$ {totalRaquelD20.toFixed(0)}</span>
+                  <span>•</span>
+                  <span>Fixos: R$ {totalFixosD20.toFixed(0)}</span>
+                </div>
               </div>
             </section>
 
-            {/* ======================= TOTAL GERAL DO MÊS ======================= */}
-            <section className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg space-y-3">
-              <span className="text-xs font-black text-slate-400 tracking-wider block">TOTAL GERAL DO MÊS</span>
-              
-              <div className="space-y-1.5 text-xs text-slate-300 border-b border-slate-800 pb-3">
-                <div className="flex justify-between"><span>João dia 5:</span><span className="font-bold text-white">R$ {totalJoaoDia5.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Raquel dia 5:</span><span className="font-bold text-white">R$ {totalRaquelDia5.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Fixos dia 5:</span><span className="font-bold text-white">R$ {totalFixosDia5.toFixed(2)}</span></div>
-                <div className="flex justify-between pt-1 border-t border-slate-800/60"><span>João dia 20:</span><span className="font-bold text-white">R$ {totalJoaoDia20.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Raquel dia 20:</span><span className="font-bold text-white">R$ {totalRaquelDia20.toFixed(2)}</span></div>
-                <div className="flex justify-between"><span>Fixos dia 20:</span><span className="font-bold text-white">R$ {totalFixosDia20.toFixed(2)}</span></div>
+
+            {/* ============================================================== */}
+            {/* 📊 TOTAL GERAL DO MÊS                                         */}
+            {/* ============================================================== */}
+            <section className="bg-slate-900 text-white rounded-3xl p-5 shadow-xl space-y-4 border border-slate-800">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                <span className="text-xs font-black text-emerald-400 tracking-wider uppercase">
+                  📊 TOTAL GERAL DO MÊS
+                </span>
+                <span className="text-[11px] text-slate-400 font-bold">{nomeMes}</span>
               </div>
 
-              <div className="flex justify-between items-center pt-1">
-                <span className="text-sm font-black">TOTAL GERAL:</span>
-                <span className="text-2xl font-black text-emerald-400">R$ {totalGeralMes.toFixed(2)}</span>
+              <div className="space-y-2 text-xs text-slate-300">
+                <div className="flex justify-between items-center bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50">
+                  <span className="font-bold text-blue-300">TOTAL QUINZENA DIA 5:</span>
+                  <span className="font-black text-sm text-white">R$ {totalQuinzenaD5.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50">
+                  <span className="font-bold text-orange-300">TOTAL QUINZENA DIA 20:</span>
+                  <span className="font-black text-sm text-white">R$ {totalQuinzenaD20.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-800 flex justify-between items-center">
+                <span className="text-sm font-black text-slate-200">TOTAL GERAL:</span>
+                <span className="text-2xl font-black text-emerald-400">
+                  R$ {totalGeralMes.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
             </section>
+
           </main>
 
-          {/* ======================= MODAL SIMPLES: ADICIONAR / EDITAR ======================= */}
+
+          {/* ============================================================== */}
+          {/* MODAL SIMPLES: ADICIONAR / EDITAR GASTO                        */}
+          {/* ============================================================== */}
           {modalAberto && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-4">
@@ -439,18 +534,18 @@
                   <h2 className="text-base font-black text-slate-800">
                     {editandoId ? '✏️ Editar Gasto' : '+ Novo Gasto'}
                   </h2>
-                  <button onClick={() => setModalAberto(false)} className="text-slate-400 text-xl font-bold">✕</button>
+                  <button onClick={() => setModalAberto(false)} className="text-slate-400 text-xl font-bold p-1">✕</button>
                 </div>
 
                 {/* QUEM? */}
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 block mb-1">QUEM GASTOU?</label>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1">QUEM?</label>
                   <div className="grid grid-cols-2 gap-2">
                     {['João', 'Raquel'].map(p => (
                       <button 
                         key={p}
                         onClick={() => setQuem(p)}
-                        className={`py-2 rounded-xl text-xs font-black border ${quem === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                        className={`py-2.5 rounded-xl text-xs font-black border transition-colors ${quem === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                       >
                         {p.toUpperCase()}
                       </button>
@@ -466,7 +561,7 @@
                       <button 
                         key={d}
                         onClick={() => setDia(d)}
-                        className={`py-2 rounded-xl text-xs font-black border ${dia === d ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                        className={`py-2.5 rounded-xl text-xs font-black border transition-colors ${dia === d ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                       >
                         DIA {d}
                       </button>
@@ -482,7 +577,7 @@
                     placeholder="Ex: Mercado, Combustível, Lanche..."
                     value={descricao}
                     onChange={(e) => setDescricao(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
                 </div>
 
@@ -495,31 +590,35 @@
                     placeholder="0,00"
                     value={valor}
                     onChange={(e) => setValor(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-base font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-base font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
                   />
                 </div>
 
-                {/* DELIVERY CHECK */}
-                <div className="flex items-center space-x-2 bg-amber-50 p-2.5 rounded-xl border border-amber-200 cursor-pointer" onClick={() => setIsDelivery(!isDelivery)}>
+                {/* CHECKBOX DELIVERY */}
+                <div 
+                  className="flex items-center space-x-2 bg-amber-50 p-3 rounded-xl border border-amber-200 cursor-pointer" 
+                  onClick={() => setIsDelivery(!isDelivery)}
+                >
                   <input 
                     type="checkbox"
                     checked={isDelivery}
                     onChange={(e) => setIsDelivery(e.target.checked)}
                     className="w-4 h-4 text-amber-600 rounded"
                   />
-                  <span className="text-xs font-bold text-amber-900">🍔 É gasto com Delivery / Lanche</span>
+                  <span className="text-xs font-bold text-amber-900">🍔 Marcar como Delivery / Lanche</span>
                 </div>
 
                 {/* BOTÃO SALVAR */}
                 <button 
                   onClick={salvarGasto}
-                  className="w-full bg-emerald-600 active:bg-emerald-700 text-white font-black text-sm py-3.5 rounded-2xl shadow-md"
+                  className="w-full bg-emerald-600 active:bg-emerald-700 text-white font-black text-sm py-4 rounded-2xl shadow-lg transition-all"
                 >
                   SALVAR
                 </button>
               </div>
             </div>
           )}
+
         </div>
       );
     }
@@ -528,3 +627,9 @@
   </script>
 </body>
 </html>
+```eof
+
+O aplicativo foi atualizado com a separação por quinzena:
+1. **Quinzena Dia 5**: Mostra individualmente João, Raquel e os Fixos (Internet R$ 126 e Apartamento), com o banner azul de destaque para o **TOTAL QUINZENA DIA 5**.
+2. **Quinzena Dia 20**: Mostra individualmente João, Raquel e os Fixos (Aluguel R$ 500, Água R$ 75, Energia R$ 75 e Mão de Obra), com o banner laranja de destaque para o **TOTAL QUINZENA DIA 20**.
+3. **Total Geral do Mês**: Card consolidado somando o Total do Dia 5 com o Total do Dia 20.
