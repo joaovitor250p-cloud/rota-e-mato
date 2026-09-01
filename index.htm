@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Finanças João & Raquel</title>
+  <title>Lista de Gastos João & Raquel</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -13,45 +13,28 @@
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    input, select, textarea {
-      user-select: text;
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 flex justify-center">
+<body class="bg-slate-100 text-slate-800 flex justify-center min-h-screen">
 
-  <div id="root" class="w-full max-w-md min-h-screen bg-slate-50 flex flex-col relative shadow-xl pb-24"></div>
+  <div id="root" class="w-full max-w-md bg-slate-50 min-h-screen pb-24 shadow-lg flex flex-col"></div>
 
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
-    const CATEGORIAS = [
-      { id: 'Casa', label: 'Casa', icon: '🏠' },
-      { id: 'Apartamento', label: 'Apartamento', icon: '🏢' },
-      { id: 'Mão de Obra', label: 'Mão de Obra', icon: '🔨' },
-      { id: 'Delivery', label: 'Delivery', icon: '🍔' },
-      { id: 'Mercado', label: 'Mercado', icon: '🛒' },
-      { id: 'Combustível', label: 'Combustível', icon: '⛽' },
-      { id: 'Lazer', label: 'Lazer', icon: '🎮' },
-      { id: 'Outros', label: 'Outros', icon: '📦' }
-    ];
-
-    const CONTAS_FIXAS_BASE = [
-      { id: 'fixa_aluguel', nome: 'Aluguel (Casa)', valorPadrao: 1200, dia: 20, responsavel: 'Casal', categoria: 'Casa' },
-      { id: 'fixa_internet', nome: 'Internet', valorPadrao: 120, dia: 5, responsavel: 'Casal', categoria: 'Casa' },
-      { id: 'fixa_luz', nome: 'Luz (Casa)', valorPadrao: 200, dia: 20, responsavel: 'Casal', categoria: 'Casa' },
-      { id: 'fixa_agua', nome: 'Água (Casa)', valorPadrao: 80, dia: 20, responsavel: 'Casal', categoria: 'Casa' },
-    ];
-
-    const CARTAO_OPCOES = [
-      { id: 'nenhum', label: 'Dinheiro / Pix / Débito' },
-      { id: 'j5', label: 'Cartão João (Dia 5)', dono: 'João', dia: 5 },
-      { id: 'j20', label: 'Cartão João (Dia 20)', dono: 'João', dia: 20 },
-      { id: 'r5', label: 'Cartão Raquel (Dia 5)', dono: 'Raquel', dia: 5 },
-      { id: 'r20', label: 'Cartão Raquel (Dia 20)', dono: 'Raquel', dia: 20 },
-    ];
+    const FIXOS_ESTRUTURA = {
+      5: [
+        { id: 'fixo_internet', nome: 'Internet', padrao: 120 }
+      ],
+      20: [
+        { id: 'fixo_aluguel', nome: 'Aluguel', padrao: 1200 },
+        { id: 'fixo_agua', nome: 'Água', padrao: 80 },
+        { id: 'fixo_luz', nome: 'Luz', padrao: 200 },
+        { id: 'fixo_mao_obra', nome: 'Mão de obra', padrao: 500 },
+        { id: 'fixo_apartamento', nome: 'Apartamento', padrao: 300 }
+      ]
+    };
 
     function App() {
       const [dataAtual, setDataAtual] = useState(() => {
@@ -59,810 +42,484 @@
         return { mes: now.getMonth(), ano: now.getFullYear() };
       });
 
-      const [abaAtiva, setAbaAtiva] = useState('inicio');
-      const [modalTipo, setModalTipo] = useState(null); // 'gasto' | 'renda_extra' | null
-
-      // Estados Persistidos
       const [gastos, setGastos] = useState(() => {
-        const s = localStorage.getItem('jr_fin2_gastos');
+        const s = localStorage.getItem('jr_lista_gastos');
         return s ? JSON.parse(s) : [];
       });
 
-      const [rendasExtras, setRendasExtras] = useState(() => {
-        const s = localStorage.getItem('jr_fin2_rendas_extras');
-        return s ? JSON.parse(s) : [];
-      });
-
-      const [valoresFixasMes, setValoresFixasMes] = useState(() => {
-        const s = localStorage.getItem('jr_fin2_fixas_mes');
+      const [valoresFixos, setValoresFixos] = useState(() => {
+        const s = localStorage.getItem('jr_lista_fixos');
         return s ? JSON.parse(s) : {};
       });
 
-      const [statusPagamento, setStatusPagamento] = useState(() => {
-        const s = localStorage.getItem('jr_fin2_pagos');
-        return s ? JSON.parse(s) : {};
-      });
+      // Modal de Adicionar / Editar
+      const [modalAberto, setModalAberto] = useState(false);
+      const [editandoId, setEditandoId] = useState(null);
+      const [quem, setQuem] = useState('João');
+      const [dia, setDia] = useState(5);
+      const [descricao, setDescricao] = useState('');
+      const [valor, setValor] = useState('');
+      const [isDelivery, setIsDelivery] = useState(false);
 
-      // Formulário Novo Gasto
-      const [inputRapido, setInputRapido] = useState('');
-      const [descGasto, setDescGasto] = useState('');
-      const [valorGasto, setValorGasto] = useState('');
-      const [respGasto, setRespGasto] = useState('João');
-      const [catGasto, setCatGasto] = useState('Mercado');
-      const [quinzenaGasto, setQuinzenaGasto] = useState(() => (new Date().getDate() <= 12 ? 5 : 20));
-      const [cartaoGasto, setCartaoGasto] = useState('nenhum');
-      const [parcelasGasto, setParcelasGasto] = useState(1);
-      const [relacionadoAoAp, setRelacionadoAoAp] = useState(false);
+      useEffect(() => {
+        localStorage.setItem('jr_lista_gastos', JSON.stringify(gastos));
+      }, [gastos]);
 
-      // Formulário Renda Extra
-      const [descExtra, setDescExtra] = useState('Shopee');
-      const [valorExtra, setValorExtra] = useState('');
-      const [quinzenaExtra, setQuinzenaExtra] = useState(() => (new Date().getDate() <= 12 ? 5 : 20));
-
-      useEffect(() => { localStorage.setItem('jr_fin2_gastos', JSON.stringify(gastos)); }, [gastos]);
-      useEffect(() => { localStorage.setItem('jr_fin2_rendas_extras', JSON.stringify(rendasExtras)); }, [rendasExtras]);
-      useEffect(() => { localStorage.setItem('jr_fin2_fixas_mes', JSON.stringify(valoresFixasMes)); }, [valoresFixasMes]);
-      useEffect(() => { localStorage.setItem('jr_fin2_pagos', JSON.stringify(statusPagamento)); }, [statusPagamento]);
-
-      const trocarMes = (dir) => {
-        setDataAtual(prev => {
-          let novoMes = prev.mes + dir;
-          let novoAno = prev.ano;
-          if (novoMes > 11) { novoMes = 0; novoAno++; }
-          if (novoMes < 0) { novoMes = 11; novoAno--; }
-          return { mes: novoMes, ano: novoAno };
-        });
-      };
+      useEffect(() => {
+        localStorage.setItem('jr_lista_fixos', JSON.stringify(valoresFixos));
+      }, [valoresFixos]);
 
       const nomeMes = useMemo(() => {
         const d = new Date(dataAtual.ano, dataAtual.mes, 1);
         return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
       }, [dataAtual]);
 
-      // Parser Rápido
-      const parseTextoRapido = (texto) => {
-        setInputRapido(texto);
-        if (!texto.trim()) return;
-        const limpo = texto.toLowerCase();
+      const trocarMes = (dir) => {
+        setDataAtual(prev => {
+          let m = prev.mes + dir;
+          let a = prev.ano;
+          if (m > 11) { m = 0; a++; }
+          if (m < 0) { m = 11; a--; }
+          return { mes: m, ano: a };
+        });
+      };
 
-        if (limpo.includes('joão') || limpo.includes('joao')) setRespGasto('João');
-        else if (limpo.includes('raquel')) setRespGasto('Raquel');
-        else if (limpo.includes('casal')) setRespGasto('Casal');
+      const getValorFixo = (id, padrao) => {
+        const chave = `${dataAtual.ano}-${dataAtual.mes}-${id}`;
+        return valoresFixos[chave] !== undefined ? valoresFixos[chave] : padrao;
+      };
 
-        if (limpo.includes('dia 5') || limpo.includes('quinzena 5')) setQuinzenaGasto(5);
-        else if (limpo.includes('dia 20') || limpo.includes('quinzena 20')) setQuinzenaGasto(20);
+      const setValorFixo = (id, val) => {
+        const chave = `${dataAtual.ano}-${dataAtual.mes}-${id}`;
+        setValoresFixos(prev => ({
+          ...prev,
+          [chave]: parseFloat(val) || 0
+        }));
+      };
 
-        if (limpo.includes('aluguel') || limpo.includes('casa')) setCatGasto('Casa');
-        else if (limpo.includes('apartamento') || limpo.includes('móveis') || limpo.includes('moveis') || limpo.includes('reforma')) setCatGasto('Apartamento');
-        else if (limpo.includes('pedreiro') || limpo.includes('pintor') || limpo.includes('eletricista') || limpo.includes('obra')) {
-          setCatGasto('Mão de Obra');
-          setRelacionadoAoAp(true);
-        } else if (limpo.includes('ifood') || limpo.includes('lanche') || limpo.includes('pizza') || limpo.includes('delivery')) setCatGasto('Delivery');
-        else if (limpo.includes('mercado')) setCatGasto('Mercado');
-        else if (limpo.includes('gasolina') || limpo.includes('combustivel')) setCatGasto('Combustível');
+      const abrirModalNovo = (diaPadrao = 5, quemPadrao = 'João') => {
+        setEditandoId(null);
+        setQuem(quemPadrao);
+        setDia(diaPadrao);
+        setDescricao('');
+        setValor('');
+        setIsDelivery(false);
+        setModalAberto(true);
+      };
 
-        const matchValor = texto.match(/(\d+[.,]?\d*)/);
-        if (matchValor) setValorGasto(matchValor[0].replace(',', '.'));
-
-        const desc = texto.replace(/joão|joao|raquel|casal|dia 5|dia 20|delivery|ifood|mercado|obra|apartamento|casa/gi, '').replace(/(\d+[.,]?\d*)/g, '').trim();
-        if (desc) setDescGasto(desc.charAt(0).toUpperCase() + desc.slice(1));
+      const abrirModalEditar = (gasto) => {
+        setEditandoId(gasto.id);
+        setQuem(gasto.quem);
+        setDia(gasto.dia);
+        setDescricao(gasto.descricao);
+        setValor(gasto.valor.toString());
+        setIsDelivery(Boolean(gasto.isDelivery));
+        setModalAberto(true);
       };
 
       const salvarGasto = () => {
-        const numValor = parseFloat(valorGasto);
-        if (isNaN(numValor) || numValor <= 0) return;
+        const numValor = parseFloat(valor);
+        if (isNaN(numValor) || numValor <= 0 || !descricao.trim()) return;
 
-        const numParcelas = parseInt(parcelasGasto) || 1;
-        const valorPorParcela = numValor / numParcelas;
-        const baseId = Date.now().toString();
-        const novos = [];
-
-        for (let i = 0; i < numParcelas; i++) {
-          let m = dataAtual.mes + i;
-          let a = dataAtual.ano;
-          while (m > 11) { m -= 12; a += 1; }
-
-          novos.push({
-            id: `${baseId}_${i}`,
-            descricao: numParcelas > 1 ? `${descGasto || catGasto} (${i + 1}/${numParcelas})` : (descGasto || catGasto),
-            valor: valorPorParcela,
-            responsavel: respGasto,
-            categoria: catGasto,
-            quinzena: quinzenaGasto,
-            cartao: cartaoGasto,
-            relacionadoAoAp: catGasto === 'Mão de Obra' ? relacionadoAoAp : false,
-            mes: m,
-            ano: a,
-            dataRegistro: new Date().toISOString()
-          });
+        if (editandoId) {
+          setGastos(prev => prev.map(g => g.id === editandoId ? {
+            ...g,
+            quem,
+            dia,
+            descricao: descricao.trim(),
+            valor: numValor,
+            isDelivery
+          } : g));
+        } else {
+          const novo = {
+            id: Date.now().toString(),
+            mes: dataAtual.mes,
+            ano: dataAtual.ano,
+            quem,
+            dia,
+            descricao: descricao.trim(),
+            valor: numValor,
+            isDelivery
+          };
+          setGastos(prev => [novo, ...prev]);
         }
 
-        setGastos(prev => [...novos, ...prev]);
-        fecharModal();
+        setModalAberto(false);
       };
 
-      const salvarRendaExtra = () => {
-        const num = parseFloat(valorExtra);
-        if (isNaN(num) || num <= 0) return;
-
-        setRendasExtras(prev => [{
-          id: Date.now().toString(),
-          descricao: descExtra || 'Shopee',
-          valor: num,
-          quinzena: quinzenaExtra,
-          responsavel: 'João',
-          mes: dataAtual.mes,
-          ano: dataAtual.ano,
-          dataRegistro: new Date().toISOString()
-        }, ...prev]);
-
-        fecharModal();
+      const excluirGasto = (id) => {
+        setGastos(prev => prev.filter(g => g.id !== id));
       };
 
-      const fecharModal = () => {
-        setModalTipo(null);
-        setInputRapido('');
-        setDescGasto('');
-        setValorGasto('');
-        setValorExtra('');
-        setDescExtra('Shopee');
-        setCartaoGasto('nenhum');
-        setParcelasGasto(1);
-        setRelacionadoAoAp(false);
-      };
+      // Cálculos da Lista
+      const gastosMes = useMemo(() => {
+        return gastos.filter(g => g.mes === dataAtual.mes && g.ano === dataAtual.ano);
+      }, [gastos, dataAtual]);
 
-      const getValorContaFixa = (idConta, valorPadrao) => {
-        const chave = `${dataAtual.ano}-${dataAtual.mes}-${idConta}`;
-        return valoresFixasMes[chave] !== undefined ? valoresFixasMes[chave] : valorPadrao;
-      };
+      // DIA 5
+      const joaoDia5 = useMemo(() => gastosMes.filter(g => g.dia === 5 && g.quem === 'João'), [gastosMes]);
+      const totalJoaoDia5 = useMemo(() => joaoDia5.reduce((a, b) => a + b.valor, 0), [joaoDia5]);
 
-      const atualizarValorContaFixa = (idConta, novoValor) => {
-        const chave = `${dataAtual.ano}-${dataAtual.mes}-${idConta}`;
-        setValoresFixasMes(prev => ({ ...prev, [chave]: parseFloat(novoValor) || 0 }));
-      };
+      const raquelDia5 = useMemo(() => gastosMes.filter(g => g.dia === 5 && g.quem === 'Raquel'), [gastosMes]);
+      const totalRaquelDia5 = useMemo(() => raquelDia5.reduce((a, b) => a + b.valor, 0), [raquelDia5]);
 
-      const toggleStatus = (id) => {
-        const chave = `${dataAtual.ano}-${dataAtual.mes}-${id}`;
-        setStatusPagamento(prev => ({ ...prev, [chave]: !prev[chave] }));
-      };
+      const totalFixosDia5 = useMemo(() => {
+        return FIXOS_ESTRUTURA[5].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
+      }, [valoresFixos, dataAtual]);
 
-      // Cálculos Gerais do Mês
-      const gastosMes = useMemo(() => gastos.filter(g => g.mes === dataAtual.mes && g.ano === dataAtual.ano), [gastos, dataAtual]);
-      const extrasMes = useMemo(() => rendasExtras.filter(r => r.mes === dataAtual.mes && r.ano === dataAtual.ano), [rendasExtras, dataAtual]);
+      const totalDia5 = totalJoaoDia5 + totalRaquelDia5 + totalFixosDia5;
 
-      const metricas = useMemo(() => {
-        // RENDAS FIXAS
-        const salariosD5 = 3300; // João 1650 + Raquel 1650
-        const salariosD20 = 2000; // João 1000 + Raquel 1000
-        const extraD5 = extrasMes.filter(e => e.quinzena === 5).reduce((a, b) => a + b.valor, 0);
-        const extraD20 = extrasMes.filter(e => e.quinzena === 20).reduce((a, b) => a + b.valor, 0);
+      // DIA 20
+      const joaoDia20 = useMemo(() => gastosMes.filter(g => g.dia === 20 && g.quem === 'João'), [gastosMes]);
+      const totalJoaoDia20 = useMemo(() => joaoDia20.reduce((a, b) => a + b.valor, 0), [joaoDia20]);
 
-        const totalEntradasD5 = salariosD5 + extraD5;
-        const totalEntradasD20 = salariosD20 + extraD20;
-        const totalEntradasMes = totalEntradasD5 + totalEntradasD20;
+      const raquelDia20 = useMemo(() => gastosMes.filter(g => g.dia === 20 && g.quem === 'Raquel'), [gastosMes]);
+      const totalRaquelDia20 = useMemo(() => raquelDia20.reduce((a, b) => a + b.valor, 0), [raquelDia20]);
 
-        // CONTAS FIXAS
-        const fixaInternet = getValorContaFixa('fixa_internet', 120);
-        const fixaAluguel = getValorContaFixa('fixa_aluguel', 1200);
-        const fixaLuz = getValorContaFixa('fixa_luz', 200);
-        const fixaAgua = getValorContaFixa('fixa_agua', 80);
+      const totalFixosDia20 = useMemo(() => {
+        return FIXOS_ESTRUTURA[20].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
+      }, [valoresFixos, dataAtual]);
 
-        const totalFixasD5 = fixaInternet;
-        const totalFixasD20 = fixaAluguel + fixaLuz + fixaAgua;
+      const totalDia20 = totalJoaoDia20 + totalRaquelDia20 + totalFixosDia20;
 
-        // CARTÕES
-        const cartoesD5 = gastosMes.filter(g => g.cartao === 'j5' || g.cartao === 'r5').reduce((a, b) => a + b.valor, 0);
-        const cartoesD20 = gastosMes.filter(g => g.cartao === 'j20' || g.cartao === 'r20').reduce((a, b) => a + b.valor, 0);
-
-        // GASTOS AVULSOS POR QUINZENA
-        const avulsosD5 = gastosMes.filter(g => g.quinzena === 5 && g.cartao === 'nenhum').reduce((a, b) => a + b.valor, 0);
-        const avulsosD20 = gastosMes.filter(g => g.quinzena === 20 && g.cartao === 'nenhum').reduce((a, b) => a + b.valor, 0);
-
-        const totalSaidasD5 = totalFixasD5 + cartoesD5 + avulsosD5;
-        const totalSaidasD20 = totalFixasD20 + cartoesD20 + avulsosD20;
-        const totalSaidasGeral = totalSaidasD5 + totalSaidasD20;
-
-        const disponivelD5 = totalEntradasD5 - totalSaidasD5;
-        const disponivelD20 = totalEntradasD20 - totalSaidasD20;
-        const disponivelTotal = disponivelD5 + disponivelD20;
-
-        // CATEGORIAS ESPECÍFICAS
-        const casaMes = (totalFixasD5 + totalFixasD20) + gastosMes.filter(g => g.categoria === 'Casa').reduce((a, b) => a + b.valor, 0);
-        const apMes = gastosMes.filter(g => g.categoria === 'Apartamento').reduce((a, b) => a + b.valor, 0);
-        const maoObraMes = gastosMes.filter(g => g.categoria === 'Mão de Obra').reduce((a, b) => a + b.valor, 0);
-        const maoObraApMes = gastosMes.filter(g => g.categoria === 'Mão de Obra' && g.relacionadoAoAp).reduce((a, b) => a + b.valor, 0);
-
-        // DELIVERY
-        const deliveryGastos = gastosMes.filter(g => g.categoria === 'Delivery');
-        const deliveryTotal = deliveryGastos.reduce((a, b) => a + b.valor, 0);
-        const deliveryCount = deliveryGastos.length;
-        const deliveryJoao = deliveryGastos.filter(g => g.responsavel === 'João').reduce((a, b) => a + b.valor, 0);
-        const deliveryRaquel = deliveryGastos.filter(g => g.responsavel === 'Raquel').reduce((a, b) => a + b.valor, 0);
-        const deliveryCasal = deliveryGastos.filter(g => g.responsavel === 'Casal').reduce((a, b) => a + b.valor, 0);
-
-        // ACUMULADO HISTÓRICO APARTAMENTO
-        const apHistoricoTotal = gastos.filter(g => g.categoria === 'Apartamento').reduce((a, b) => a + b.valor, 0);
-
-        return {
-          totalEntradasMes,
-          totalSaidasGeral,
-          disponivelTotal,
-          totalEntradasD5,
-          totalSaidasD5,
-          disponivelD5,
-          totalEntradasD20,
-          totalSaidasD20,
-          disponivelD20,
-          extraTotal: extraD5 + extraD20,
-          totalFixasMes: totalFixasD5 + totalFixasD20,
-          totalCartoesMes: cartoesD5 + cartoesD20,
-          casaMes,
-          apMes,
-          apHistoricoTotal,
-          maoObraMes,
-          maoObraApMes,
-          deliveryTotal,
-          deliveryCount,
-          deliveryJoao,
-          deliveryRaquel,
-          deliveryCasal,
-          fixaInternet,
-          fixaAluguel,
-          fixaLuz,
-          fixaAgua
-        };
-      }, [gastosMes, extrasMes, valoresFixasMes, gastos]);
+      // TOTAIS GERAIS
+      const totalGeralMes = totalDia5 + totalDia20;
+      const totalDelivery = useMemo(() => gastosMes.filter(g => g.isDelivery).reduce((a, b) => a + b.valor, 0), [gastosMes]);
 
       return (
         <div className="flex flex-col flex-1">
           {/* TOPO: SELETOR DE MÊS */}
-          <header className="bg-slate-900 text-white p-4 pt-6 sticky top-0 z-30 shadow-md flex items-center justify-between">
-            <button onClick={() => trocarMes(-1)} className="p-2 rounded-full hover:bg-slate-800 text-lg font-bold">←</button>
-            <div className="text-center">
-              <span className="text-[10px] tracking-widest text-emerald-400 font-bold block">FLUXO JOÃO & RAQUEL</span>
-              <h1 className="text-sm font-extrabold">{nomeMes}</h1>
-            </div>
-            <button onClick={() => trocarMes(1)} className="p-2 rounded-full hover:bg-slate-800 text-lg font-bold">→</button>
+          <header className="bg-slate-900 text-white p-4 sticky top-0 z-30 shadow flex items-center justify-between">
+            <button onClick={() => trocarMes(-1)} className="p-2 text-xl font-bold hover:bg-slate-800 rounded-full">←</button>
+            <h1 className="text-sm font-extrabold tracking-wider">{nomeMes}</h1>
+            <button onClick={() => trocarMes(1)} className="p-2 text-xl font-bold hover:bg-slate-800 rounded-full">→</button>
           </header>
 
-          {/* CORPO PRINCIPAL */}
-          <main className="p-4 flex-1 space-y-4">
-            {/* --- ABA INÍCIO --- */}
-            {abaAtiva === 'inicio' && (
-              <div className="space-y-4">
-                {/* BOTÕES RÁPIDOS */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => { setModalTipo('gasto'); setQuinzenaGasto(5); }}
-                    className="bg-emerald-500 active:bg-emerald-600 text-white font-black py-4 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5"
-                  >
-                    <span className="text-xl">+</span>
-                    <span className="text-sm">GASTO RÁPIDO</span>
-                  </button>
-                  <button 
-                    onClick={() => setModalTipo('renda_extra')}
-                    className="bg-amber-500 active:bg-amber-600 text-white font-black py-4 px-3 rounded-2xl shadow-md flex items-center justify-center space-x-1.5"
-                  >
-                    <span className="text-xl">💰</span>
-                    <span className="text-sm">RENDA EXTRA</span>
-                  </button>
+          {/* BOTÃO PRINCIPAL FIXO NO TOPO */}
+          <div className="p-4 pb-2">
+            <button 
+              onClick={() => abrirModalNovo()}
+              className="w-full bg-emerald-600 active:bg-emerald-700 text-white font-extrabold py-3.5 rounded-2xl shadow-md flex items-center justify-center space-x-2 text-base"
+            >
+              <span className="text-xl">+</span>
+              <span>ADICIONAR GASTO</span>
+            </button>
+          </div>
+
+          {/* RESUMO RÁPIDO DE DELIVERY */}
+          {totalDelivery > 0 && (
+            <div className="mx-4 mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex justify-between items-center text-xs font-bold text-amber-900">
+              <span>🍔 Total Delivery no mês:</span>
+              <span>R$ {totalDelivery.toFixed(2)}</span>
+            </div>
+          )}
+
+          <main className="p-4 pt-1 space-y-6 flex-1">
+            {/* ======================= BLOCO DIA 5 ======================= */}
+            <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-4">
+              <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
+                <span className="text-lg font-black text-slate-900">📅 DIA 5</span>
+                <span className="text-xs font-bold text-slate-400">PRIMEIRA QUINZENA</span>
+              </div>
+
+              {/* JOÃO - DIA 5 */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-blue-600 uppercase tracking-wide">JOÃO</span>
+                  <button onClick={() => abrirModalNovo(5, 'João')} className="text-xs text-blue-500 font-bold hover:underline">+ item</button>
                 </div>
-
-                {/* CARD DISPONÍVEL AGORA */}
-                <div className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg">
-                  <span className="text-xs font-bold text-slate-400">DISPONÍVEL AGORA</span>
-                  <div className={`text-3xl font-black mt-1 ${metricas.disponivelTotal < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    R$ {metricas.disponivelTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                {joaoDia5.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+                ) : (
+                  <div className="space-y-1">
+                    {joaoDia5.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                        <div className="flex items-center space-x-1.5 truncate">
+                          {g.isDelivery && <span>🍔</span>}
+                          <span className="font-semibold text-slate-800">{g.descricao}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  
-                  {metricas.disponivelTotal < 0 ? (
-                    <div className="mt-3 text-xs font-bold bg-rose-500/20 text-rose-300 p-2.5 rounded-xl border border-rose-500/30">
-                      🔴 VOCÊS GASTARAM R$ {Math.abs(metricas.disponivelTotal).toFixed(2)} A MAIS DO QUE RECEBERAM
-                    </div>
-                  ) : metricas.disponivelTotal <= 500 && (
-                    <div className="mt-3 text-xs font-semibold bg-amber-500/20 text-amber-300 p-2.5 rounded-xl border border-amber-500/30">
-                      ⚠️ ATENÇÃO: Vocês já gastaram R$ {metricas.totalSaidasGeral.toFixed(2)}. Restam R$ {metricas.disponivelTotal.toFixed(2)}.
-                    </div>
-                  )}
-
-                  <div className="flex justify-between text-xs text-slate-400 mt-4 pt-3 border-t border-slate-800">
-                    <span>Entradas: <strong className="text-white">R$ {metricas.totalEntradasMes.toFixed(2)}</strong></span>
-                    <span>Saídas: <strong className="text-white">R$ {metricas.totalSaidasGeral.toFixed(2)}</strong></span>
-                  </div>
+                )}
+                <div className="text-right text-xs font-bold text-slate-600 pt-1">
+                  TOTAL JOÃO DIA 5: <strong className="text-slate-900">R$ {totalJoaoDia5.toFixed(2)}</strong>
                 </div>
+              </div>
 
-                {/* CONTROLE DE QUINZENAS */}
-                <div className="grid grid-cols-2 gap-3">
-                  {/* QUINZENA DIA 5 */}
-                  <div className={`p-4 rounded-2xl border ${metricas.disponivelD5 < 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'} shadow-sm`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-black text-slate-700">DIA 5</span>
-                      {metricas.disponivelD5 < 0 && <span className="text-[9px] font-black text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">NEGATIVO</span>}
-                    </div>
-                    <span className="text-[10px] text-slate-400 block">Disponível até dia 20</span>
-                    <div className={`text-base font-black ${metricas.disponivelD5 < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-                      R$ {metricas.disponivelD5.toFixed(2)}
-                    </div>
-                    <div className="mt-2 text-[10px] text-slate-500 pt-2 border-t border-slate-100 space-y-0.5">
-                      <div>Recebido: R$ {metricas.totalEntradasD5.toFixed(0)}</div>
-                      <div>Gastos: R$ {metricas.totalSaidasD5.toFixed(0)}</div>
-                    </div>
-                  </div>
-
-                  {/* QUINZENA DIA 20 */}
-                  <div className={`p-4 rounded-2xl border ${metricas.disponivelD20 < 0 ? 'bg-rose-50 border-rose-200' : 'bg-white border-slate-200'} shadow-sm`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-black text-slate-700">DIA 20</span>
-                      {metricas.disponivelD20 < 0 && <span className="text-[9px] font-black text-rose-600 bg-rose-100 px-1.5 py-0.5 rounded">NEGATIVO</span>}
-                    </div>
-                    <span className="text-[10px] text-slate-400 block">Disponível até dia 5</span>
-                    <div className={`text-base font-black ${metricas.disponivelD20 < 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-                      R$ {metricas.disponivelD20.toFixed(2)}
-                    </div>
-                    <div className="mt-2 text-[10px] text-slate-500 pt-2 border-t border-slate-100 space-y-0.5">
-                      <div>Recebido: R$ {metricas.totalEntradasD20.toFixed(0)}</div>
-                      <div>Gastos: R$ {metricas.totalSaidasD20.toFixed(0)}</div>
-                    </div>
-                  </div>
+              {/* RAQUEL - DIA 5 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-purple-600 uppercase tracking-wide">RAQUEL</span>
+                  <button onClick={() => abrirModalNovo(5, 'Raquel')} className="text-xs text-purple-500 font-bold hover:underline">+ item</button>
                 </div>
-
-                {/* PRÓXIMO RECEBIMENTO & CONTAS */}
-                <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                    <div>
-                      <span className="text-xs font-black text-slate-800 block">📅 PRÓXIMO RECEBIMENTO FIXO</span>
-                      <span className="text-[10px] text-slate-400">Dia 5: João R$ 1.650 | Raquel R$ 1.650</span>
-                    </div>
-                    <span className="text-xs font-black text-emerald-600">R$ 3.300,00</span>
+                {raquelDia5.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+                ) : (
+                  <div className="space-y-1">
+                    {raquelDia5.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                        <div className="flex items-center space-x-1.5 truncate">
+                          {g.isDelivery && <span>🍔</span>}
+                          <span className="font-semibold text-slate-800">{g.descricao}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-
-                  <div>
-                    <span className="text-[10px] font-black text-slate-400 tracking-wider block mb-1">💸 CONTAS PRÓXIMAS (CASA)</span>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="bg-slate-50 p-2 rounded-xl">Aluguel: <strong>R$ {metricas.fixaAluguel}</strong></div>
-                      <div className="bg-slate-50 p-2 rounded-xl">Internet: <strong>R$ {metricas.fixaInternet}</strong></div>
-                      <div className="bg-slate-50 p-2 rounded-xl">Luz: <strong>R$ {metricas.fixaLuz}</strong></div>
-                      <div className="bg-slate-50 p-2 rounded-xl">Água: <strong>R$ {metricas.fixaAgua}</strong></div>
-                    </div>
-                  </div>
+                )}
+                <div className="text-right text-xs font-bold text-slate-600 pt-1">
+                  TOTAL RAQUEL DIA 5: <strong className="text-slate-900">R$ {totalRaquelDia5.toFixed(2)}</strong>
                 </div>
+              </div>
 
-                {/* BLOCO SEPARADO: CASA vs APARTAMENTO vs MÃO DE OBRA */}
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200">
-                    <span className="text-base block mb-0.5">🏠</span>
-                    <span className="text-[10px] font-bold text-slate-400 block">CASA</span>
-                    <span className="text-xs font-black text-slate-800">R$ {metricas.casaMes.toFixed(0)}</span>
-                  </div>
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200">
-                    <span className="text-base block mb-0.5">🏢</span>
-                    <span className="text-[10px] font-bold text-slate-400 block">APARTAMENTO</span>
-                    <span className="text-xs font-black text-slate-800">R$ {metricas.apMes.toFixed(0)}</span>
-                  </div>
-                  <div className="bg-white p-3 rounded-2xl border border-slate-200">
-                    <span className="text-base block mb-0.5">🔨</span>
-                    <span className="text-[10px] font-bold text-slate-400 block">MÃO DE OBRA</span>
-                    <span className="text-xs font-black text-slate-800">R$ {metricas.maoObraMes.toFixed(0)}</span>
-                  </div>
-                </div>
-
-                {/* DELIVERY */}
-                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">🍔</span>
-                      <div>
-                        <span className="text-xs font-bold text-amber-900 block">DELIVERY NO MÊS</span>
-                        <span className="text-base font-black text-amber-900">R$ {metricas.deliveryTotal.toFixed(2)}</span>
+              {/* FIXOS DO CASAL - DIA 5 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 bg-amber-50/50 p-3 rounded-2xl border border-amber-100">
+                <span className="text-xs font-black text-amber-900 uppercase tracking-wide block">FIXOS DO CASAL</span>
+                <div className="space-y-1.5">
+                  {FIXOS_ESTRUTURA[5].map(f => (
+                    <div key={f.id} className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700">{f.nome}</span>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-slate-400 font-bold">R$</span>
+                        <input 
+                          type="number" 
+                          value={getValorFixo(f.id, f.padrao)}
+                          onChange={(e) => setValorFixo(f.id, e.target.value)}
+                          className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold text-slate-900"
+                        />
                       </div>
                     </div>
-                    <span className="text-xs font-bold bg-amber-200 text-amber-900 px-2.5 py-1 rounded-xl">
-                      {metricas.deliveryCount} pedidos
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-amber-900/80 pt-2 mt-2 border-t border-amber-200 font-medium">
-                    <span>João: R$ {metricas.deliveryJoao.toFixed(0)}</span>
-                    <span>Raquel: R$ {metricas.deliveryRaquel.toFixed(0)}</span>
-                    <span>Casal: R$ {metricas.deliveryCasal.toFixed(0)}</span>
-                  </div>
+                  ))}
+                </div>
+                <div className="text-right text-xs font-bold text-amber-950 pt-1">
+                  TOTAL FIXOS DIA 5: R$ {totalFixosDia5.toFixed(2)}
                 </div>
               </div>
-            )}
 
-            {/* --- ABA GASTOS --- */}
-            {abaAtiva === 'gastos' && (
-              <div className="space-y-4">
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-black text-slate-400 mb-3 tracking-wider">HISTÓRICO DE GASTOS</h2>
-                  {gastosMes.length === 0 ? (
-                    <span className="text-xs text-slate-400 italic">Nenhum gasto avulso registrado.</span>
-                  ) : (
-                    <div className="space-y-2">
-                      {gastosMes.map(g => (
-                        <div key={g.id} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                          <div>
-                            <span className="text-xs font-bold text-slate-800 block">{g.descricao}</span>
-                            <span className="text-[10px] text-slate-400">
-                              {g.responsavel} • {g.categoria} • Dia {g.quinzena} {g.relacionadoAoAp && '(Obra Ap)'}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs font-black text-slate-800">R$ {g.valor.toFixed(2)}</span>
-                            <button 
-                              onClick={() => setGastos(prev => prev.filter(item => item.id !== g.id))}
-                              className="text-slate-300 hover:text-rose-500 font-bold text-xs p-1"
-                            >
-                              ✕
-                            </button>
-                          </div>
+              {/* TOTAL DIA 5 */}
+              <div className="bg-slate-900 text-white p-3 rounded-2xl flex justify-between items-center">
+                <span className="text-xs font-black">TOTAL DIA 5</span>
+                <span className="text-sm font-black text-emerald-400">R$ {totalDia5.toFixed(2)}</span>
+              </div>
+            </section>
+
+            {/* ======================= BLOCO DIA 20 ======================= */}
+            <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-4">
+              <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
+                <span className="text-lg font-black text-slate-900">📅 DIA 20</span>
+                <span className="text-xs font-bold text-slate-400">SEGUNDA QUINZENA</span>
+              </div>
+
+              {/* JOÃO - DIA 20 */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-blue-600 uppercase tracking-wide">JOÃO</span>
+                  <button onClick={() => abrirModalNovo(20, 'João')} className="text-xs text-blue-500 font-bold hover:underline">+ item</button>
+                </div>
+                {joaoDia20.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+                ) : (
+                  <div className="space-y-1">
+                    {joaoDia20.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                        <div className="flex items-center space-x-1.5 truncate">
+                          {g.isDelivery && <span>🍔</span>}
+                          <span className="font-semibold text-slate-800">{g.descricao}</span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* --- ABA CONTAS FIXAS & CARTÕES --- */}
-            {abaAtiva === 'contas' && (
-              <div className="space-y-4">
-                {/* CONTAS FIXAS */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-black text-slate-400 mb-3 tracking-wider">📅 CONTAS FIXAS (CASA)</h2>
-                  <div className="space-y-2.5">
-                    {CONTAS_FIXAS_BASE.map(f => {
-                      const val = getValorContaFixa(f.id, f.valorPadrao);
-                      const pago = statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-${f.id}`];
-                      return (
-                        <div key={f.id} className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl">
-                          <div className="flex items-center space-x-2">
-                            <span onClick={() => toggleStatus(f.id)} className="cursor-pointer text-sm">
-                              {pago ? '🟢' : '🔴'}
-                            </span>
-                            <div>
-                              <span className="text-xs font-bold text-slate-800 block">{f.nome}</span>
-                              <span className="text-[10px] text-slate-400">Vence Dia {f.dia}</span>
-                            </div>
-                          </div>
-                          <input 
-                            type="number" 
-                            value={val}
-                            onChange={(e) => atualizarValorContaFixa(f.id, e.target.value)}
-                            className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold"
-                          />
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
+                )}
+                <div className="text-right text-xs font-bold text-slate-600 pt-1">
+                  TOTAL JOÃO DIA 20: <strong className="text-slate-900">R$ {totalJoaoDia20.toFixed(2)}</strong>
                 </div>
+              </div>
 
-                {/* FATURAS DOS CARTÕES */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-black text-slate-400 mb-3 tracking-wider">💳 FATURAS DOS CARTÕES</h2>
-                  <div className="space-y-2 text-xs">
-                    {[
-                      { id: 'j5', nome: 'Cartão João (Dia 5)' },
-                      { id: 'r5', nome: 'Cartão Raquel (Dia 5)' },
-                      { id: 'j20', nome: 'Cartão João (Dia 20)' },
-                      { id: 'r20', nome: 'Cartão Raquel (Dia 20)' }
-                    ].map(c => {
-                      const faturaVal = gastosMes.filter(g => g.cartao === c.id).reduce((a, b) => a + b.valor, 0);
-                      const pago = statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-${c.id}`];
-                      return (
-                        <div key={c.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50">
-                          <div className="flex items-center space-x-2">
-                            <span onClick={() => toggleStatus(c.id)} className="cursor-pointer">{pago ? '🟢' : '🔴'}</span>
-                            <span className="font-semibold text-slate-700">{c.nome}</span>
-                          </div>
-                          <span className="font-black text-slate-800">R$ {faturaVal.toFixed(2)}</span>
+              {/* RAQUEL - DIA 20 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-black text-purple-600 uppercase tracking-wide">RAQUEL</span>
+                  <button onClick={() => abrirModalNovo(20, 'Raquel')} className="text-xs text-purple-500 font-bold hover:underline">+ item</button>
+                </div>
+                {raquelDia20.length === 0 ? (
+                  <div className="text-[11px] text-slate-400 italic pl-1">Nenhum gasto adicionado</div>
+                ) : (
+                  <div className="space-y-1">
+                    {raquelDia20.map(g => (
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
+                        <div className="flex items-center space-x-1.5 truncate">
+                          {g.isDelivery && <span>🍔</span>}
+                          <span className="font-semibold text-slate-800">{g.descricao}</span>
                         </div>
-                      );
-                    })}
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <span className="font-bold text-slate-900">R$ {g.valor.toFixed(2)}</span>
+                          <button onClick={() => abrirModalEditar(g)} className="text-slate-400 hover:text-slate-600">✏️</button>
+                          <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 font-bold">🗑️</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
+                )}
+                <div className="text-right text-xs font-bold text-slate-600 pt-1">
+                  TOTAL RAQUEL DIA 20: <strong className="text-slate-900">R$ {totalRaquelDia20.toFixed(2)}</strong>
                 </div>
               </div>
-            )}
 
-            {/* --- ABA RESUMO DO MÊS --- */}
-            {abaAtiva === 'resumo' && (
-              <div className="space-y-4">
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-black text-slate-400 mb-3 tracking-wider">RESUMO GERAL</h2>
-                  
-                  {/* ENTRADAS */}
-                  <div className="mb-3">
-                    <span className="text-[10px] font-black text-emerald-600 block mb-1">ENTRADAS</span>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between"><span className="text-slate-500">Salários Fixos:</span><span className="font-bold">R$ 5.300,00</span></div>
-                      <div className="flex justify-between"><span className="text-slate-500">Renda Extra (Shopee):</span><span className="font-bold text-emerald-600">+ R$ {metricas.extraTotal.toFixed(2)}</span></div>
-                      <div className="flex justify-between pt-1 border-t border-slate-100 font-bold"><span>TOTAL RECEBIDO:</span><span className="text-emerald-700">R$ {metricas.totalEntradasMes.toFixed(2)}</span></div>
+              {/* FIXOS DO CASAL - DIA 20 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 bg-amber-50/50 p-3 rounded-2xl border border-amber-100">
+                <span className="text-xs font-black text-amber-900 uppercase tracking-wide block">FIXOS DO CASAL</span>
+                <div className="space-y-1.5">
+                  {FIXOS_ESTRUTURA[20].map(f => (
+                    <div key={f.id} className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700">{f.nome}</span>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-slate-400 font-bold">R$</span>
+                        <input 
+                          type="number" 
+                          value={getValorFixo(f.id, f.padrao)}
+                          onChange={(e) => setValorFixo(f.id, e.target.value)}
+                          className="w-20 bg-white border border-slate-200 rounded-lg p-1 text-right text-xs font-bold text-slate-900"
+                        />
+                      </div>
                     </div>
-                  </div>
-
-                  {/* SAÍDAS */}
-                  <div className="mb-3 pt-2 border-t border-slate-100">
-                    <span className="text-[10px] font-black text-rose-500 block mb-1">SAÍDAS</span>
-                    <div className="space-y-1 text-xs">
-                      <div className="flex justify-between"><span className="text-slate-500">🏠 Casa (Aluguel + Contas):</span><span className="font-bold">R$ {metricas.casaMes.toFixed(2)}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-500">🏢 Apartamento:</span><span className="font-bold">R$ {metricas.apMes.toFixed(2)}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-500">🔨 Mão de Obra:</span><span className="font-bold">R$ {metricas.maoObraMes.toFixed(2)}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-500">🍔 Delivery:</span><span className="font-bold">R$ {metricas.deliveryTotal.toFixed(2)}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-500">💳 Cartões:</span><span className="font-bold">R$ {metricas.totalCartoesMes.toFixed(2)}</span></div>
-                      <div className="flex justify-between pt-1 border-t border-slate-100 font-bold"><span>TOTAL GASTO:</span><span className="text-rose-600">R$ {metricas.totalSaidasGeral.toFixed(2)}</span></div>
-                    </div>
-                  </div>
-
-                  {/* SOBRA */}
-                  <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                    <span className="text-xs font-black text-slate-800">SOBRA:</span>
-                    <span className={`text-base font-black ${metricas.disponivelTotal < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                      R$ {metricas.disponivelTotal.toFixed(2)}
-                    </span>
-                  </div>
+                  ))}
                 </div>
-
-                {/* PAINEL EXCLUSIVO APARTAMENTO */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-                  <h2 className="text-xs font-black text-slate-400 mb-2 tracking-wider">🏢 CONTROLE DO APARTAMENTO</h2>
-                  <div className="grid grid-cols-2 gap-2 my-2 text-center">
-                    <div className="bg-slate-50 p-2.5 rounded-xl">
-                      <span className="text-[10px] text-slate-400 block font-bold">TOTAL MÊS</span>
-                      <span className="text-xs font-black text-slate-800">R$ {metricas.apMes.toFixed(2)}</span>
-                    </div>
-                    <div className="bg-slate-50 p-2.5 rounded-xl">
-                      <span className="text-[10px] text-slate-400 block font-bold">ACUMULADO TOTAL</span>
-                      <span className="text-xs font-black text-slate-800">R$ {metricas.apHistoricoTotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  <div className="text-[11px] text-slate-500 pt-1">
-                    Apartamento + Mão de Obra Vinculada (Mês): <strong>R$ {(metricas.apMes + metricas.maoObraApMes).toFixed(2)}</strong>
-                  </div>
+                <div className="text-right text-xs font-bold text-amber-950 pt-1">
+                  TOTAL FIXOS DIA 20: R$ {totalFixosDia20.toFixed(2)}
                 </div>
               </div>
-            )}
+
+              {/* TOTAL DIA 20 */}
+              <div className="bg-slate-900 text-white p-3 rounded-2xl flex justify-between items-center">
+                <span className="text-xs font-black">TOTAL DIA 20</span>
+                <span className="text-sm font-black text-emerald-400">R$ {totalDia20.toFixed(2)}</span>
+              </div>
+            </section>
+
+            {/* ======================= TOTAL GERAL DO MÊS ======================= */}
+            <section className="bg-slate-900 text-white rounded-3xl p-5 shadow-lg space-y-3">
+              <span className="text-xs font-black text-slate-400 tracking-wider block">TOTAL GERAL DO MÊS</span>
+              
+              <div className="space-y-1.5 text-xs text-slate-300 border-b border-slate-800 pb-3">
+                <div className="flex justify-between"><span>João dia 5:</span><span className="font-bold text-white">R$ {totalJoaoDia5.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Raquel dia 5:</span><span className="font-bold text-white">R$ {totalRaquelDia5.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Fixos dia 5:</span><span className="font-bold text-white">R$ {totalFixosDia5.toFixed(2)}</span></div>
+                <div className="flex justify-between pt-1 border-t border-slate-800/60"><span>João dia 20:</span><span className="font-bold text-white">R$ {totalJoaoDia20.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Raquel dia 20:</span><span className="font-bold text-white">R$ {totalRaquelDia20.toFixed(2)}</span></div>
+                <div className="flex justify-between"><span>Fixos dia 20:</span><span className="font-bold text-white">R$ {totalFixosDia20.toFixed(2)}</span></div>
+              </div>
+
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-sm font-black">TOTAL GERAL:</span>
+                <span className="text-2xl font-black text-emerald-400">R$ {totalGeralMes.toFixed(2)}</span>
+              </div>
+            </section>
           </main>
 
-          {/* MODAL GASTO RÁPIDO */}
-          {modalTipo === 'gasto' && (
+          {/* ======================= MODAL SIMPLES: ADICIONAR / EDITAR ======================= */}
+          {modalAberto && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-              <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-3">
-                  <h2 className="text-base font-black text-slate-800">+ GASTO</h2>
-                  <button onClick={fecharModal} className="text-slate-400 text-xl font-bold">✕</button>
+              <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <h2 className="text-base font-black text-slate-800">
+                    {editandoId ? '✏️ Editar Gasto' : '+ Novo Gasto'}
+                  </h2>
+                  <button onClick={() => setModalAberto(false)} className="text-slate-400 text-xl font-bold">✕</button>
                 </div>
 
-                <div className="space-y-3">
-                  <input 
-                    type="text" 
-                    placeholder='Ex: "Mercado 150 João dia 5"' 
-                    value={inputRapido}
-                    onChange={(e) => parseTextoRapido(e.target.value)}
-                    className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-2.5 text-xs font-semibold focus:outline-none"
-                  />
-
+                {/* QUEM? */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1">QUEM GASTOU?</label>
                   <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 block mb-1">O QUE FOI?</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ex: Mercado" 
-                        value={descGasto}
-                        onChange={(e) => setDescGasto(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-400 block mb-1">VALOR (R$)</label>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        placeholder="0,00" 
-                        value={valorGasto}
-                        onChange={(e) => setValorGasto(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-sm font-black text-slate-800"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">QUEM?</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['João', 'Raquel', 'Casal'].map(p => (
-                        <button 
-                          key={p}
-                          onClick={() => setRespGasto(p)}
-                          className={`py-2 rounded-xl text-xs font-bold border ${respGasto === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}`}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">CATEGORIA</label>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {CATEGORIAS.map(c => (
-                        <button 
-                          key={c.id}
-                          onClick={() => setCatGasto(c.id)}
-                          className={`py-2 px-1 rounded-xl text-[10px] font-bold border flex flex-col items-center justify-center ${catGasto === c.id ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'}`}
-                        >
-                          <span className="text-sm">{c.icon}</span>
-                          <span className="truncate">{c.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {catGasto === 'Mão de Obra' && (
-                    <div className="flex items-center space-x-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                      <input 
-                        type="checkbox" 
-                        id="relAp"
-                        checked={relacionadoAoAp}
-                        onChange={(e) => setRelacionadoAoAp(e.target.checked)}
-                        className="w-4 h-4 text-emerald-600 rounded"
-                      />
-                      <label htmlFor="relAp" className="text-xs font-semibold text-slate-700">Relacionado ao Apartamento</label>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">SAI DE QUAL QUINZENA?</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    {['João', 'Raquel'].map(p => (
                       <button 
-                        onClick={() => setQuinzenaGasto(5)}
-                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaGasto === 5 ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}`}
+                        key={p}
+                        onClick={() => setQuem(p)}
+                        className={`py-2 rounded-xl text-xs font-black border ${quem === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
                       >
-                        📅 Quinzena Dia 5
+                        {p.toUpperCase()}
                       </button>
-                      <button 
-                        onClick={() => setQuinzenaGasto(20)}
-                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaGasto === 20 ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}`}
-                      >
-                        📅 Quinzena Dia 20
-                      </button>
-                    </div>
+                    ))}
                   </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">PAGAMENTO / CARTÃO</label>
-                    <select 
-                      value={cartaoGasto} 
-                      onChange={(e) => setCartaoGasto(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold mb-2"
-                    >
-                      {CARTAO_OPCOES.map(opt => (
-                        <option key={opt.id} value={opt.id}>{opt.label}</option>
-                      ))}
-                    </select>
-
-                    {cartaoGasto !== 'nenhum' && (
-                      <div className="flex items-center space-x-2">
-                        <label className="text-xs font-bold text-slate-400">Parcelas:</label>
-                        <select 
-                          value={parcelasGasto} 
-                          onChange={(e) => setParcelasGasto(e.target.value)}
-                          className="bg-slate-50 border border-slate-200 rounded-xl p-1.5 text-xs font-bold"
-                        >
-                          {[1, 2, 3, 4, 5, 6, 10, 12].map(n => (
-                            <option key={n} value={n}>{n}x</option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-
-                  <button 
-                    onClick={salvarGasto}
-                    className="w-full bg-emerald-500 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg mt-2 active:bg-emerald-600"
-                  >
-                    SALVAR
-                  </button>
                 </div>
+
+                {/* DIA? */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1">QUAL DIA?</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[5, 20].map(d => (
+                      <button 
+                        key={d}
+                        onClick={() => setDia(d)}
+                        className={`py-2 rounded-xl text-xs font-black border ${dia === d ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}
+                      >
+                        DIA {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* O QUE GASTOU? */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1">O QUE GASTOU?</label>
+                  <input 
+                    type="text"
+                    placeholder="Ex: Mercado, Combustível, Lanche..."
+                    value={descricao}
+                    onChange={(e) => setDescricao(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  />
+                </div>
+
+                {/* VALOR */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 block mb-1">VALOR (R$)</label>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    placeholder="0,00"
+                    value={valor}
+                    onChange={(e) => setValor(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-base font-black text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  />
+                </div>
+
+                {/* DELIVERY CHECK */}
+                <div className="flex items-center space-x-2 bg-amber-50 p-2.5 rounded-xl border border-amber-200 cursor-pointer" onClick={() => setIsDelivery(!isDelivery)}>
+                  <input 
+                    type="checkbox"
+                    checked={isDelivery}
+                    onChange={(e) => setIsDelivery(e.target.checked)}
+                    className="w-4 h-4 text-amber-600 rounded"
+                  />
+                  <span className="text-xs font-bold text-amber-900">🍔 É gasto com Delivery / Lanche</span>
+                </div>
+
+                {/* BOTÃO SALVAR */}
+                <button 
+                  onClick={salvarGasto}
+                  className="w-full bg-emerald-600 active:bg-emerald-700 text-white font-black text-sm py-3.5 rounded-2xl shadow-md"
+                >
+                  SALVAR
+                </button>
               </div>
             </div>
           )}
-
-          {/* MODAL RENDA EXTRA */}
-          {modalTipo === 'renda_extra' && (
-            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-              <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl">
-                <div className="flex justify-between items-center mb-3">
-                  <h2 className="text-base font-black text-slate-800">💰 Renda Extra (Shopee / Bicos)</h2>
-                  <button onClick={fecharModal} className="text-slate-400 text-xl font-bold">✕</button>
-                </div>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">DESCRIÇÃO</label>
-                    <input 
-                      type="text" 
-                      value={descExtra} 
-                      onChange={(e) => setDescExtra(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">VALOR RECEBIDO (R$)</label>
-                    <input 
-                      type="number" 
-                      step="0.01" 
-                      placeholder="Ex: 350,00" 
-                      value={valorExtra}
-                      onChange={(e) => setValorExtra(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-base font-black text-slate-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-1">QUINZENA DE ENTRADA</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button 
-                        onClick={() => setQuinzenaExtra(5)}
-                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaExtra === 5 ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-200'}`}
-                      >
-                        Dia 5
-                      </button>
-                      <button 
-                        onClick={() => setQuinzenaExtra(20)}
-                        className={`py-2 rounded-xl text-xs font-bold border ${quinzenaExtra === 20 ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-slate-600 border-slate-200'}`}
-                      >
-                        Dia 20
-                      </button>
-                    </div>
-                  </div>
-
-                  <button 
-                    onClick={salvarRendaExtra}
-                    className="w-full bg-amber-500 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg mt-2 active:bg-amber-600"
-                  >
-                    SOMAR AO SALDO
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* MENU INFERIOR FIXO */}
-          <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 px-3 py-2 flex justify-between items-center z-40">
-            <button 
-              onClick={() => setAbaAtiva('inicio')} 
-              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'inicio' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
-            >
-              <span className="text-lg">🏠</span>
-              <span className="text-[10px]">Início</span>
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('gastos')} 
-              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'gastos' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
-            >
-              <span className="text-lg">💸</span>
-              <span className="text-[10px]">Gastos</span>
-            </button>
-            <button 
-              onClick={() => { setModalTipo('gasto'); setQuinzenaGasto(5); }} 
-              className="bg-emerald-500 text-white rounded-full p-3 shadow-lg -translate-y-3 flex items-center justify-center border-4 border-slate-50"
-            >
-              <span className="text-2xl font-bold leading-none">➕</span>
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('contas')} 
-              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'contas' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
-            >
-              <span className="text-lg">📅</span>
-              <span className="text-[10px]">Contas</span>
-            </button>
-            <button 
-              onClick={() => setAbaAtiva('resumo')} 
-              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'resumo' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
-            >
-              <span className="text-lg">📊</span>
-              <span className="text-[10px]">Resumo</span>
-            </button>
-          </nav>
         </div>
       );
     }
