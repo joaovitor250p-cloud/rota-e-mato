@@ -4,16 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Gastos João & Raquel — Controle por Quinzena</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <script src="[https://unpkg.com/react@18/umd/react.production.min.js](https://unpkg.com/react@18/umd/react.production.min.js)" crossorigin></script>
+  <script src="[https://unpkg.com/react-dom@18/umd/react-dom.production.min.js](https://unpkg.com/react-dom@18/umd/react-dom.production.min.js)" crossorigin></script>
+  <script src="[https://unpkg.com/@babel/standalone/babel.min.js](https://unpkg.com/@babel/standalone/babel.min.js)"></script>
+  <link href="[https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap](https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap)" rel="stylesheet">
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      overflow-x: hidden;
     }
     input, select, textarea {
       user-select: text;
@@ -22,12 +23,11 @@
 </head>
 <body class="bg-slate-100 text-slate-800 flex justify-center min-h-screen">
 
-  <div id="root" class="w-full max-w-md bg-slate-50 min-h-screen pb-12 shadow-xl flex flex-col"></div>
+  <div id="root" class="w-full max-w-md bg-slate-50 min-h-screen pb-12 shadow-xl flex flex-col overflow-hidden"></div>
 
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
-    // ESTRUTURA DOS GASTOS FIXOS DO CASAL POR DIA
     const ESTRUTURA_FIXOS = {
       5: [
         { id: 'fixo_internet', nome: 'Internet', padrao: 126 },
@@ -42,25 +42,21 @@
     };
 
     function App() {
-      // Estado do Mês Selecionado
       const [dataAtual, setDataAtual] = useState(() => {
         const now = new Date();
         return { mes: now.getMonth(), ano: now.getFullYear() };
       });
 
-      // Gastos Individuais Salvos
       const [gastos, setGastos] = useState(() => {
         const s = localStorage.getItem('jr_quinzena_gastos_v2');
         return s ? JSON.parse(s) : [];
       });
 
-      // Valores dos Fixos Salvos (com suporte a edição mensal)
       const [valoresFixos, setValoresFixos] = useState(() => {
         const s = localStorage.getItem('jr_quinzena_fixos_v2');
         return s ? JSON.parse(s) : {};
       });
 
-      // Estado do Modal
       const [modalAberto, setModalAberto] = useState(false);
       const [editandoId, setEditandoId] = useState(null);
       const [quem, setQuem] = useState('João');
@@ -69,7 +65,6 @@
       const [valor, setValor] = useState('');
       const [isDelivery, setIsDelivery] = useState(false);
 
-      // Persistência
       useEffect(() => {
         localStorage.setItem('jr_quinzena_gastos_v2', JSON.stringify(gastos));
       }, [gastos]);
@@ -78,7 +73,6 @@
         localStorage.setItem('jr_quinzena_fixos_v2', JSON.stringify(valoresFixos));
       }, [valoresFixos]);
 
-      // Nome do Mês Formatado
       const nomeMes = useMemo(() => {
         const d = new Date(dataAtual.ano, dataAtual.mes, 1);
         return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
@@ -94,7 +88,6 @@
         });
       };
 
-      // Leitura e Escrita de Fixos por Mês
       const getValorFixo = (id, padrao) => {
         const chave = `${dataAtual.ano}-${dataAtual.mes}-${id}`;
         return valoresFixos[chave] !== undefined ? valoresFixos[chave] : padrao;
@@ -108,7 +101,6 @@
         }));
       };
 
-      // Modal Handlers
       const abrirModalNovo = (diaPadrao = 5, quemPadrao = 'João') => {
         setEditandoId(null);
         setQuem(quemPadrao);
@@ -163,12 +155,11 @@
         setGastos(prev => prev.filter(g => g.id !== id));
       };
 
-      // Gastos Filtrados do Mês
       const gastosMes = useMemo(() => {
         return gastos.filter(g => g.mes === dataAtual.mes && g.ano === dataAtual.ano);
       }, [gastos, dataAtual]);
 
-      // ================= CÁLCULOS QUINZENA DIA 5 =================
+      // DIA 5
       const joaoD5 = useMemo(() => gastosMes.filter(g => g.dia === 5 && g.quem === 'João'), [gastosMes]);
       const totalJoaoD5 = useMemo(() => joaoD5.reduce((a, b) => a + b.valor, 0), [joaoD5]);
 
@@ -179,10 +170,9 @@
         return ESTRUTURA_FIXOS[5].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
       }, [valoresFixos, dataAtual]);
 
-      // TOTAL COMBINADO DA QUINZENA DIA 5
       const totalQuinzenaD5 = totalJoaoD5 + totalRaquelD5 + totalFixosD5;
 
-      // ================= CÁLCULOS QUINZENA DIA 20 =================
+      // DIA 20
       const joaoD20 = useMemo(() => gastosMes.filter(g => g.dia === 20 && g.quem === 'João'), [gastosMes]);
       const totalJoaoD20 = useMemo(() => joaoD20.reduce((a, b) => a + b.valor, 0), [joaoD20]);
 
@@ -193,18 +183,14 @@
         return ESTRUTURA_FIXOS[20].reduce((acc, f) => acc + getValorFixo(f.id, f.padrao), 0);
       }, [valoresFixos, dataAtual]);
 
-      // TOTAL COMBINADO DA QUINZENA DIA 20
       const totalQuinzenaD20 = totalJoaoD20 + totalRaquelD20 + totalFixosD20;
 
-      // ================= TOTAL GERAL DO MÊS =================
+      // TOTAL GERAL DO MÊS
       const totalGeralMes = totalQuinzenaD5 + totalQuinzenaD20;
-
-      const totalDelivery = useMemo(() => {
-        return gastosMes.filter(g => g.isDelivery).reduce((a, b) => a + b.valor, 0);
-      }, [gastosMes]);
+      const totalDelivery = useMemo(() => gastosMes.filter(g => g.isDelivery).reduce((a, b) => a + b.valor, 0), [gastosMes]);
 
       return (
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1 w-full">
           {/* TOPO: SELETOR DE MÊS */}
           <header className="bg-slate-900 text-white p-4 sticky top-0 z-30 shadow-md flex items-center justify-between">
             <button onClick={() => trocarMes(-1)} className="p-2 text-xl font-bold hover:bg-slate-800 rounded-full transition-colors">←</button>
@@ -226,7 +212,7 @@
             </button>
           </div>
 
-          {/* RESUMO RÁPIDO DE DELIVERY (SE HOUVER) */}
+          {/* RESUMO RÁPIDO DE DELIVERY */}
           {totalDelivery > 0 && (
             <div className="mx-4 mb-2 p-2.5 bg-amber-50 border border-amber-200 rounded-2xl flex justify-between items-center text-xs font-bold text-amber-900">
               <span className="flex items-center gap-1.5">🍔 Delivery / Lanches no mês:</span>
@@ -234,11 +220,9 @@
             </div>
           )}
 
-          <main className="p-4 pt-1 space-y-6 flex-1">
+          <main className="p-4 pt-1 space-y-6 flex-1 w-full">
 
-            {/* ============================================================== */}
-            {/* 📅 QUINZENA DO DIA 5                                          */}
-            {/* ============================================================== */}
+            {/* QUINZENA DO DIA 5 */}
             <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-4">
               <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
                 <span className="text-base font-black text-blue-900 flex items-center gap-1.5">
@@ -261,7 +245,7 @@
                 ) : (
                   <div className="space-y-1.5">
                     {joaoD5.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-sm">
                         <div className="flex items-center space-x-1.5 truncate">
                           {g.isDelivery && <span title="Delivery">🍔</span>}
                           <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
@@ -293,7 +277,7 @@
                 ) : (
                   <div className="space-y-1.5">
                     {raquelD5.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-sm">
                         <div className="flex items-center space-x-1.5 truncate">
                           {g.isDelivery && <span title="Delivery">🍔</span>}
                           <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
@@ -323,8 +307,8 @@
                 <div className="space-y-2">
                   {ESTRUTURA_FIXOS[5].map(f => (
                     <div key={f.id} className="flex justify-between items-center text-xs bg-white/80 p-2 rounded-xl border border-amber-200/60">
-                      <span className="font-bold text-slate-800">{f.nome}</span>
-                      <div className="flex items-center space-x-1">
+                      <span className="font-bold text-slate-800 truncate pr-2">{f.nome}</span>
+                      <div className="flex items-center space-x-1.5 shrink-0">
                         <span className="text-slate-400 font-bold">R$</span>
                         <input 
                           type="number" 
@@ -342,7 +326,7 @@
                 </div>
               </div>
 
-              {/* 🔵 TOTAL DA QUINZENA — DIA 5 (EM DESTAQUE) */}
+              {/* TOTAL DA QUINZENA DIA 5 */}
               <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-2xl shadow-md space-y-1.5">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-extrabold tracking-wider uppercase text-blue-100">
@@ -363,9 +347,7 @@
             </section>
 
 
-            {/* ============================================================== */}
-            {/* 📅 QUINZENA DO DIA 20                                         */}
-            {/* ============================================================== */}
+            {/* QUINZENA DO DIA 20 */}
             <section className="bg-white rounded-3xl p-4 shadow-sm border border-slate-200 space-y-4">
               <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
                 <span className="text-base font-black text-orange-950 flex items-center gap-1.5">
@@ -388,7 +370,7 @@
                 ) : (
                   <div className="space-y-1.5">
                     {joaoD20.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-sm">
                         <div className="flex items-center space-x-1.5 truncate">
                           {g.isDelivery && <span title="Delivery">🍔</span>}
                           <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
@@ -420,7 +402,7 @@
                 ) : (
                   <div className="space-y-1.5">
                     {raquelD20.map(g => (
-                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-2xs">
+                      <div key={g.id} className="flex justify-between items-center p-2 rounded-xl bg-white border border-slate-200/70 text-xs shadow-sm">
                         <div className="flex items-center space-x-1.5 truncate">
                           {g.isDelivery && <span title="Delivery">🍔</span>}
                           <span className="font-semibold text-slate-800 truncate">{g.descricao}</span>
@@ -450,8 +432,8 @@
                 <div className="space-y-2">
                   {ESTRUTURA_FIXOS[20].map(f => (
                     <div key={f.id} className="flex justify-between items-center text-xs bg-white/80 p-2 rounded-xl border border-amber-200/60">
-                      <span className="font-bold text-slate-800">{f.nome}</span>
-                      <div className="flex items-center space-x-1">
+                      <span className="font-bold text-slate-800 truncate pr-2">{f.nome}</span>
+                      <div className="flex items-center space-x-1.5 shrink-0">
                         <span className="text-slate-400 font-bold">R$</span>
                         <input 
                           type="number" 
@@ -469,7 +451,7 @@
                 </div>
               </div>
 
-              {/* 🟠 TOTAL DA QUINZENA — DIA 20 (EM DESTAQUE) */}
+              {/* TOTAL DA QUINZENA DIA 20 */}
               <div className="bg-gradient-to-r from-orange-500 to-amber-600 text-white p-4 rounded-2xl shadow-md space-y-1.5">
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-extrabold tracking-wider uppercase text-orange-100">
@@ -490,9 +472,7 @@
             </section>
 
 
-            {/* ============================================================== */}
-            {/* 📊 TOTAL GERAL DO MÊS                                         */}
-            {/* ============================================================== */}
+            {/* TOTAL GERAL DO MÊS */}
             <section className="bg-slate-900 text-white rounded-3xl p-5 shadow-xl space-y-4 border border-slate-800">
               <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                 <span className="text-xs font-black text-emerald-400 tracking-wider uppercase">
@@ -507,7 +487,7 @@
                   <span className="font-black text-sm text-white">R$ {totalQuinzenaD5.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
 
-                <div className="flex justify-between items-center bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50">
+                <div className="flex justify-between items-center bg-slate-800/50 p-2.5 rounded-xl border border-orange-300">
                   <span className="font-bold text-orange-300">TOTAL QUINZENA DIA 20:</span>
                   <span className="font-black text-sm text-white">R$ {totalQuinzenaD20.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
@@ -524,9 +504,7 @@
           </main>
 
 
-          {/* ============================================================== */}
-          {/* MODAL SIMPLES: ADICIONAR / EDITAR GASTO                        */}
-          {/* ============================================================== */}
+          {/* MODAL ADICIONAR / EDITAR */}
           {modalAberto && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
               <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-4">
@@ -623,13 +601,7 @@
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
   </script>
 </body>
 </html>
-```eof
-
-O aplicativo foi atualizado com a separação por quinzena:
-1. **Quinzena Dia 5**: Mostra individualmente João, Raquel e os Fixos (Internet R$ 126 e Apartamento), com o banner azul de destaque para o **TOTAL QUINZENA DIA 5**.
-2. **Quinzena Dia 20**: Mostra individualmente João, Raquel e os Fixos (Aluguel R$ 500, Água R$ 75, Energia R$ 75 e Mão de Obra), com o banner laranja de destaque para o **TOTAL QUINZENA DIA 20**.
-3. **Total Geral do Mês**: Card consolidado somando o Total do Dia 5 com o Total do Dia 20.
