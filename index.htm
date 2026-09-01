@@ -1,831 +1,768 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Finanças | João & Aquel</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        joao: { light: '#EFF6FF', DEFAULT: '#2563EB', dark: '#1E40AF' },
-                        aquel: { light: '#FDF2F8', DEFAULT: '#DB2777', dark: '#9D174D' },
-                        casal: { light: '#F5F3FF', DEFAULT: '#7C3AED', dark: '#5B21B6' },
-                        dia5: '#0284C7',
-                        dia20: '#EA580C'
-                    }
-                }
-            }
-        }
-    </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        /* Esconder barra de rolagem mas manter funcional */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .tap-highlight-transparent { -webkit-tap-highlight-color: transparent; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Contas João & Raquel</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    input, select, textarea {
+      user-select: text;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased font-sans pb-24 select-none">
-
-    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <button onclick="mudarMes(-1)" class="p-2 hover:bg-slate-100 rounded-full active:scale-95 transition">
-                <i data-lucide="chevron-left" class="w-5 h-5 text-slate-600"></i>
-            </button>
-            <div class="text-center">
-                <h1 id="label-mes-ano" class="font-bold text-base text-slate-800 capitalize">Carregando...</h1>
-                <p class="text-[11px] text-slate-400 font-medium">Controle Mensal do Casal</p>
-            </div>
-            <button onclick="mudarMes(1)" class="p-2 hover:bg-slate-100 rounded-full active:scale-95 transition">
-                <i data-lucide="chevron-right" class="w-5 h-5 text-slate-600"></i>
-            </button>
-        </div>
-    </header>
-
-    <main class="max-w-md mx-auto px-4 pt-4">
-
-        <section id="tab-inicio" class="space-y-4">
-            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-3xl shadow-xl">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total a Pagar no Mês</span>
-                        <div class="text-3xl font-extrabold mt-1" id="dash-total-mes">R$ 0,00</div>
-                    </div>
-                    <span class="px-2.5 py-1 bg-white/10 rounded-full text-[11px] font-medium text-slate-200">Geral Casal</span>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-700/60">
-                    <div>
-                        <span class="text-[11px] text-emerald-400 flex items-center gap-1 font-medium">
-                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Já Pago
-                        </span>
-                        <p class="text-sm font-bold text-slate-100 mt-0.5" id="dash-pago">R$ 0,00</p>
-                    </div>
-                    <div>
-                        <span class="text-[11px] text-amber-400 flex items-center gap-1 font-medium">
-                            <i data-lucide="clock" class="w-3.5 h-3.5"></i> Pendente
-                        </span>
-                        <p class="text-sm font-bold text-slate-100 mt-0.5" id="dash-pendente">R$ 0,00</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm relative overflow-hidden">
-                    <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-blue-50 rounded-full opacity-60 pointer-events-none"></div>
-                    <span class="text-xs font-bold text-blue-600 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-blue-600"></span> João
-                    </span>
-                    <p class="text-lg font-extrabold text-slate-800 mt-2" id="dash-total-joao">R$ 0,00</p>
-                    <p class="text-[10px] text-slate-400 mt-0.5" id="dash-sub-joao">Dia 5: R$ 0 | Dia 20: R$ 0</p>
-                </div>
-
-                <div class="bg-white p-4 rounded-2xl border border-pink-100 shadow-sm relative overflow-hidden">
-                    <div class="absolute -right-2 -bottom-2 w-16 h-16 bg-pink-50 rounded-full opacity-60 pointer-events-none"></div>
-                    <span class="text-xs font-bold text-pink-600 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-pink-600"></span> Aquel
-                    </span>
-                    <p class="text-lg font-extrabold text-slate-800 mt-2" id="dash-total-aquel">R$ 0,00</p>
-                    <p class="text-[10px] text-slate-400 mt-0.5" id="dash-sub-aquel">Dia 5: R$ 0 | Dia 20: R$ 0</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center font-bold text-sm">
-                        05
-                    </div>
-                    <div>
-                        <p class="text-[11px] text-slate-500 font-medium">Vence Dia 5</p>
-                        <p class="text-sm font-bold text-slate-800" id="dash-total-dia5">R$ 0,00</p>
-                    </div>
-                </div>
-
-                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-sm">
-                        20
-                    </div>
-                    <div>
-                        <p class="text-[11px] text-slate-500 font-medium">Vence Dia 20</p>
-                        <p class="text-sm font-bold text-slate-800" id="dash-total-dia20">R$ 0,00</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Divisão dos Gastos</h3>
-                <div class="space-y-2.5">
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-600 flex items-center gap-2">
-                            <i data-lucide="receipt" class="w-4 h-4 text-purple-500"></i> Contas Fixas
-                        </span>
-                        <span class="font-bold text-slate-800" id="dash-total-fixas">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-600 flex items-center gap-2">
-                            <i data-lucide="credit-card" class="w-4 h-4 text-indigo-500"></i> Faturas dos Cartões
-                        </span>
-                        <span class="font-bold text-slate-800" id="dash-total-cartoes">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between items-center text-xs">
-                        <span class="text-slate-600 flex items-center gap-2">
-                            <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-500"></i> Compras Avulsas
-                        </span>
-                        <span class="font-bold text-slate-800" id="dash-total-avulsas">R$ 0,00</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="tab-contas" class="space-y-5 hidden">
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="bg-sky-600 px-4 py-3 text-white flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-white animate-pulse"></span>
-                        <h2 class="font-bold text-sm">VENCIMENTO DIA 05</h2>
-                    </div>
-                    <span class="font-extrabold text-sm" id="bloco-total-dia5">R$ 0,00</span>
-                </div>
-                <div class="p-3 space-y-3" id="lista-vencimento-dia5">
-                    </div>
-            </div>
-
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="bg-orange-600 px-4 py-3 text-white flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-white animate-pulse"></span>
-                        <h2 class="font-bold text-sm">VENCIMENTO DIA 20</h2>
-                    </div>
-                    <span class="font-extrabold text-sm" id="bloco-total-dia20">R$ 0,00</span>
-                </div>
-                <div class="p-3 space-y-3" id="lista-vencimento-dia20">
-                    </div>
-            </div>
-        </section>
-
-        <section id="tab-cartoes" class="space-y-4 hidden">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Cartões de Crédito</h2>
-            
-            <div class="grid grid-cols-1 gap-3">
-                <div class="bg-white p-4 rounded-2xl border-l-4 border-blue-600 shadow-sm">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <span class="text-xs font-bold text-blue-600">JOÃO</span>
-                            <h3 class="font-bold text-sm text-slate-800">Cartão João — Dia 5</h3>
-                        </div>
-                        <span class="text-sm font-extrabold text-slate-800" id="card-total-cj5">R$ 0,00</span>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-cj5"></div>
-                </div>
-
-                <div class="bg-white p-4 rounded-2xl border-l-4 border-blue-600 shadow-sm">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <span class="text-xs font-bold text-blue-600">JOÃO</span>
-                            <h3 class="font-bold text-sm text-slate-800">Cartão João — Dia 20</h3>
-                        </div>
-                        <span class="text-sm font-extrabold text-slate-800" id="card-total-cj20">R$ 0,00</span>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-cj20"></div>
-                </div>
-
-                <div class="bg-white p-4 rounded-2xl border-l-4 border-pink-600 shadow-sm">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <span class="text-xs font-bold text-pink-600">AQUEL</span>
-                            <h3 class="font-bold text-sm text-slate-800">Cartão Aquel — Dia 5</h3>
-                        </div>
-                        <span class="text-sm font-extrabold text-slate-800" id="card-total-ca5">R$ 0,00</span>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-ca5"></div>
-                </div>
-
-                <div class="bg-white p-4 rounded-2xl border-l-4 border-pink-600 shadow-sm">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <span class="text-xs font-bold text-pink-600">AQUEL</span>
-                            <h3 class="font-bold text-sm text-slate-800">Cartão Aquel — Dia 20</h3>
-                        </div>
-                        <span class="text-sm font-extrabold text-slate-800" id="card-total-ca20">R$ 0,00</span>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-1.5" id="itens-ca20"></div>
-                </div>
-            </div>
-        </section>
-
-        <section id="tab-compras" class="space-y-4 hidden">
-            <div class="flex items-center justify-between">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Todos os Lançamentos do Mês</h2>
-            </div>
-            <div id="lista-geral-gastos" class="space-y-2">
-                </div>
-        </section>
-
-        <section id="tab-resumo" class="space-y-4 hidden">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Fechamento do Mês</h2>
-            
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <div class="pb-3 border-b border-slate-100">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-blue-600 text-sm">JOÃO</span>
-                        <span class="font-extrabold text-slate-800 text-sm" id="resumo-total-joao">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between text-xs text-slate-500">
-                        <span>Vencimento Dia 05: <b class="text-slate-700" id="resumo-j5">R$ 0,00</b></span>
-                        <span>Vencimento Dia 20: <b class="text-slate-700" id="resumo-j20">R$ 0,00</b></span>
-                    </div>
-                </div>
-
-                <div class="pb-3 border-b border-slate-100">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-pink-600 text-sm">AQUEL</span>
-                        <span class="font-extrabold text-slate-800 text-sm" id="resumo-total-aquel">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between text-xs text-slate-500">
-                        <span>Vencimento Dia 05: <b class="text-slate-700" id="resumo-a5">R$ 0,00</b></span>
-                        <span>Vencimento Dia 20: <b class="text-slate-700" id="resumo-a20">R$ 0,00</b></span>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold text-purple-600 text-sm">CASAL (COMPARTILHADO)</span>
-                        <span class="font-extrabold text-slate-800 text-sm" id="resumo-total-casal">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between text-xs text-slate-500">
-                        <span>Vencimento Dia 05: <b class="text-slate-700" id="resumo-c5">R$ 0,00</b></span>
-                        <span>Vencimento Dia 20: <b class="text-slate-700" id="resumo-c20">R$ 0,00</b></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-4 rounded-2xl text-white text-center shadow-lg">
-                <p class="text-xs uppercase font-medium tracking-wider text-white/80">TOTAL CONSOLIDADO DO MÊS</p>
-                <h3 class="text-2xl font-black mt-1" id="resumo-total-geral">R$ 0,00</h3>
-            </div>
-        </section>
-
-    </main>
-
-    <button onclick="abrirModal()" class="fixed right-5 bottom-20 z-40 bg-slate-900 text-white rounded-full p-4 shadow-2xl flex items-center gap-2 hover:bg-slate-800 active:scale-90 transition tap-highlight-transparent">
-        <i data-lucide="plus" class="w-6 h-6"></i>
-        <span class="text-xs font-bold pr-1">Adicionar</span>
-    </button>
-
-    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 py-2">
-        <div class="max-w-md mx-auto grid grid-cols-5 text-[10px] font-medium text-slate-400">
-            <button onclick="trocarAba('inicio')" id="nav-inicio" class="flex flex-col items-center gap-1 text-blue-600">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-                <span>Início</span>
-            </button>
-            <button onclick="trocarAba('contas')" id="nav-contas" class="flex flex-col items-center gap-1 hover:text-slate-600">
-                <i data-lucide="calendar-days" class="w-5 h-5"></i>
-                <span>Contas</span>
-            </button>
-            <button onclick="trocarAba('cartoes')" id="nav-cartoes" class="flex flex-col items-center gap-1 hover:text-slate-600">
-                <i data-lucide="credit-card" class="w-5 h-5"></i>
-                <span>Cartões</span>
-            </button>
-            <button onclick="trocarAba('compras')" id="nav-compras" class="flex flex-col items-center gap-1 hover:text-slate-600">
-                <i data-lucide="receipt" class="w-5 h-5"></i>
-                <span>Gastos</span>
-            </button>
-            <button onclick="trocarAba('resumo')" id="nav-resumo" class="flex flex-col items-center gap-1 hover:text-slate-600">
-                <i data-lucide="pie-chart" class="w-5 h-5"></i>
-                <span>Resumo</span>
-            </button>
-        </div>
-    </nav>
-
-    <div id="modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar animate-in slide-in-from-bottom duration-200">
-            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                <h3 class="font-bold text-base text-slate-800" id="modal-titulo">Novo Lançamento</h3>
-                <button onclick="fecharModal()" class="p-1 rounded-full text-slate-400 hover:bg-slate-100">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <div>
-                <label class="text-[11px] font-bold text-slate-400 uppercase">O que deseja adicionar?</label>
-                <div class="grid grid-cols-3 gap-2 mt-1">
-                    <button type="button" onclick="setTipoForm('fixa')" id="btn-tipo-fixa" class="py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700">Conta Fixa</button>
-                    <button type="button" onclick="setTipoForm('avulsa')" id="btn-tipo-avulsa" class="py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700">Compra Avulsa</button>
-                    <button type="button" onclick="setTipoForm('cartao')" id="btn-tipo-cartao" class="py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700">No Cartão</button>
-                </div>
-            </div>
-
-            <form id="form-gasto" onsubmit="salvarGasto(event)" class="space-y-3">
-                <input type="hidden" id="gasto-id">
-
-                <div>
-                    <label class="text-xs font-medium text-slate-600">Descrição / Nome</label>
-                    <input type="text" id="gasto-nome" required placeholder="Ex: Aluguel, Supermercado, Tênis..." class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-medium text-slate-600">Valor (R$)</label>
-                        <input type="number" step="0.01" id="gasto-valor" required placeholder="0,00" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                    </div>
-                    <div>
-                        <label class="text-xs font-medium text-slate-600">Data da Compra</label>
-                        <input type="date" id="gasto-data" required class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="text-xs font-medium text-slate-600">Pessoa Responsável</label>
-                    <select id="gasto-pessoa" onchange="atualizarOpcoesCartao()" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                        <option value="João">João</option>
-                        <option value="Aquel">Aquel</option>
-                        <option value="Casal">Casal (Compartilhado)</option>
-                    </select>
-                </div>
-
-                <div id="campo-cartao" class="space-y-3 hidden">
-                    <div>
-                        <label class="text-xs font-medium text-slate-600">Cartão Utilizado</label>
-                        <select id="gasto-cartao" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                            </select>
-                    </div>
-                    <div>
-                        <label class="text-xs font-medium text-slate-600">Número de Parcelas</label>
-                        <input type="number" min="1" max="48" id="gasto-parcelas" value="1" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                    </div>
-                </div>
-
-                <div id="campo-vencimento">
-                    <label class="text-xs font-medium text-slate-600">Dia de Vencimento</label>
-                    <select id="gasto-vencimento-dia" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                        <option value="5">Dia 05</option>
-                        <option value="20">Dia 20</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="text-xs font-medium text-slate-600">Categoria</label>
-                    <select id="gasto-categoria" class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                        <option value="Moradia">Moradia / Casa</option>
-                        <option value="Alimentação">Alimentação / Mercado</option>
-                        <option value="Transporte">Transporte / Combustível</option>
-                        <option value="Lazer">Lazer / Delivery / Restaurante</option>
-                        <option value="Saúde">Saúde / Farmácia</option>
-                        <option value="Serviços">Streaming / Contas / Internet</option>
-                        <option value="Compras">Compras Pessoais / Roupas</option>
-                        <option value="Outros">Outros</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="text-xs font-medium text-slate-600">Observação (Opcional)</label>
-                    <input type="text" id="gasto-obs" placeholder="Detalhes adicionais..." class="w-full mt-1 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-blue-600">
-                </div>
-
-                <button type="submit" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 active:scale-98 transition mt-2">
-                    Salvar Lançamento
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // Estado Global
-        let dataAtual = new Date();
-        let mesSelecionado = dataAtual.getMonth(); // 0 - 11
-        let anoSelecionado = dataAtual.getFullYear();
-        let tipoFormAtual = 'fixa';
-
-        const MESES = [
-            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-        ];
-
-        // Inicializar Banco de Dados
-        function getGastos() {
-            return JSON.parse(localStorage.getItem('financas_casal_dados') || '[]');
-        }
-
-        function setGastos(gastos) {
-            localStorage.setItem('financas_casal_dados', JSON.stringify(gastos));
-        }
-
-        // Navegação de Abas
-        function trocarAba(aba) {
-            const abas = ['inicio', 'contas', 'cartoes', 'compras', 'resumo'];
-            abas.forEach(a => {
-                document.getElementById(`tab-${a}`).classList.toggle('hidden', a !== aba);
-                const navBtn = document.getElementById(`nav-${a}`);
-                if (a === aba) {
-                    navBtn.className = "flex flex-col items-center gap-1 text-blue-600";
-                } else {
-                    navBtn.className = "flex flex-col items-center gap-1 text-slate-400 hover:text-slate-600";
-                }
-            });
-            lucide.createIcons();
-        }
-
-        // Controle do Mês
-        function mudarMes(delta) {
-            mesSelecionado += delta;
-            if (mesSelecionado < 0) {
-                mesSelecionado = 11;
-                anoSelecionado--;
-            } else if (mesSelecionado > 11) {
-                mesSelecionado = 0;
-                anoSelecionado++;
-            }
-            renderApp();
-        }
-
-        // Tipo de Formulário
-        function setTipoForm(tipo) {
-            tipoFormAtual = tipo;
-            ['fixa', 'avulsa', 'cartao'].forEach(t => {
-                const btn = document.getElementById(`btn-tipo-${t}`);
-                if (t === tipo) {
-                    btn.className = "py-2 text-xs font-bold rounded-xl border border-blue-600 bg-blue-50 text-blue-700";
-                } else {
-                    btn.className = "py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 text-slate-700";
-                }
-            });
-
-            const campoCartao = document.getElementById('campo-cartao');
-            const campoVencimento = document.getElementById('campo-vencimento');
-
-            if (tipo === 'cartao') {
-                campoCartao.classList.remove('hidden');
-                campoVencimento.classList.add('hidden');
-                atualizarOpcoesCartao();
-            } else {
-                campoCartao.classList.add('hidden');
-                campoVencimento.classList.remove('hidden');
-            }
-        }
-
-        function atualizarOpcoesCartao() {
-            const pessoa = document.getElementById('gasto-pessoa').value;
-            const selectCartao = document.getElementById('gasto-cartao');
-            selectCartao.innerHTML = '';
-
-            const cartoes = [
-                { id: 'cj5', nome: 'Cartão João — Dia 5', pessoa: 'João', venc: 5 },
-                { id: 'cj20', nome: 'Cartão João — Dia 20', pessoa: 'João', venc: 20 },
-                { id: 'ca5', nome: 'Cartão Aquel — Dia 5', pessoa: 'Aquel', venc: 5 },
-                { id: 'ca20', nome: 'Cartão Aquel — Dia 20', pessoa: 'Aquel', venc: 20 },
-            ];
-
-            const filtrados = (pessoa === 'Casal') ? cartoes : cartoes.filter(c => c.pessoa === pessoa);
-            filtrados.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.id;
-                opt.textContent = c.nome;
-                selectCartao.appendChild(opt);
-            });
-        }
-
-        // Modal
-        function abrirModal(gastoParaEditar = null) {
-            const modal = document.getElementById('modal');
-            const form = document.getElementById('form-gasto');
-            form.reset();
-
-            if (gastoParaEditar) {
-                document.getElementById('modal-titulo').innerText = "Editar Lançamento";
-                document.getElementById('gasto-id').value = gastoParaEditar.id;
-                document.getElementById('gasto-nome').value = gastoParaEditar.nome;
-                document.getElementById('gasto-valor').value = gastoParaEditar.valor;
-                document.getElementById('gasto-data').value = gastoParaEditar.data;
-                document.getElementById('gasto-pessoa').value = gastoParaEditar.pessoa;
-                document.getElementById('gasto-categoria').value = gastoParaEditar.categoria;
-                document.getElementById('gasto-obs').value = gastoParaEditar.obs || '';
-                setTipoForm(gastoParaEditar.tipo);
-
-                if (gastoParaEditar.tipo === 'cartao') {
-                    document.getElementById('gasto-cartao').value = gastoParaEditar.cartaoId;
-                    document.getElementById('gasto-parcelas').value = gastoParaEditar.totalParcelas || 1;
-                } else {
-                    document.getElementById('gasto-vencimento-dia').value = gastoParaEditar.vencimentoDia;
-                }
-            } else {
-                document.getElementById('modal-titulo').innerText = "Novo Lançamento";
-                document.getElementById('gasto-id').value = '';
-                document.getElementById('gasto-data').value = new Date().toISOString().split('T')[0];
-                setTipoForm('fixa');
-            }
-
-            modal.classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        function fecharModal() {
-            document.getElementById('modal').classList.add('hidden');
-        }
-
-        // Salvar Lançamento
-        function salvarGasto(e) {
-            e.preventDefault();
-            const id = document.getElementById('gasto-id').value || Date.now().toString();
-            const nome = document.getElementById('gasto-nome').value;
-            const valorTotal = parseFloat(document.getElementById('gasto-valor').value);
-            const data = document.getElementById('gasto-data').value;
-            const pessoa = document.getElementById('gasto-pessoa').value;
-            const categoria = document.getElementById('gasto-categoria').value;
-            const obs = document.getElementById('gasto-obs').value;
-
-            let todosGastos = getGastos();
-
-            if (document.getElementById('gasto-id').value) {
-                // Modo Edição
-                todosGastos = todosGastos.filter(g => g.id !== id && g.parentId !== id);
-            }
-
-            if (tipoFormAtual === 'cartao') {
-                const cartaoId = document.getElementById('gasto-cartao').value;
-                const parcelas = parseInt(document.getElementById('gasto-parcelas').value) || 1;
-                const valorParcela = valorTotal / parcelas;
-                const vencDia = (cartaoId === 'cj5' || cartaoId === 'ca5') ? 5 : 20;
-
-                const [anoComp, mesComp, diaComp] = data.split('-').map(Number);
-                let baseDate = new Date(anoComp, mesComp - 1, diaComp);
-
-                for (let i = 0; i < parcelas; i++) {
-                    let d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
-                    todosGastos.push({
-                        id: (parcelas === 1) ? id : `${id}_p${i+1}`,
-                        parentId: id,
-                        nome: parcelas > 1 ? `${nome} (${i+1}/${parcelas})` : nome,
-                        valor: valorParcela,
-                        data: data,
-                        pessoa: pessoa,
-                        tipo: 'cartao',
-                        cartaoId: cartaoId,
-                        vencimentoDia: vencDia,
-                        categoria: categoria,
-                        obs: obs,
-                        mesRef: d.getMonth(),
-                        anoRef: d.getFullYear(),
-                        pago: false,
-                        dataPago: null,
-                        parcelaAtual: i + 1,
-                        totalParcelas: parcelas
-                    });
-                }
-            } else {
-                const vencDia = parseInt(document.getElementById('gasto-vencimento-dia').value);
-                const [anoComp, mesComp] = data.split('-').map(Number);
-
-                todosGastos.push({
-                    id: id,
-                    parentId: null,
-                    nome: nome,
-                    valor: valorTotal,
-                    data: data,
-                    pessoa: pessoa,
-                    tipo: tipoFormAtual,
-                    cartaoId: null,
-                    vencimentoDia: vencDia,
-                    categoria: categoria,
-                    obs: obs,
-                    mesRef: mesComp - 1,
-                    anoRef: anoComp,
-                    pago: false,
-                    dataPago: null
-                });
-            }
-
-            setGastos(todosGastos);
-            fecharModal();
-            renderApp();
-        }
-
-        // Toggle Status Pago
-        function togglePago(id) {
-            const gastos = getGastos();
-            const item = gastos.find(g => g.id === id);
-            if (item) {
-                item.pago = !item.pago;
-                item.dataPago = item.pago ? new Date().toISOString() : null;
-                setGastos(gastos);
-                renderApp();
-            }
-        }
-
-        // Excluir Lançamento
-        function excluirGasto(id) {
-            if (confirm('Tem certeza que deseja excluir este lançamento?')) {
-                let gastos = getGastos();
-                const item = gastos.find(g => g.id === id);
-                if (item && item.parentId) {
-                    gastos = gastos.filter(g => g.parentId !== item.parentId && g.id !== item.parentId);
-                } else {
-                    gastos = gastos.filter(g => g.id !== id && g.parentId !== id);
-                }
-                setGastos(gastos);
-                renderApp();
-            }
-        }
-
-        // Formatador Moeda
-        const formatBRL = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-        // RENDER PRINCIPAL DO APLICATIVO
-        function renderApp() {
-            document.getElementById('label-mes-ano').innerText = `${MESES[mesSelecionado]} ${anoSelecionado}`;
-            
-            const todosGastos = getGastos();
-            // Filtrar apenas para o mês selecionado
-            const gastosDoMes = todosGastos.filter(g => g.mesRef === mesSelecionado && g.anoRef === anoSelecionado);
-
-            // Variáveis de Cálculo
-            let totalMes = 0;
-            let totalPago = 0;
-            let totalPendente = 0;
-
-            let totalJoao = 0, joaoDia5 = 0, joaoDia20 = 0;
-            let totalAquel = 0, aquelDia5 = 0, aquelDia20 = 0;
-            let totalCasal = 0, casalDia5 = 0, casalDia20 = 0;
-
-            let totalDia5 = 0, totalDia20 = 0;
-            let totalFixas = 0, totalCartoes = 0, totalAvulsas = 0;
-
-            let cartaoTotals = { cj5: 0, cj20: 0, ca5: 0, ca20: 0 };
-            let cartaoItens = { cj5: [], cj20: [], ca5: [], ca20: [] };
-
-            gastosDoMes.forEach(g => {
-                const val = g.valor;
-                totalMes += val;
-                if (g.pago) totalPago += val; else totalPendente += val;
-
-                // Tipos
-                if (g.tipo === 'fixa') totalFixas += val;
-                if (g.tipo === 'cartao') totalCartoes += val;
-                if (g.tipo === 'avulsa') totalAvulsas += val;
-
-                // Vencimentos
-                if (g.vencimentoDia === 5) totalDia5 += val;
-                if (g.vencimentoDia === 20) totalDia20 += val;
-
-                // Por Pessoa e Vencimento
-                if (g.pessoa === 'João') {
-                    totalJoao += val;
-                    if (g.vencimentoDia === 5) joaoDia5 += val;
-                    if (g.vencimentoDia === 20) joaoDia20 += val;
-                } else if (g.pessoa === 'Aquel') {
-                    totalAquel += val;
-                    if (g.vencimentoDia === 5) aquelDia5 += val;
-                    if (g.vencimentoDia === 20) aquelDia20 += val;
-                } else if (g.pessoa === 'Casal') {
-                    totalCasal += val;
-                    if (g.vencimentoDia === 5) casalDia5 += val;
-                    if (g.vencimentoDia === 20) casalDia20 += val;
-                }
-
-                // Por Cartão
-                if (g.tipo === 'cartao' && cartaoTotals[g.cartaoId] !== undefined) {
-                    cartaoTotals[g.cartaoId] += val;
-                    cartaoItens[g.cartaoId].push(g);
-                }
-            });
-
-            // Atualizar Dashboard
-            document.getElementById('dash-total-mes').innerText = formatBRL(totalMes);
-            document.getElementById('dash-pago').innerText = formatBRL(totalPago);
-            document.getElementById('dash-pendente').innerText = formatBRL(totalPendente);
-
-            document.getElementById('dash-total-joao').innerText = formatBRL(totalJoao);
-            document.getElementById('dash-sub-joao').innerText = `Dia 5: ${formatBRL(joaoDia5)} | Dia 20: ${formatBRL(joaoDia20)}`;
-
-            document.getElementById('dash-total-aquel').innerText = formatBRL(totalAquel);
-            document.getElementById('dash-sub-aquel').innerText = `Dia 5: ${formatBRL(aquelDia5)} | Dia 20: ${formatBRL(aquelDia20)}`;
-
-            document.getElementById('dash-total-dia5').innerText = formatBRL(totalDia5);
-            document.getElementById('dash-total-dia20').innerText = formatBRL(totalDia20);
-
-            document.getElementById('dash-total-fixas').innerText = formatBRL(totalFixas);
-            document.getElementById('dash-total-cartoes').innerText = formatBRL(totalCartoes);
-            document.getElementById('dash-total-avulsas').innerText = formatBRL(totalAvulsas);
-
-            // Atualizar Bloco Dia 5 & 20
-            document.getElementById('bloco-total-dia5').innerText = formatBRL(totalDia5);
-            document.getElementById('bloco-total-dia20').innerText = formatBRL(totalDia20);
-
-            renderListaVencimento('lista-vencimento-dia5', gastosDoMes.filter(g => g.vencimentoDia === 5));
-            renderListaVencimento('lista-vencimento-dia20', gastosDoMes.filter(g => g.vencimentoDia === 20));
-
-            // Atualizar Cartões
-            ['cj5', 'cj20', 'ca5', 'ca20'].forEach(cId => {
-                document.getElementById(`card-total-${cId}`).innerText = formatBRL(cartaoTotals[cId]);
-                const container = document.getElementById(`itens-${cId}`);
-                if (cartaoItens[cId].length === 0) {
-                    container.innerHTML = '<span class="text-slate-400 italic">Nenhum gasto neste cartão</span>';
-                } else {
-                    container.innerHTML = cartaoItens[cId].map(item => `
-                        <div class="flex justify-between items-center py-1">
-                            <span class="truncate pr-2">${item.nome}</span>
-                            <div class="flex items-center gap-2">
-                                <span class="font-semibold text-slate-700">${formatBRL(item.valor)}</span>
-                                <button onclick="togglePago('${item.id}')" class="text-[10px] px-1.5 py-0.5 rounded font-bold ${item.pago ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${item.pago ? 'PAGO' : 'PENDENTE'}</button>
-                            </div>
-                        </div>
-                    `).join('');
-                }
-            });
-
-            // Atualizar Geral Gastos
-            renderListaGeral(gastosDoMes);
-
-            // Atualizar Resumo
-            document.getElementById('resumo-total-joao').innerText = formatBRL(totalJoao);
-            document.getElementById('resumo-j5').innerText = formatBRL(joaoDia5);
-            document.getElementById('resumo-j20').innerText = formatBRL(joaoDia20);
-
-            document.getElementById('resumo-total-aquel').innerText = formatBRL(totalAquel);
-            document.getElementById('resumo-a5').innerText = formatBRL(aquelDia5);
-            document.getElementById('resumo-a20').innerText = formatBRL(aquelDia20);
-
-            document.getElementById('resumo-total-casal').innerText = formatBRL(totalCasal);
-            document.getElementById('resumo-c5').innerText = formatBRL(casalDia5);
-            document.getElementById('resumo-c20').innerText = formatBRL(casalDia20);
-
-            document.getElementById('resumo-total-geral').innerText = formatBRL(totalMes);
-
-            lucide.createIcons();
-        }
-
-        // Renderizadores Auxiliares
-        function renderListaVencimento(elemId, lista) {
-            const container = document.getElementById(elemId);
-            if (lista.length === 0) {
-                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-3">Nenhuma conta para este vencimento.</p>';
-                return;
-            }
-
-            container.innerHTML = lista.map(item => `
-                <div class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <div class="flex items-center gap-2.5">
-                        <button onclick="togglePago('${item.id}')" class="w-6 h-6 rounded-full flex items-center justify-center border transition ${item.pago ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent'}">
-                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <div>
-                            <p class="text-xs font-bold text-slate-800 leading-tight ${item.pago ? 'line-through text-slate-400' : ''}">${item.nome}</p>
-                            <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-md ${item.pessoa === 'João' ? 'bg-blue-100 text-blue-700' : (item.pessoa === 'Aquel' ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700')}">${item.pessoa}</span>
-                            <span class="text-[10px] text-slate-400 ml-1">${item.categoria}</span>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span class="text-xs font-extrabold text-slate-800 ${item.pago ? 'line-through text-slate-400' : ''}">${formatBRL(item.valor)}</span>
-                        <div class="flex gap-2 justify-end mt-1">
-                            <button onclick="excluirGasto('${item.id}')" class="text-slate-300 hover:text-rose-500">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderListaGeral(lista) {
-            const container = document.getElementById('lista-geral-gastos');
-            if (lista.length === 0) {
-                container.innerHTML = '<div class="bg-white p-6 rounded-2xl text-center text-slate-400 text-xs border border-slate-200">Nenhum lançamento cadastrado neste mês.</div>';
-                return;
-            }
-
-            container.innerHTML = lista.map(item => `
-                <div class="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <button onclick="togglePago('${item.id}')" class="w-7 h-7 rounded-full flex items-center justify-center border transition ${item.pago ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 text-transparent'}">
-                            <i data-lucide="check" class="w-4 h-4"></i>
-                        </button>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-800 ${item.pago ? 'line-through text-slate-400' : ''}">${item.nome}</h4>
-                            <div class="flex items-center gap-1.5 mt-0.5">
-                                <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${item.pessoa === 'João' ? 'bg-blue-100 text-blue-700' : (item.pessoa === 'Aquel' ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700')}">${item.pessoa}</span>
-                                <span class="text-[10px] text-slate-400">Venc. Dia ${item.vencimentoDia}</span>
-                                ${item.tipo === 'cartao' ? '<span class="text-[9px] bg-slate-100 text-slate-600 px-1 rounded font-medium">Cartão</span>' : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs font-extrabold text-slate-800 ${item.pago ? 'line-through text-slate-400' : ''}">${formatBRL(item.valor)}</p>
-                        <div class="flex items-center gap-2 justify-end mt-1">
-                            <button onclick="excluirGasto('${item.id}')" class="text-slate-300 hover:text-rose-500 transition">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Inicialização
-        window.addEventListener('DOMContentLoaded', () => {
-            renderApp();
+<body class="bg-slate-100 text-slate-800 flex justify-center">
+
+  <div id="root" class="w-full max-w-md min-h-screen bg-slate-50 flex flex-col relative shadow-xl pb-24"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // --- DADOS INICIAIS / PADRÃO ---
+    const CATEGORIAS = [
+      { id: 'Delivery', label: 'Delivery', icon: '🍔' },
+      { id: 'Mercado', label: 'Mercado', icon: '🛒' },
+      { id: 'Combustível', label: 'Combustível', icon: '⛽' },
+      { id: 'Casa', label: 'Casa', icon: '🏠' },
+      { id: 'Lazer', label: 'Lazer', icon: '🎮' },
+      { id: 'Outros', label: 'Outros', icon: '📦' }
+    ];
+
+    const CONTAS_FIXAS_BASE = [
+      { id: 'f1', nome: 'Aluguel', valor: 1500, dia: 5, responsavel: 'Casal', categoria: 'Casa', ativa: true },
+      { id: 'f2', nome: 'Energia', valor: 250, dia: 5, responsavel: 'Casal', categoria: 'Casa', ativa: true },
+      { id: 'f3', nome: 'Internet', valor: 120, dia: 20, responsavel: 'Casal', categoria: 'Casa', ativa: true },
+      { id: 'f4', nome: 'Água', valor: 80, dia: 20, responsavel: 'Casal', categoria: 'Casa', ativa: true },
+    ];
+
+    const CARTAO_OPCOES = [
+      { id: 'nenhum', label: 'Dinheiro / Pix / Débito' },
+      { id: 'j5', label: 'Cartão João (Dia 5)', dono: 'João', dia: 5 },
+      { id: 'j20', label: 'Cartão João (Dia 20)', dono: 'João', dia: 20 },
+      { id: 'r5', label: 'Cartão Raquel (Dia 5)', dono: 'Raquel', dia: 5 },
+      { id: 'r20', label: 'Cartão Raquel (Dia 20)', dono: 'Raquel', dia: 20 },
+    ];
+
+    function App() {
+      // Estado de Data
+      const [dataAtual, setDataAtual] = useState(() => {
+        const now = new Date();
+        return { mes: now.getMonth(), ano: now.getFullYear() };
+      });
+
+      // Estados Principais com Persistência
+      const [gastos, setGastos] = useState(() => {
+        const saved = localStorage.getItem('jr_gastos');
+        return saved ? JSON.parse(saved) : [];
+      });
+
+      const [contasFixas, setContasFixas] = useState(() => {
+        const saved = localStorage.getItem('jr_contas_fixas');
+        return saved ? JSON.parse(saved) : CONTAS_FIXAS_BASE;
+      });
+
+      const [statusPagamento, setStatusPagamento] = useState(() => {
+        const saved = localStorage.getItem('jr_status_pagamento');
+        return saved ? JSON.parse(saved) : {}; // chave: "ano-mes-idConta" -> boolean
+      });
+
+      const [abaAtiva, setAbaAtiva] = useState('inicio');
+      const [modalAberto, setModalAberto] = useState(false);
+      const [modoEdicaoFixa, setModoEdicaoFixa] = useState(null);
+
+      // Formulário de Gasto
+      const [inputRapido, setInputRapido] = useState('');
+      const [descricao, setDescricao] = useState('');
+      const [valor, setValor] = useState('');
+      const [responsavel, setResponsavel] = useState('João');
+      const [categoria, setCategoria] = useState('Mercado');
+      const [cartaoSelecionado, setCartaoSelecionado] = useState('nenhum');
+      const [parcelas, setParcelas] = useState(1);
+
+      useEffect(() => {
+        localStorage.setItem('jr_gastos', JSON.stringify(gastos));
+      }, [gastos]);
+
+      useEffect(() => {
+        localStorage.setItem('jr_contas_fixas', JSON.stringify(contasFixas));
+      }, [contasFixas]);
+
+      useEffect(() => {
+        localStorage.setItem('jr_status_pagamento', JSON.stringify(statusPagamento));
+      }, [statusPagamento]);
+
+      // Navegação do Mês
+      const trocarMes = (direcao) => {
+        setDataAtual(prev => {
+          let novoMes = prev.mes + direcao;
+          let novoAno = prev.ano;
+          if (novoMes > 11) { novoMes = 0; novoAno++; }
+          if (novoMes < 0) { novoMes = 11; novoAno--; }
+          return { mes: novoMes, ano: novoAno };
         });
-    </script>
+      };
+
+      const nomeMes = useMemo(() => {
+        const d = new Date(dataAtual.ano, dataAtual.mes, 1);
+        return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+      }, [dataAtual]);
+
+      // Parser Inteligente de Texto (WhatsApp Style)
+      const parseTextoRapido = (texto) => {
+        setInputRapido(texto);
+        if (!texto.trim()) return;
+
+        let limpo = texto.toLowerCase();
+        
+        // Identificar Responsável
+        let respDetectado = null;
+        if (limpo.includes('joão') || limpo.includes('joao')) respDetectado = 'João';
+        else if (limpo.includes('raquel')) respDetectado = 'Raquel';
+        else if (limpo.includes('casal')) respDetectado = 'Casal';
+
+        // Identificar Categoria
+        let catDetectada = null;
+        CATEGORIAS.forEach(cat => {
+          if (limpo.includes(cat.label.toLowerCase()) || limpo.includes(cat.id.toLowerCase())) {
+            catDetectada = cat.id;
+          }
+        });
+        if (limpo.includes('ifood') || limpo.includes('lanche') || limpo.includes('pizza') || limpo.includes('hamburguer')) {
+          catDetectada = 'Delivery';
+        }
+
+        // Identificar Valor
+        const matchValor = texto.match(/(\d+[.,]?\d*)/);
+        let valorDetectado = matchValor ? matchValor[0].replace(',', '.') : '';
+
+        // Limpeza da Descrição
+        let desc = texto
+          .replace(/joão|joao|raquel|casal/gi, '')
+          .replace(/delivery|mercado|combustível|combustivel|casa|lazer|outros/gi, '')
+          .replace(/(\d+[.,]?\d*)/g, '')
+          .trim();
+
+        if (respDetectado) setResponsavel(respDetectado);
+        if (catDetectada) setCategoria(catDetectada);
+        if (valorDetectado) setValor(valorDetectado);
+        if (desc) setDescricao(desc.charAt(0).toUpperCase() + desc.slice(1));
+        else if (catDetectada) setDescricao(catDetectada);
+      };
+
+      // Salvar Novo Gasto / Parcelas
+      const salvarGasto = () => {
+        const numValor = parseFloat(valor);
+        if (isNaN(numValor) || numValor <= 0) return;
+
+        const numParcelas = parseInt(parcelas) || 1;
+        const valorParcela = numValor / numParcelas;
+        const novosGastos = [];
+        const baseId = Date.now().toString();
+
+        for (let i = 0; i < numParcelas; i++) {
+          let mesParcela = dataAtual.mes + i;
+          let anoParcela = dataAtual.ano;
+          while (mesParcela > 11) {
+            mesParcela -= 12;
+            anoParcela += 1;
+          }
+
+          novosGastos.push({
+            id: `${baseId}_${i}`,
+            descricao: numParcelas > 1 ? `${descricao || categoria} (${i + 1}/${numParcelas})` : (descricao || categoria),
+            valor: valorParcela,
+            responsavel,
+            categoria,
+            cartao: cartaoSelecionado,
+            mes: mesParcela,
+            ano: anoParcela,
+            pago: false,
+            dataRegistro: new Date().toISOString()
+          });
+        }
+
+        setGastos(prev => [...novosGastos, ...prev]);
+        fecharModal();
+      };
+
+      const fecharModal = () => {
+        setModalAberto(false);
+        setInputRapido('');
+        setDescricao('');
+        setValor('');
+        setResponsavel('João');
+        setCategoria('Mercado');
+        setCartaoSelecionado('nenhum');
+        setParcelas(1);
+      };
+
+      const toggleStatus = (id) => {
+        const chave = `${dataAtual.ano}-${dataAtual.mes}-${id}`;
+        setStatusPagamento(prev => ({ ...prev, [chave]: !prev[chave] }));
+      };
+
+      const toggleGastoPago = (id) => {
+        setGastos(prev => prev.map(g => g.id === id ? { ...g, pago: !g.pago } : g));
+      };
+
+      const excluirGasto = (id) => {
+        setGastos(prev => prev.filter(g => g.id !== id));
+      };
+
+      // Cálculos do Mês Selecionado
+      const gastosMes = useMemo(() => {
+        return gastos.filter(g => g.mes === dataAtual.mes && g.ano === dataAtual.ano);
+      }, [gastos, dataAtual]);
+
+      // Faturas de Cartão Agrupadas por Dia (5 e 20)
+      const faturas = useMemo(() => {
+        const res = { j5: 0, j20: 0, r5: 0, r20: 0 };
+        gastosMes.forEach(g => {
+          if (g.cartao && res[g.cartao] !== undefined) {
+            res[g.cartao] += g.valor;
+          }
+        });
+        return res;
+      }, [gastosMes]);
+
+      // Totais Consolidados (Contas Fixas + Cartões + Gastos Avulsos)
+      const metricas = useMemo(() => {
+        const fixasAtivas = contasFixas.filter(f => f.ativa);
+        
+        let totalFixas = fixasAtivas.reduce((acc, cur) => acc + cur.valor, 0);
+        let totalGastosForaCartao = gastosMes.filter(g => g.cartao === 'nenhum').reduce((acc, cur) => acc + cur.valor, 0);
+        let totalCartoes = Object.values(faturas).reduce((a, b) => a + b, 0);
+
+        let totalGeral = totalFixas + totalGastosForaCartao + totalCartoes;
+
+        // Cálculo de Pagos vs A Pagar
+        let pago = 0;
+        fixasAtivas.forEach(f => {
+          const chave = `${dataAtual.ano}-${dataAtual.mes}-${f.id}`;
+          if (statusPagamento[chave]) pago += f.valor;
+        });
+        ['j5', 'j20', 'r5', 'r20'].forEach(cId => {
+          const chave = `${dataAtual.ano}-${dataAtual.mes}-${cId}`;
+          if (statusPagamento[chave]) pago += faturas[cId];
+        });
+        gastosMes.filter(g => g.cartao === 'nenhum' && g.pago).forEach(g => {
+          pago += g.valor;
+        });
+
+        const aPagar = Math.max(0, totalGeral - pago);
+
+        // Subtotais Dia 5 e Dia 20
+        const fixasDia5 = fixasAtivas.filter(f => f.dia === 5).reduce((a, b) => a + b.valor, 0);
+        const totalDia5 = fixasDia5 + faturas.j5 + faturas.r5;
+
+        const fixasDia20 = fixasAtivas.filter(f => f.dia === 20).reduce((a, b) => a + b.valor, 0);
+        const totalDia20 = fixasDia20 + faturas.j20 + faturas.r20;
+
+        // Por Pessoa
+        let totalJoao = 0;
+        let totalRaquel = 0;
+        let totalCasal = 0;
+
+        fixasAtivas.forEach(f => {
+          if (f.responsavel === 'João') totalJoao += f.valor;
+          else if (f.responsavel === 'Raquel') totalRaquel += f.valor;
+          else totalCasal += f.valor;
+        });
+
+        gastosMes.forEach(g => {
+          if (g.responsavel === 'João') totalJoao += g.valor;
+          else if (g.responsavel === 'Raquel') totalRaquel += g.valor;
+          else totalCasal += g.valor;
+        });
+
+        // Delivery
+        const deliveryGastos = gastosMes.filter(g => g.categoria === 'Delivery');
+        const deliveryTotal = deliveryGastos.reduce((a, b) => a + b.valor, 0);
+        const deliveryCount = deliveryGastos.length;
+        const deliveryJoao = deliveryGastos.filter(g => g.responsavel === 'João').reduce((a, b) => a + b.valor, 0);
+        const deliveryRaquel = deliveryGastos.filter(g => g.responsavel === 'Raquel').reduce((a, b) => a + b.valor, 0);
+
+        return {
+          totalGeral,
+          pago,
+          aPagar,
+          totalDia5,
+          totalDia20,
+          totalJoao,
+          totalRaquel,
+          totalCasal,
+          deliveryTotal,
+          deliveryCount,
+          deliveryJoao,
+          deliveryRaquel
+        };
+      }, [gastosMes, contasFixas, statusPagamento, faturas, dataAtual]);
+
+      return (
+        <div className="flex flex-col flex-1">
+          {/* TOPO: SELETOR DE MÊS */}
+          <header className="bg-slate-900 text-white p-4 pt-6 sticky top-0 z-30 shadow-md flex items-center justify-between">
+            <button onClick={() => trocarMes(-1)} className="p-2 rounded-full hover:bg-slate-800 text-xl font-bold">←</button>
+            <h1 className="text-sm font-extrabold tracking-wider">{nomeMes}</h1>
+            <button onClick={() => trocarMes(1)} className="p-2 rounded-full hover:bg-slate-800 text-xl font-bold">→</button>
+          </header>
+
+          {/* CONTEÚDO PRINCIPAL DAS ABAS */}
+          <main className="p-4 flex-1">
+            {/* --- ABA INÍCIO --- */}
+            {abaAtiva === 'inicio' && (
+              <div className="space-y-4">
+                {/* BOTÃO PRINCIPAL NOVO GASTO */}
+                <button 
+                  onClick={() => setModalAberto(true)}
+                  className="w-full bg-emerald-500 active:bg-emerald-600 text-white font-black text-lg py-4 rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition-all transform active:scale-98"
+                >
+                  <span className="text-2xl">+</span>
+                  <span>NOVO GASTO</span>
+                </button>
+
+                {/* CARD RESUMO PRINCIPAL */}
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-slate-200">
+                  <span className="text-xs font-bold text-slate-400 tracking-wider">TOTAL DO MÊS</span>
+                  <div className="text-3xl font-extrabold text-slate-800 my-1">
+                    R$ {metricas.totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-100">
+                    <div className="bg-rose-50 p-3 rounded-2xl">
+                      <span className="text-xs font-bold text-rose-500 flex items-center gap-1">🔴 A PAGAR</span>
+                      <span className="text-base font-bold text-rose-700 mt-0.5 block">
+                        R$ {metricas.aPagar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="bg-emerald-50 p-3 rounded-2xl">
+                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">🟢 JÁ PAGO</span>
+                      <span className="text-base font-bold text-emerald-800 mt-0.5 block">
+                        R$ {metricas.pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* PRÓXIMO VENCIMENTO */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-400 block">PRÓXIMO VENCIMENTO</span>
+                    <span className="text-sm font-extrabold text-slate-800">Dia 5 • R$ {metricas.totalDia5.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <button 
+                    onClick={() => setAbaAtiva('contas')}
+                    className="bg-slate-100 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl"
+                  >
+                    VER CONTAS
+                  </button>
+                </div>
+
+                {/* ALERTA / RESUMO DELIVERY */}
+                <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-2xl">🍔</span>
+                      <div>
+                        <span className="text-xs font-bold text-amber-900 block">DELIVERY NO MÊS</span>
+                        <span className="text-lg font-black text-amber-900">
+                          R$ {metricas.deliveryTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold bg-amber-200 text-amber-800 px-2 py-1 rounded-lg">
+                      {metricas.deliveryCount} pedidos
+                    </span>
+                  </div>
+                  {metricas.deliveryTotal > 400 && (
+                    <div className="mt-3 text-xs font-semibold text-amber-800 bg-amber-100/70 p-2 rounded-xl">
+                      ⚠️ Vocês já gastaram R$ {metricas.deliveryTotal.toFixed(0)} em Delivery este mês.
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xs text-amber-900/80 pt-2 mt-2 border-t border-amber-200/60 font-medium">
+                    <span>João: R$ {metricas.deliveryJoao.toFixed(2)}</span>
+                    <span>Raquel: R$ {metricas.deliveryRaquel.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* DIVISÃO RÁPIDA JOÃO E RAQUEL */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                    <span className="text-xs font-bold text-slate-400 block">👨 JOÃO</span>
+                    <span className="text-lg font-black text-slate-800">
+                      R$ {metricas.totalJoao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200">
+                    <span className="text-xs font-bold text-slate-400 block">👩 RAQUEL</span>
+                    <span className="text-lg font-black text-slate-800">
+                      R$ {metricas.totalRaquel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- ABA CONTAS (DIA 5 & DIA 20) --- */}
+            {abaAtiva === 'contas' && (
+              <div className="space-y-5">
+                {/* BLOCO DIA 5 */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                  <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                    <span className="text-sm font-black text-slate-800">DIA 5</span>
+                    <span className="text-sm font-black text-slate-600">
+                      Total: R$ {metricas.totalDia5.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {contasFixas.filter(f => f.ativa && f.dia === 5).map(item => {
+                      const pago = statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-${item.id}`];
+                      return (
+                        <div key={item.id} onClick={() => toggleStatus(item.id)} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                          <div className="flex items-center space-x-2">
+                            <span>{pago ? '🟢' : '🔴'}</span>
+                            <span className={`text-sm font-semibold ${pago ? 'line-through text-slate-400' : 'text-slate-700'}`}>{item.nome}</span>
+                          </div>
+                          <span className="text-sm font-bold text-slate-800">R$ {item.valor.toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
+                    {/* Cartão João Dia 5 */}
+                    <div onClick={() => toggleStatus('j5')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer border-t border-slate-50">
+                      <div className="flex items-center space-x-2">
+                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-j5`] ? '🟢' : '🔴'}</span>
+                        <span className="text-sm font-semibold text-slate-700">Cartão João (Dia 5)</span>
+                      </div>
+                      <span className="text-sm font-bold text-slate-800">R$ {faturas.j5.toFixed(2)}</span>
+                    </div>
+                    {/* Cartão Raquel Dia 5 */}
+                    <div onClick={() => toggleStatus('r5')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                      <div className="flex items-center space-x-2">
+                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-r5`] ? '🟢' : '🔴'}</span>
+                        <span className="text-sm font-semibold text-slate-700">Cartão Raquel (Dia 5)</span>
+                      </div>
+                      <span className="text-sm font-bold text-slate-800">R$ {faturas.r5.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BLOCO DIA 20 */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                  <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                    <span className="text-sm font-black text-slate-800">DIA 20</span>
+                    <span className="text-sm font-black text-slate-600">
+                      Total: R$ {metricas.totalDia20.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {contasFixas.filter(f => f.ativa && f.dia === 20).map(item => {
+                      const pago = statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-${item.id}`];
+                      return (
+                        <div key={item.id} onClick={() => toggleStatus(item.id)} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                          <div className="flex items-center space-x-2">
+                            <span>{pago ? '🟢' : '🔴'}</span>
+                            <span className={`text-sm font-semibold ${pago ? 'line-through text-slate-400' : 'text-slate-700'}`}>{item.nome}</span>
+                          </div>
+                          <span className="text-sm font-bold text-slate-800">R$ {item.valor.toFixed(2)}</span>
+                        </div>
+                      );
+                    })}
+                    {/* Cartão João Dia 20 */}
+                    <div onClick={() => toggleStatus('j20')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer border-t border-slate-50">
+                      <div className="flex items-center space-x-2">
+                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-j20`] ? '🟢' : '🔴'}</span>
+                        <span className="text-sm font-semibold text-slate-700">Cartão João (Dia 20)</span>
+                      </div>
+                      <span className="text-sm font-bold text-slate-800">R$ {faturas.j20.toFixed(2)}</span>
+                    </div>
+                    {/* Cartão Raquel Dia 20 */}
+                    <div onClick={() => toggleStatus('r20')} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                      <div className="flex items-center space-x-2">
+                        <span>{statusPagamento[`${dataAtual.ano}-${dataAtual.mes}-r20`] ? '🟢' : '🔴'}</span>
+                        <span className="text-sm font-semibold text-slate-700">Cartão Raquel (Dia 20)</span>
+                      </div>
+                      <span className="text-sm font-bold text-slate-800">R$ {faturas.r20.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- ABA RELATÓRIO DE GASTOS --- */}
+            {abaAtiva === 'gastos' && (
+              <div className="space-y-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">ONDE ESTAMOS GASTANDO?</h2>
+                  <div className="space-y-3">
+                    {CATEGORIAS.map(cat => {
+                      // Totaliza fixa + lançamentos daquela categoria
+                      const totalCat = gastosMes
+                        .filter(g => g.categoria === cat.id)
+                        .reduce((acc, cur) => acc + cur.valor, 0)
+                        + contasFixas.filter(f => f.ativa && f.categoria === cat.id).reduce((acc, cur) => acc + cur.valor, 0);
+
+                      return (
+                        <div key={cat.id} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg">{cat.icon}</span>
+                            <span className="text-sm font-semibold text-slate-700">{cat.label}</span>
+                          </div>
+                          <span className="text-sm font-bold text-slate-900">
+                            R$ {totalCat.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">DIVISÃO GERAL</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm py-1 border-b border-slate-50">
+                      <span className="font-semibold text-slate-700">👨 João</span>
+                      <span className="font-bold text-slate-900">R$ {metricas.totalJoao.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm py-1 border-b border-slate-50">
+                      <span className="font-semibold text-slate-700">👩 Raquel</span>
+                      <span className="font-bold text-slate-900">R$ {metricas.totalRaquel.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm py-1">
+                      <span className="font-semibold text-slate-700">👥 Compartilhado (Casal)</span>
+                      <span className="font-bold text-slate-900">R$ {metricas.totalCasal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- ABA MAIS / HISTÓRICO & CONTAS FIXAS --- */}
+            {abaAtiva === 'mais' && (
+              <div className="space-y-5">
+                {/* GERENCIADOR DE CONTAS FIXAS */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">CONFIGURAR CONTAS FIXAS</h2>
+                  <div className="space-y-3">
+                    {contasFixas.map(f => (
+                      <div key={f.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
+                        <div>
+                          <span className="text-sm font-bold text-slate-800 block">{f.nome} (Dia {f.dia})</span>
+                          <span className="text-xs text-slate-400">{f.responsavel} • {f.categoria}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input 
+                            type="number" 
+                            value={f.valor} 
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              setContasFixas(prev => prev.map(item => item.id === f.id ? { ...item, valor: val } : item));
+                            }}
+                            className="w-20 bg-white border border-slate-300 rounded-lg p-1 text-right text-sm font-bold"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* HISTÓRICO COMPLETO DE GASTOS AVULSOS */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+                  <h2 className="text-xs font-bold text-slate-400 mb-3 tracking-wider">HISTÓRICO DO MÊS</h2>
+                  {gastosMes.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">Nenhum gasto avulso registrado.</span>
+                  ) : (
+                    <div className="space-y-2">
+                      {gastosMes.map(g => (
+                        <div key={g.id} className="flex items-center justify-between p-2 border-b border-slate-100 last:border-0">
+                          <div>
+                            <span className="text-sm font-bold text-slate-800 block">{g.descricao}</span>
+                            <span className="text-xs text-slate-400">{g.responsavel} • {g.categoria}</span>
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <span className="text-sm font-black text-slate-800">R$ {g.valor.toFixed(2)}</span>
+                            <button onClick={() => excluirGasto(g.id)} className="text-rose-400 hover:text-rose-600 text-xs font-bold">✕</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* MODAL REGISTRO SIMPLES / LANÇAMENTO RÁPIDO */}
+          {modalAberto && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-black text-slate-800">Novo Gasto</h2>
+                  <button onClick={fecharModal} className="text-slate-400 text-xl font-bold">✕</button>
+                </div>
+
+                {/* ENTRADA TIPO WHATSAPP */}
+                <div className="mb-4">
+                  <label className="text-xs font-bold text-slate-400 block mb-1">LANÇAMENTO INTELIGENTE</label>
+                  <input 
+                    type="text" 
+                    placeholder='Ex: "Delivery 52,90 João"' 
+                    value={inputRapido}
+                    onChange={(e) => parseTextoRapido(e.target.value)}
+                    className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                {/* CAMPOS REFINADOS AUTOMATICAMENTE */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1">O que você gastou?</label>
+                    <input 
+                      type="text" 
+                      placeholder="Ex: Mercado" 
+                      value={descricao}
+                      onChange={(e) => setDescricao(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1">Valor (R$)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      placeholder="0,00" 
+                      value={valor}
+                      onChange={(e) => setValor(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xl font-black text-slate-800"
+                    />
+                  </div>
+
+                  {/* QUEM GASTOU */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1">Quem gastou?</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['João', 'Raquel', 'Casal'].map(p => (
+                        <button 
+                          key={p}
+                          onClick={() => setResponsavel(p)}
+                          className={`py-2 rounded-xl text-sm font-bold border ${responsavel === p ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200'}`}
+                        >
+                          {p.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* CATEGORIAS */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1">Categoria</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {CATEGORIAS.map(c => (
+                        <button 
+                          key={c.id}
+                          onClick={() => setCategoria(c.id)}
+                          className={`py-2 px-1 rounded-xl text-xs font-bold border flex items-center justify-center space-x-1 ${categoria === c.id ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'}`}
+                        >
+                          <span>{c.icon}</span>
+                          <span>{c.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* CARTÃO & PARCELAMENTO */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 block mb-1">Forma de Pagamento</label>
+                    <select 
+                      value={cartaoSelecionado} 
+                      onChange={(e) => setCartaoSelecionado(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm font-semibold mb-2"
+                    >
+                      {CARTAO_OPCOES.map(opt => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
+
+                    {cartaoSelecionado !== 'nenhum' && (
+                      <div className="flex items-center space-x-2">
+                        <label className="text-xs font-bold text-slate-400">Parcelas:</label>
+                        <select 
+                          value={parcelas} 
+                          onChange={(e) => setParcelas(e.target.value)}
+                          className="bg-slate-50 border border-slate-200 rounded-xl p-2 text-sm font-bold"
+                        >
+                          {[1, 2, 3, 4, 5, 6, 10, 12].map(n => (
+                            <option key={n} value={n}>{n}x</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* BOTÃO SALVAR */}
+                  <button 
+                    onClick={salvarGasto}
+                    className="w-full bg-slate-900 text-white font-extrabold text-base py-4 rounded-2xl shadow-lg mt-2 active:bg-slate-800"
+                  >
+                    SALVAR GASTO
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MENU INFERIOR FIXO */}
+          <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200 px-4 py-2 flex justify-between items-center z-40">
+            <button 
+              onClick={() => setAbaAtiva('inicio')} 
+              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'inicio' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
+            >
+              <span className="text-xl">🏠</span>
+              <span className="text-[10px]">Início</span>
+            </button>
+            <button 
+              onClick={() => setAbaAtiva('contas')} 
+              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'contas' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
+            >
+              <span className="text-xl">📋</span>
+              <span className="text-[10px]">Contas</span>
+            </button>
+            <button 
+              onClick={() => setModalAberto(true)} 
+              className="bg-emerald-500 text-white rounded-full p-3 shadow-lg -translate-y-3 flex items-center justify-center border-4 border-slate-50"
+            >
+              <span className="text-2xl font-bold leading-none">➕</span>
+            </button>
+            <button 
+              onClick={() => setAbaAtiva('gastos')} 
+              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'gastos' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
+            >
+              <span className="text-xl">📊</span>
+              <span className="text-[10px]">Gastos</span>
+            </button>
+            <button 
+              onClick={() => setAbaAtiva('mais')} 
+              className={`flex flex-col items-center py-1 px-2 ${abaAtiva === 'mais' ? 'text-emerald-600 font-extrabold' : 'text-slate-400 font-medium'}`}
+            >
+              <span className="text-xl">⚙️</span>
+              <span className="text-[10px]">Mais</span>
+            </button>
+          </nav>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
 </body>
 </html>
