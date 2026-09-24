@@ -1,0 +1,548 @@
+/* ==========================
+   MB DRYFIT
+   STYLE PRINCIPAL
+========================== */
+
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+
+
+body{
+
+    background:#0b0b0b;
+    color:white;
+
+}
+
+
+
+/* ==========================
+HEADER
+========================== */
+
+
+header{
+
+    width:100%;
+    background:#111;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 40px;
+
+    border-bottom:2px solid #ff6a00;
+
+    position:sticky;
+    top:0;
+    z-index:10;
+
+}
+
+
+
+.logo{
+
+    font-size:32px;
+    font-weight:bold;
+
+    color:white;
+
+}
+
+
+
+.logo span{
+
+    color:#ff6a00;
+
+}
+
+
+
+
+nav{
+
+    display:flex;
+    gap:10px;
+
+}
+
+
+
+nav button{
+
+
+    background:none;
+
+    color:white;
+
+    border:1px solid #ff6a00;
+
+    padding:10px 18px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+
+
+nav button:hover{
+
+
+    background:#ff6a00;
+
+    color:black;
+
+}
+
+
+
+
+
+/* ==========================
+PÁGINAS
+========================== */
+
+
+.pagina{
+
+    padding:40px;
+
+}
+
+
+
+.escondido{
+
+    display:none;
+
+}
+
+
+
+
+
+/* ==========================
+BANNER
+========================== */
+
+
+.banner{
+
+
+    height:450px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+
+    text-align:center;
+
+
+    background:
+
+    linear-gradient(
+    rgba(0,0,0,.7),
+    rgba(0,0,0,.8)
+    ),
+
+    url("imagens/logo/banner.jpg");
+
+
+    background-size:cover;
+
+    background-position:center;
+
+
+}
+
+
+
+
+.banner h1{
+
+
+    font-size:70px;
+
+    color:#ff6a00;
+
+
+}
+
+
+
+.banner h2{
+
+    margin:20px;
+
+    font-size:30px;
+
+}
+
+
+
+
+
+button{
+
+
+    background:#ff6a00;
+
+    color:black;
+
+    border:none;
+
+    padding:12px 25px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-weight:bold;
+
+}
+
+
+
+button:hover{
+
+
+    transform:scale(1.05);
+
+}
+
+
+
+
+
+
+/* ==========================
+FILTROS
+========================== */
+
+
+.filtros{
+
+
+    display:flex;
+
+    gap:15px;
+
+    margin:30px 0;
+
+
+}
+
+
+
+input,select{
+
+
+    padding:12px;
+
+    border-radius:8px;
+
+    border:none;
+
+    background:#222;
+
+    color:white;
+
+
+}
+
+
+
+
+
+
+
+/* ==========================
+PRODUTOS
+========================== */
+
+
+
+#listaProdutos{
+
+
+    display:grid;
+
+    grid-template-columns:
+
+    repeat(auto-fit,minmax(250px,1fr));
+
+    gap:25px;
+
+
+}
+
+
+
+.produto{
+
+
+    background:#151515;
+
+    border-radius:15px;
+
+    overflow:hidden;
+
+    border:1px solid #333;
+
+    padding:20px;
+
+    transition:.3s;
+
+
+}
+
+
+
+.produto:hover{
+
+
+    border-color:#ff6a00;
+
+    transform:translateY(-5px);
+
+
+}
+
+
+
+.produto img{
+
+
+    width:100%;
+
+    height:250px;
+
+    object-fit:cover;
+
+    border-radius:10px;
+
+
+}
+
+
+
+.produto h3{
+
+
+    margin-top:15px;
+
+}
+
+
+
+.produto .preco{
+
+
+    color:#ff6a00;
+
+    font-size:22px;
+
+    margin:10px 0;
+
+
+}
+
+
+
+
+
+
+/* ==========================
+PAINEL ADMIN/VENDEDOR
+========================== */
+
+
+
+#admin,
+#vendedor{
+
+
+    background:#111;
+
+    border-radius:15px;
+
+}
+
+
+
+#resultadoEAN,
+#painelAdmin{
+
+
+    margin-top:30px;
+
+    padding:20px;
+
+    background:#181818;
+
+    border-radius:10px;
+
+
+}
+
+
+
+
+
+
+
+/* ==========================
+CARRINHO
+========================== */
+
+
+
+.modal{
+
+
+    position:fixed;
+
+    top:0;
+
+    left:0;
+
+    width:100%;
+
+    height:100%;
+
+
+    background:rgba(0,0,0,.8);
+
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+
+}
+
+
+
+.caixa{
+
+
+    background:#111;
+
+    padding:30px;
+
+    border-radius:15px;
+
+    width:90%;
+
+    max-width:500px;
+
+    border:2px solid #ff6a00;
+
+
+}
+
+
+
+.itemCarrinho{
+
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin:15px 0;
+
+    padding:10px;
+
+    background:#222;
+
+    border-radius:8px;
+
+
+}
+
+
+
+
+
+
+/* ==========================
+MOBILE
+========================== */
+
+
+@media(max-width:768px){
+
+
+
+header{
+
+
+    flex-direction:column;
+
+    gap:20px;
+
+
+}
+
+
+
+nav{
+
+
+    flex-wrap:wrap;
+
+    justify-content:center;
+
+
+}
+
+
+
+.banner h1{
+
+
+    font-size:45px;
+
+
+}
+
+
+
+.pagina{
+
+
+    padding:20px;
+
+}
+
+
+
+.filtros{
+
+
+    flex-direction:column;
+
+}
+
+
+
+}
