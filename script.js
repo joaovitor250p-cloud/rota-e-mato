@@ -1,71 +1,76 @@
-// =====================================
+// ======================================
 // MB DRYFIT
-// SISTEMA PRINCIPAL JAVASCRIPT
-// =====================================
+// SISTEMA DE LOJA COMPLETO
+// ======================================
 
 
 let produtos = [];
 
 let carrinho = [];
 
+let produtoSelecionado = null;
 
+let corSelecionada = null;
 
-
-// =====================================
-// CARREGAR PRODUTOS
-// =====================================
-
-
-async function carregarProdutos(){
-
-    try{
-
-        let resposta = await fetch("catalogo.json");
-
-        produtos = await resposta.json();
-
-
-        mostrarProdutos();
-
-
-    }catch(error){
-
-        console.log("Erro carregando catálogo",error);
-
-    }
-
-}
-
-
-
-carregarProdutos();
+let tamanhoSelecionado = null;
 
 
 
 
+// ======================================
+// CARREGAR CATALOGO
+// ======================================
 
-// =====================================
+
+fetch("catalogo.json")
+
+.then(res => res.json())
+
+.then(dados => {
+
+
+    produtos = dados;
+
+
+    mostrarProdutos();
+
+
+})
+
+.catch(error=>{
+
+console.log(error);
+
+});
+
+
+
+
+
+
+// ======================================
 // NAVEGAÇÃO
-// =====================================
+// ======================================
 
 
 function mostrarPagina(id){
 
 
-    let paginas=document.querySelectorAll(".pagina");
+document
+.querySelectorAll(".pagina")
+.forEach(p=>{
 
 
-    paginas.forEach(p=>{
-
-        p.classList.add("escondido");
-
-    });
+p.classList.add("escondido");
 
 
+});
 
-    document
-    .getElementById(id)
-    .classList.remove("escondido");
+
+
+document
+.getElementById(id)
+.classList.remove("escondido");
 
 
 }
@@ -75,70 +80,74 @@ function mostrarPagina(id){
 
 
 
-// =====================================
-// MOSTRAR PRODUTOS
-// =====================================
+
+// ======================================
+// LISTAR PRODUTOS
+// ======================================
 
 
 function mostrarProdutos(lista=produtos){
 
 
-    let area=document.getElementById("listaProdutos");
+let area =
+document.getElementById("listaProdutos");
 
 
-    area.innerHTML="";
-
-
-
-    lista.forEach((produto,index)=>{
-
-
-        let card=document.createElement("div");
-
-
-        card.className="produto";
+area.innerHTML="";
 
 
 
-        card.innerHTML=`
-
-        <img src="${produto.imagem || 'imagens/produtos/semfoto.jpg'}">
+lista.forEach((produto,index)=>{
 
 
-        <h3>
-        ${produto.nome}
-        </h3>
+area.innerHTML += `
 
 
-        <p>
-        Marca:
-        ${produto.marca}
-        </p>
+<div class="produto">
 
 
-        <div class="preco">
-
-        R$ ${produto.preco.toFixed(2)}
-
-        </div>
+<img src="${produto.imagem}">
 
 
-        <button onclick="adicionarCarrinho(${index})">
+<h3>
 
-        Comprar
+${produto.nome}
 
-        </button>
-
-
-        `;
+</h3>
 
 
+<p>
 
-        area.appendChild(card);
+${produto.marca}
+
+</p>
+
+
+<div class="preco">
+
+R$ ${produto.preco.toFixed(2)}
+
+</div>
 
 
 
-    });
+<button onclick="abrirProduto(${index})">
+
+Ver produto
+
+</button>
+
+
+
+</div>
+
+
+
+`;
+
+
+
+});
 
 
 }
@@ -150,34 +159,152 @@ function mostrarProdutos(lista=produtos){
 
 
 
-// =====================================
-// BUSCA PRODUTOS
-// =====================================
+// ======================================
+// ABRIR PRODUTO
+// ======================================
 
 
-function buscarProduto(){
+function abrirProduto(index){
 
 
-let texto=
-document
-.getElementById("busca")
-.value
-.toLowerCase();
+produtoSelecionado =
+produtos[index];
 
 
 
-let resultado=produtos.filter(p=>{
+corSelecionada=null;
+
+tamanhoSelecionado=null;
 
 
-return (
 
-p.nome.toLowerCase().includes(texto)
+let area =
+document.getElementById("listaProdutos");
 
-||
 
-p.marca.toLowerCase().includes(texto)
 
-);
+area.innerHTML = `
+
+
+
+<div class="produto-detalhe">
+
+
+
+<img 
+id="imagemProduto"
+src="${produtoSelecionado.imagem}"
+>
+
+
+
+<h1>
+
+${produtoSelecionado.nome}
+
+</h1>
+
+
+
+<p>
+
+Marca:
+${produtoSelecionado.marca}
+
+</p>
+
+
+
+<h3>
+Escolha a cor:
+</h3>
+
+
+
+<div id="cores"></div>
+
+
+
+<h3>
+Escolha o tamanho:
+</h3>
+
+
+
+<div id="tamanhos"></div>
+
+
+
+<h2 id="valorProduto">
+
+Escolha uma opção
+
+</h2>
+
+
+
+<button onclick="adicionarProdutoCarrinho()">
+
+Adicionar ao carrinho
+
+</button>
+
+
+
+</div>
+
+
+
+`;
+
+
+
+
+mostrarCores();
+
+
+}
+
+
+
+
+
+
+
+// ======================================
+// CORES
+// ======================================
+
+
+function mostrarCores(){
+
+
+let area =
+document.getElementById("cores");
+
+
+
+area.innerHTML="";
+
+
+
+produtoSelecionado.cores.forEach((cor)=>{
+
+
+
+area.innerHTML += `
+
+
+<button onclick='selecionarCor(${JSON.stringify(cor)})'>
+
+
+${cor.nome}
+
+
+</button>
+
+
+`;
 
 
 
@@ -185,8 +312,29 @@ p.marca.toLowerCase().includes(texto)
 
 
 
-mostrarProdutos(resultado);
+}
 
+
+
+
+
+
+
+function selecionarCor(cor){
+
+
+corSelecionada=cor;
+
+
+
+document
+.getElementById("imagemProduto")
+.src =
+cor.imagem;
+
+
+
+mostrarTamanhos();
 
 
 }
@@ -198,24 +346,104 @@ mostrarProdutos(resultado);
 
 
 
-// =====================================
-// FILTRO MARCA
-// =====================================
+// ======================================
+// TAMANHOS
+// ======================================
+
+
+function mostrarTamanhos(){
+
+
+
+let area =
+document.getElementById("tamanhos");
+
+
+
+area.innerHTML="";
+
+
+
+corSelecionada.tamanhos.forEach(t=>{
+
+
+
+area.innerHTML +=`
+
+
+<button onclick='selecionarTamanho(${JSON.stringify(t)})'>
+
+
+${t.tamanho}
+
+
+</button>
+
+
+`;
+
+
+
+});
+
+
+}
+
+
+
+
+
+
+
+function selecionarTamanho(tamanho){
+
+
+tamanhoSelecionado=tamanho;
+
 
 
 document
-.getElementById("marcaFiltro")
-.addEventListener("change",function(){
+.getElementById("valorProduto")
+.innerHTML = `
+
+
+Preço:
+
+R$ ${tamanho.preco.toFixed(2)}
+
+<br>
+
+Estoque:
+
+${tamanho.estoque}
 
 
 
-let marca=this.value;
+`;
 
 
 
-if(marca==""){
+}
 
-mostrarProdutos();
+
+
+
+
+
+
+// ======================================
+// CARRINHO
+// ======================================
+
+
+
+function adicionarProdutoCarrinho(){
+
+
+
+if(!corSelecionada){
+
+alert("Escolha uma cor");
 
 return;
 
@@ -223,70 +451,72 @@ return;
 
 
 
-let resultado=produtos.filter(p=>{
+if(!tamanhoSelecionado){
 
 
-return p.marca==marca;
+alert("Escolha um tamanho");
 
 
-});
-
-
-
-mostrarProdutos(resultado);
-
-
-
-});
-
-
-
-
-
-
-
-
-// =====================================
-// CARRINHO
-// =====================================
-
-
-function adicionarCarrinho(id){
-
-
-let produto=produtos[id];
-
-
-
-let existente=
-carrinho.find(p=>p.nome==produto.nome);
-
-
-
-if(existente){
-
-
-existente.quantidade++;
+return;
 
 
 }
 
-else{
 
 
-carrinho.push({
-
-nome:produto.nome,
-
-preco:produto.preco,
-
-quantidade:1
+if(tamanhoSelecionado.estoque<=0){
 
 
-});
+alert("Produto sem estoque");
+
+
+return;
 
 
 }
+
+
+
+
+let item={
+
+
+nome:
+
+produtoSelecionado.nome,
+
+
+cor:
+
+corSelecionada.nome,
+
+
+tamanho:
+
+tamanhoSelecionado.tamanho,
+
+
+ean:
+
+tamanhoSelecionado.ean,
+
+
+preco:
+
+tamanhoSelecionado.preco,
+
+
+quantidade:
+
+1
+
+
+};
+
+
+
+
+carrinho.push(item);
 
 
 
@@ -294,7 +524,8 @@ mostrarCarrinho();
 
 
 
-alert("Produto adicionado ao carrinho");
+alert("Produto adicionado");
+
 
 
 }
@@ -311,10 +542,16 @@ function abrirCarrinho(){
 
 document
 .getElementById("carrinho")
-.classList.remove("escondido");
+.classList
+.remove("escondido");
+
+
+mostrarCarrinho();
 
 
 }
+
+
 
 
 
@@ -323,10 +560,12 @@ function fecharCarrinho(){
 
 document
 .getElementById("carrinho")
-.classList.add("escondido");
+.classList
+.add("escondido");
 
 
 }
+
 
 
 
@@ -336,8 +575,12 @@ document
 function mostrarCarrinho(){
 
 
-let area=
+let area =
 document.getElementById("itensCarrinho");
+
+
+
+if(!area)return;
 
 
 
@@ -352,41 +595,69 @@ let total=0;
 carrinho.forEach((item,index)=>{
 
 
-total+=item.preco*item.quantidade;
+let subtotal =
+item.preco *
+item.quantidade;
 
 
 
-area.innerHTML+=`
+total += subtotal;
+
+
+
+area.innerHTML += `
+
+
 
 <div class="itemCarrinho">
 
-
-<span>
 
 ${item.nome}
 
 <br>
 
+
+Cor:
+${item.cor}
+
+
+<br>
+
+
+Tamanho:
+${item.tamanho}
+
+
+
+<br>
+
+
+EAN:
+${item.ean}
+
+
+
+<br>
+
+
 Quantidade:
 ${item.quantidade}
 
 
-</span>
+
+<br>
 
 
-<span>
-
-R$
-${(item.preco*item.quantidade).toFixed(2)}
-
-</span>
+R$ ${subtotal.toFixed(2)}
 
 
-<button onclick="removerCarrinho(${index})">
 
-X
+<button onclick="removerItem(${index})">
+
+Excluir
 
 </button>
+
 
 
 </div>
@@ -400,130 +671,18 @@ X
 
 
 
-area.innerHTML+=`
+area.innerHTML += `
 
-<hr>
-
-<h3>
-
-Total:
-R$ ${total.toFixed(2)}
-
-</h3>
-
-`;
-
-
-
-
-}
-
-
-
-
-
-
-
-
-function removerCarrinho(id){
-
-
-carrinho.splice(id,1);
-
-
-mostrarCarrinho();
-
-
-}
-
-
-
-
-
-
-
-
-// =====================================
-// VENDA - BUSCAR EAN
-// =====================================
-
-
-
-function buscarEAN(){
-
-
-let codigo=
-document
-.getElementById("codigoEAN")
-.value;
-
-
-
-let produto=produtos.find(p=>{
-
-
-return p.ean==codigo;
-
-
-});
-
-
-
-let resultado=
-document.getElementById("resultadoEAN");
-
-
-
-if(!produto){
-
-
-resultado.innerHTML=`
-
-<h3>
-Produto não encontrado
-</h3>
-
-`;
-
-return;
-
-
-}
-
-
-
-resultado.innerHTML=`
 
 <h2>
-${produto.nome}
+
+Total:
+
+R$ ${total.toFixed(2)}
+
 </h2>
 
 
-<p>
-Marca:
-${produto.marca}
-</p>
-
-
-<p>
-Preço:
-R$ ${produto.preco}
-</p>
-
-
-<p>
-Estoque:
-${produto.estoque}
-</p>
-
-
-<button onclick="registrarVenda('${produto.nome}')">
-
-Vender
-
-</button>
-
-
 `;
 
 
@@ -534,165 +693,13 @@ Vender
 
 
 
+function removerItem(index){
 
 
-function registrarVenda(nome){
+carrinho.splice(index,1);
 
 
-alert(
-"Venda registrada: "+nome
-);
-
-
-}
-
-
-
-
-
-
-
-
-
-
-// =====================================
-// ADMIN
-// =====================================
-
-
-function loginAdmin(){
-
-
-
-let senha=
-document
-.getElementById("adminSenha")
-.value;
-
-
-
-if(senha==="1234"){
-
-
-document
-.getElementById("painelAdmin")
-.classList
-.remove("escondido");
-
-
-
-}
-
-else{
-
-
-alert("Senha incorreta");
-
-
-}
-
-
-
-}
-
-
-
-
-
-
-
-
-
-// =====================================
-// CADASTRO PRODUTO
-// =====================================
-
-
-
-function cadastrarProduto(){
-
-
-let nome=
-document
-.getElementById("nomeProduto")
-.value;
-
-
-
-let marca=
-document
-.getElementById("marcaProduto")
-.value;
-
-
-
-let referencia=
-document
-.getElementById("referenciaProduto")
-.value;
-
-
-
-
-let novo={
-
-
-nome:nome,
-
-marca:marca,
-
-referencia:referencia,
-
-preco:0,
-
-estoque:0,
-
-ean:
-gerarEAN()
-
-
-};
-
-
-
-produtos.push(novo);
-
-
-
-mostrarProdutos();
-
-
-
-alert("Produto cadastrado");
-
-
-}
-
-
-
-
-
-
-
-
-
-// =====================================
-// GERADOR EAN
-// =====================================
-
-
-function gerarEAN(){
-
-
-let numero=
-
-Date.now()
-.toString()
-.slice(-12);
-
-
-
-return "789"+numero;
+mostrarCarrinho();
 
 
 }
