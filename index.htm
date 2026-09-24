@@ -1,431 +1,272 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MB Dryfit — Catálogo Oficial</title>
-    <style>
-        :root {
-            --bg-color: #f9f9f9;
-            --card-bg: #ffffff;
-            --text-main: #111111;
-            --text-secondary: #666666;
-            --accent: #000000;
-            --border: #e5e5e5;
-            --danger: #d9534f;
-            --success: #5cb85c;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; }
-        
-        header { background: #fff; border-bottom: 1px solid var(--border); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; }
-        .cart-btn { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; }
-        
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
-        
-        .search-bar { width: 100%; padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 2rem; outline: none; }
-        .search-bar:focus { border-color: var(--accent); }
 
-        .brand-section { margin-bottom: 3rem; }
-        .brand-title { font-size: 1.8rem; font-weight: 700; border-bottom: 2px solid var(--text-main); padding-bottom: 0.5rem; margin-bottom: 1.5rem; text-transform: uppercase; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
-        
-        .product-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
-        .product-img-container { width: 100%; height: 280px; background: #eee; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; position: relative; }
-        .product-img { width: 100%; height: 100%; object-fit: cover; }
-        .no-img { color: var(--text-secondary); font-size: 0.85rem; text-align: center; padding: 1rem; }
+<title>MB DRYFIT</title>
 
-        .product-name { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
-        .product-brand { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0.25rem; }
-        
-        .colors-container { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .color-thumb { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; object-fit: cover; }
-        .color-thumb.active { border-color: var(--accent); transform: scale(1.1); }
+<link rel="stylesheet" href="style.css">
 
-        .sizes-container { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .size-btn { padding: 0.4rem 0.8rem; border: 1px solid var(--border); background: #fff; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
-        .size-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-        .size-btn.out-of-stock { opacity: 0.4; text-decoration: line-through; }
-
-        .product-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; border-top: 1px solid var(--border); padding-top: 0.75rem; }
-        .product-price { font-size: 1.15rem; font-weight: 700; }
-        
-        .action-btn { background: var(--accent); color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 0.5rem; text-align: center; }
-        .action-btn.unavailable { background: var(--danger); cursor: not-allowed; }
-
-        /* Modal do Carrinho */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: flex-end; z-index: 1000; }
-        .modal.open { display: flex; }
-        .cart-drawer { background: #fff; width: 100%; max-width: 400px; height: 100%; padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
-        .cart-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
-        .close-cart { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
-        .cart-items { flex-grow: 1; overflow-y: auto; padding: 1rem 0; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding: 0.75rem 0; font-size: 0.9rem; }
-        .cart-total { font-size: 1.2rem; font-weight: bold; border-top: 1px solid var(--border); padding-top: 1rem; display: flex; justify-content: space-between; }
-
-        .audit-panel { background: #000; color: #0f0; padding: 1.5rem; font-family: monospace; font-size: 0.80rem; margin-top: 4rem; border-radius: 6px; white-space: pre-wrap; }
-    </style>
 </head>
+
+
 <body>
 
-    <header>
-        <div class="logo">MB DRYFIT</div>
-        <button class="cart-btn" onclick="toggleCart()">Carrinho (<span id="cart-count">0</span>)</button>
-    </header>
 
-    <div class="container">
-        <input type="text" id="search-input" class="search-bar" placeholder="Pesquisar por nome, marca, cor, tamanho, código ou código de barras..." oninput="handleSearch()">
-        
-        <div id="catalog-container"></div>
-        <div id="audit-container"></div>
-    </div>
+<header>
 
-    <!-- Carrinho Drawer -->
-    <div id="cart-modal" class="modal">
-        <div class="cart-drawer">
-            <div class="cart-header">
-                <h2>O seu Carrinho</h2>
-                <button class="close-cart" onclick="toggleCart()">&times;</button>
-            </div>
-            <div class="cart-items" id="cart-items-list"></div>
-            <div>
-                <div class="cart-total">
-                    <span>Total:</span>
-                    <span id="cart-total-price">R$ 0,00</span>
-                </div>
-                <button class="action-btn" style="margin-top: 1rem;" onclick="checkout()">Finalizar Pedido</button>
-            </div>
-        </div>
-    </div>
+<div class="logo">
+MB <span>DRYFIT</span>
+</div>
 
-    <script>
-        let rawData = [];
-        let groupedCatalog = {};
-        let cart = [];
-        let stateSelections = {};
-        let detectedKeysExample = [];
 
-        async function loadCatalog() {
-            try {
-                const response = await fetch('catalogo.json');
-                const jsonResponse = await response.json();
-                
-                if (Array.isArray(jsonResponse)) {
-                    rawData = jsonResponse;
-                } else if (typeof jsonResponse === 'object' && jsonResponse !== null) {
-                    const possibleArray = Object.values(jsonResponse).find(val => Array.isArray(val));
-                    rawData = possibleArray ? possibleArray : [jsonResponse];
-                } else {
-                    rawData = [];
-                }
+<nav>
 
-                if (rawData.length > 0) {
-                    detectedKeysExample = Object.keys(rawData[0]);
-                }
+<button onclick="mostrarPagina('inicio')">
+Início
+</button>
 
-                processCatalog();
-                runAudit();
-            } catch (error) {
-                console.error("Erro ao carregar o catalogo.json:", error);
-                document.getElementById('catalog-container').innerHTML = `<p style="color:red; text-align:center;">Erro ao carregar 'catalogo.json': ${error.message}</p>`;
-            }
-        }
+<button onclick="mostrarPagina('produtos')">
+Produtos
+</button>
 
-        function extractField(item, keywords, defaultValue) {
-            const keys = Object.keys(item);
-            for (const kw of keywords) {
-                const foundKey = keys.find(k => k.toLowerCase().includes(kw.toLowerCase()));
-                if (foundKey && item[foundKey] !== null && item[foundKey] !== undefined && item[foundKey] !== '') {
-                    return item[foundKey];
-                }
-            }
-            return defaultValue;
-        }
+<button onclick="mostrarPagina('vendedor')">
+Vendedor
+</button>
 
-        function processCatalog() {
-            groupedCatalog = {};
-            
-            rawData.forEach(item => {
-                const marcaRaw = String(extractField(item, ['marca', 'brand', 'fabri', 'fornecedor', 'empresa'], 'OUTRAS'));
-                const modeloRaw = String(extractField(item, ['modelo', 'name', 'nome', 'desc', 'produto', 'title', 'titulo'], 'PRODUTO SEM NOME'));
-                const corRaw = String(extractField(item, ['cor', 'color', 'ton'], 'Única'));
-                const tamanhoRaw = String(extractField(item, ['tamanho', 'size', 'medida'], 'Único'));
-                
-                // Normalização estrita para evitar duplicações por espaçamentos ou maiúsculas
-                const marca = marcaRaw.trim().toUpperCase();
-                const modelo = modeloRaw.trim();
-                const cor = corRaw.trim();
-                const tamanho = tamanhoRaw.trim().toUpperCase();
+<button onclick="mostrarPagina('admin')">
+Admin
+</button>
 
-                const imagem = extractField(item, ['imagem', 'image', 'foto', 'img', 'url', 'pic', 'link'], null);
-                const sku = extractField(item, ['codigo', 'sku', 'id', 'ref', 'referencia'], Math.random().toString());
-                const barcode = extractField(item, ['barras', 'barcode', 'ean', 'gtin', 'upc'], '');
-                
-                // Extração e conversão robusta do stock (suporta números negativos, zeros e positivos)
-                let rawEstoque = extractField(item, ['estoque', 'stock', 'qtde', 'quantidade', 'qtd', 'saldo'], 0);
-                let estoque = parseInt(rawEstoque);
-                if (isNaN(estoque)) estoque = 0;
 
-                let rawPreco = extractField(item, ['preco', 'price', 'valor', 'venda', 'custo'], 0);
-                let preco = parseFloat(rawPreco);
-                if (isNaN(preco)) preco = 0;
+<button onclick="abrirCarrinho()">
+🛒 Carrinho
+</button>
 
-                if (!groupedCatalog[marca]) groupedCatalog[marca] = {};
-                if (!groupedCatalog[marca][modelo]) {
-                    groupedCatalog[marca][modelo] = {
-                        name: modelo,
-                        brand: marca,
-                        colors: {}
-                    };
-                }
 
-                if (!groupedCatalog[marca][modelo].colors[cor]) {
-                    groupedCatalog[marca][modelo].colors[cor] = {
-                        colorName: cor,
-                        image: imagem,
-                        sizes: {}
-                    };
-                }
+</nav>
 
-                // Prioriza uma imagem válida caso exista noutra linha da mesma cor
-                if (imagem && (!groupedCatalog[marca][modelo].colors[cor].image || groupedCatalog[marca][modelo].colors[cor].image.trim() === '')) {
-                    groupedCatalog[marca][modelo].colors[cor].image = imagem;
-                }
+</header>
 
-                groupedCatalog[marca][modelo].colors[cor].sizes[tamanho] = {
-                    sku: sku,
-                    barcode: barcode,
-                    stock: estoque,
-                    price: preco
-                };
-            });
 
-            renderCatalog(groupedCatalog);
-        }
 
-        function renderCatalog(catalogData, filterQuery = '') {
-            const container = document.getElementById('catalog-container');
-            container.innerHTML = '';
+<section id="inicio" class="pagina">
 
-            let hasResults = false;
 
-            for (const [marca, modelos] of Object.entries(catalogData)) {
-                let brandHtml = `<div class="brand-section"><div class="brand-title">${marca}</div><div class="products-grid">`;
-                let brandHasVisibleProducts = false;
+<div class="banner">
 
-                for (const [modeloKey, modeloObj] of Object.entries(modelos)) {
-                    if (!stateSelections[modeloKey]) {
-                        const firstColor = Object.keys(modeloObj.colors)[0];
-                        const firstSize = Object.keys(modeloObj.colors[firstColor].sizes)[0];
-                        stateSelections[modeloKey] = { color: firstColor, size: firstSize };
-                    }
 
-                    const currentColor = stateSelections[modeloKey].color;
-                    const colorData = modeloObj.colors[currentColor] || Object.values(modeloObj.colors)[0];
-                    const currentSize = stateSelections[modeloKey].size;
-                    const sizeData = colorData.sizes[currentSize] || Object.values(colorData.sizes)[0];
+<h1>
+MB DRYFIT
+</h1>
 
-                    if (filterQuery) {
-                        const query = filterQuery.toLowerCase();
-                        const matchesName = modeloKey.toLowerCase().includes(query);
-                        const matchesBrand = marca.toLowerCase().includes(query);
-                        const matchesColor = currentColor.toLowerCase().includes(query);
-                        const matchesSize = currentSize.toLowerCase().includes(query);
-                        const matchesSku = String(sizeData.sku).toLowerCase().includes(query);
-                        const matchesBarcode = String(sizeData.barcode).toLowerCase().includes(query);
 
-                        if (!matchesName && !matchesBrand && !matchesColor && !matchesSize && !matchesSku && !matchesBarcode) {
-                            continue;
-                        }
-                    }
+<h2>
+Performance, estilo e qualidade
+</h2>
 
-                    brandHasVisibleProducts = true;
-                    hasResults = true;
 
-                    let colorThumbsHtml = '';
-                    for (const [colName, colObj] of Object.entries(modeloObj.colors)) {
-                        const activeClass = colName === currentColor ? 'active' : '';
-                        const imgSource = colObj.image ? colObj.image : '';
-                        if (imgSource) {
-                            colorThumbsHtml += `<img src="${imgSource}" class="color-thumb ${activeClass}" title="${colName}" onclick="selectColor('${modeloKey}', '${colName}')">`;
-                        } else {
-                            colorThumbsHtml += `<div class="color-thumb ${activeClass}" style="background:#ccc;display:flex;align-items:center;justify-content:center;font-size:10px;" title="${colName}" onclick="selectColor('${modeloKey}', '${colName}')">${colName.substring(0,3)}</div>`;
-                        }
-                    }
+<button onclick="mostrarPagina('produtos')">
+Comprar agora
+</button>
 
-                    let sizesHtml = '';
-                    for (const [szName, szObj] of Object.entries(colorData.sizes)) {
-                        const activeClass = szName === currentSize ? 'active' : '';
-                        const outClass = szObj.stock <= 0 ? 'out-of-stock' : '';
-                        sizesHtml += `<button class="size-btn ${activeClass} ${outClass}" onclick="selectSize('${modeloKey}', '${szName}')">${szName}</button>`;
-                    }
 
-                    const isAvailable = sizeData.stock > 0;
-                    const stockStatusHtml = isAvailable ? `Stock: ${sizeData.stock}` : 'INDISPONÍVEL';
-                    const btnClass = isAvailable ? 'action-btn' : 'action-btn unavailable';
-                    const btnText = isAvailable ? 'ADICIONAR AO CARRINHO' : 'INDISPONÍVEL';
-                    const priceFormatted = sizeData.price > 0 ? `R$ ${sizeData.price.toFixed(2).replace('.', ',')}` : 'Sob Consulta';
+</div>
 
-                    brandHtml += `
-                        <div class="product-card">
-                            <div>
-                                <div class="product-brand">${marca}</div>
-                                <div class="product-name">${modeloKey}</div>
-                                <div class="product-img-container">
-                                    ${colorData.image ? `<img src="${colorData.image}" class="product-img" alt="${modeloKey}">` : `<div class="no-img">Imagem Indisponível</div>`}
-                                </div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Cor: <strong>${currentColor}</strong></div>
-                                <div class="colors-container">${colorThumbsHtml}</div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Tamanho:</div>
-                                <div class="sizes-container">${sizesHtml}</div>
-                            </div>
-                            <div>
-                                <div class="product-footer">
-                                    <span class="product-price">${priceFormatted}</span>
-                                    <span style="font-size: 0.8rem; font-weight: bold; color: ${isAvailable ? 'var(--success)' : 'var(--danger)'};">${stockStatusHtml}</span>
-                                </div>
-                                <button class="${btnClass}" ${!isAvailable ? 'disabled' : ''} onclick="addToCart('${sizeData.sku}', '${modeloKey}', '${currentColor}', '${currentSize}', ${sizeData.price}, ${sizeData.stock})">${btnText}</button>
-                            </div>
-                        </div>
-                    `;
-                }
 
-                brandHtml += `</div></div>`;
-                if (brandHasVisibleProducts) {
-                    container.innerHTML += brandHtml;
-                }
-            }
+</section>
 
-            if (!hasResults) {
-                container.innerHTML = `<p style="text-align:center; color:var(--text-secondary); padding: 3rem;">Nenhum produto encontrado para a pesquisa.</p>`;
-            }
-        }
 
-        function selectColor(modeloKey, colorName) {
-            stateSelections[modeloKey].color = colorName;
-            const brand = getBrandForModel(modeloKey);
-            const firstSize = Object.keys(groupedCatalog[brand][modeloKey].colors[colorName].sizes)[0];
-            stateSelections[modeloKey].size = firstSize;
-            renderCatalog(groupedCatalog, document.getElementById('search-input').value);
-        }
 
-        function selectSize(modeloKey, sizeName) {
-            stateSelections[modeloKey].size = sizeName;
-            renderCatalog(groupedCatalog, document.getElementById('search-input').value);
-        }
 
-        function getBrandForModel(modeloKey) {
-            for (const [marca, modelos] of Object.entries(groupedCatalog)) {
-                if (modelos[modeloKey]) return marca;
-            }
-            return 'OUTRAS';
-        }
 
-        function handleSearch() {
-            const query = document.getElementById('search-input').value;
-            renderCatalog(groupedCatalog, query);
-        }
+<section id="produtos" class="pagina escondido">
 
-        function addToCart(sku, modelo, color, size, price, stock) {
-            const existingItem = cart.find(item => item.sku === sku);
-            const currentQtyInCart = existingItem ? existingItem.quantity : 0;
 
-            if (currentQtyInCart + 1 > stock) {
-                alert("Quantidade máxima disponível em stock atingida!");
-                return;
-            }
+<h1>
+Produtos
+</h1>
 
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({ sku, modelo, color, size, price, quantity: 1, stock });
-            }
-            updateCartUI();
-        }
 
-        function updateCartUI() {
-            document.getElementById('cart-count').innerText = cart.reduce((acc, item) => acc + item.quantity, 0);
-            const listEl = document.getElementById('cart-items-list');
-            listEl.innerHTML = '';
-            
-            let total = 0;
-            cart.forEach((item, index) => {
-                const subtotal = item.price * item.quantity;
-                total += subtotal;
-                listEl.innerHTML += `
-                    <div class="cart-item">
-                        <div>
-                            <strong>${item.modelo}</strong><br>
-                            <small>Cor: ${item.color} | Tam: ${item.size}</small><br>
-                            <small>R$ ${item.price.toFixed(2).replace('.', ',')} x ${item.quantity}</small>
-                        </div>
-                        <div style="text-align: right;">
-                            <strong>R$ ${subtotal.toFixed(2).replace('.', ',')}</strong><br>
-                            <button style="background:none; border:none; color:red; cursor:pointer; font-size:0.8rem;" onclick="removeFromCart(${index})">Remover</button>
-                        </div>
-                    </div>
-                `;
-            });
+<div class="filtros">
 
-            document.getElementById('cart-total-price').innerText = `R$ ${total.toFixed(2).replace('.', ',')}`;
-        }
 
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            updateCartUI();
-        }
+<input 
+id="busca"
+placeholder="Buscar produto..."
+onkeyup="buscarProduto()"
+>
 
-        function toggleCart() {
-            document.getElementById('cart-modal').classList.toggle('open');
-        }
 
-        function checkout() {
-            if (cart.length === 0) {
-                alert("O seu carrinho está vazio!");
-                return;
-            }
-            alert("Pedido finalizado com sucesso!");
-            cart = [];
-            updateCartUI();
-            toggleCart();
-        }
+<select id="marcaFiltro">
 
-        function runAudit() {
-            let originalCount = rawData.length;
-            let finalSkusCount = 0;
-            let modelsCount = 0;
-            let productColorCombos = 0;
+<option value="">
+Todas marcas
+</option>
 
-            for (const [marca, modelos] of Object.entries(groupedCatalog)) {
-                for (const [modeloKey, modeloObj] of Object.entries(modelos)) {
-                    modelsCount++;
-                    for (const [colName, colObj] of Object.entries(modeloObj.colors)) {
-                        productColorCombos++;
-                        for (const [szName, szObj] of Object.entries(colObj.sizes)) {
-                            finalSkusCount++;
-                        }
-                    }
-                }
-            }
+<option>
+Nike
+</option>
 
-            const report = `========== AUDITORIA & VALIDAÇÃO DO CATÁLOGO ==========
-Chaves detetadas no JSON: [${detectedKeysExample.join(', ')}]
--------------------------------------------------------
-Produtos originais lidos: ${originalCount}
-Modelos únicos agrupados: ${modelsCount}
-Combinações Produto + Cor: ${productColorCombos}
-Variações (SKUs) finais: ${finalSkusCount}
-Duplicações eliminadas: 100% resolvidas
-Verificação de Stock (Disponível vs Indisponível): Ativa
-=====================================================`;
+<option>
+Adidas
+</option>
 
-            console.log(report);
-            document.getElementById('audit-container').innerHTML = `<div class="audit-panel">${report}</div>`;
-        }
 
-        loadCatalog();
-    </script>
+<option>
+Outras
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+<div id="listaProdutos">
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+<section id="vendedor" class="pagina escondido">
+
+
+<h1>
+Painel Vendedor
+</h1>
+
+
+
+<input 
+id="codigoEAN"
+placeholder="Digite ou bipar EAN"
+>
+
+
+<button onclick="buscarEAN()">
+Buscar
+</button>
+
+
+
+<div id="resultadoEAN">
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<section id="admin" class="pagina escondido">
+
+
+<h1>
+Painel Administrativo
+</h1>
+
+
+<input id="adminSenha"
+placeholder="Senha"
+type="password"
+>
+
+
+<button onclick="loginAdmin()">
+Entrar
+</button>
+
+
+
+<div id="painelAdmin" class="escondido">
+
+
+<h2>
+Cadastro Produto
+</h2>
+
+
+<input id="nomeProduto"
+placeholder="Nome produto"
+>
+
+
+<input id="marcaProduto"
+placeholder="Marca"
+>
+
+
+<input id="referenciaProduto"
+placeholder="Referência"
+>
+
+
+<button onclick="cadastrarProduto()">
+Cadastrar
+</button>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<div id="carrinho" class="modal escondido">
+
+
+<div class="caixa">
+
+
+<h2>
+Carrinho
+</h2>
+
+
+<div id="itensCarrinho">
+
+</div>
+
+
+<button onclick="fecharCarrinho()">
+Fechar
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<script src="script.js"></script>
+
+
 </body>
+
 </html>
