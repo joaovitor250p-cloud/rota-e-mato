@@ -1,0 +1,150 @@
+[
+    {
+        "nome": "Camisa Dry Nike Básica",
+        "marca": "Nike",
+        "categoria": "Camisa",
+        "referencia": "NK001",
+        "imagem": "imagens/produtos/camisa-preta.jpg",
+        "preco": 59.90,
+        "estoque": 15,
+        "ean": "789000000001",
+
+        "cores": [
+
+            {
+                "nome": "Preto",
+                "imagem": "imagens/produtos/camisa-preta.jpg",
+
+                "tamanhos": [
+                    {
+                        "tamanho": "P",
+                        "ean": "789000000002",
+                        "estoque": 5,
+                        "preco": 59.90
+                    },
+
+                    {
+                        "tamanho": "M",
+                        "ean": "789000000003",
+                        "estoque": 8,
+                        "preco": 59.90
+                    },
+
+                    {
+                        "tamanho": "G",
+                        "ean": "789000000004",
+                        "estoque": 2,
+                        "preco": 59.90
+                    }
+                ]
+            },
+
+
+            {
+                "nome": "Branco",
+                "imagem": "imagens/produtos/camisa-branca.jpg",
+
+                "tamanhos": [
+
+                    {
+                        "tamanho": "P",
+                        "ean": "789000000005",
+                        "estoque": 4,
+                        "preco": 59.90
+                    },
+
+                    {
+                        "tamanho": "M",
+                        "ean": "789000000006",
+                        "estoque": 10,
+                        "preco": 59.90
+                    },
+
+
+                    {
+                        "tamanho": "GG",
+                        "ean": "789000000007",
+                        "estoque": 3,
+                        "preco": 59.90
+                    }
+
+                ]
+
+            }
+
+        ]
+
+    },
+
+
+
+    {
+
+
+        "nome": "Bermuda Dry Adidas Performance",
+
+        "marca": "Adidas",
+
+        "categoria": "Bermuda",
+
+        "referencia": "AD001",
+
+        "imagem": "imagens/produtos/bermuda.jpg",
+
+        "preco": 79.90,
+
+        "estoque": 20,
+
+        "ean": "789000000008",
+
+
+
+        "cores":[
+
+
+            {
+
+                "nome":"Preto",
+
+                "imagem":"imagens/produtos/bermuda-preta.jpg",
+
+
+                "tamanhos":[
+
+
+                    {
+
+                        "tamanho":"M",
+
+                        "ean":"789000000009",
+
+                        "estoque":7,
+
+                        "preco":79.90
+
+                    },
+
+
+                    {
+
+                        "tamanho":"G",
+
+                        "ean":"789000000010",
+
+                        "estoque":8,
+
+                        "preco":79.90
+
+                    }
+
+
+                ]
+
+            }
+
+
+        ]
+
+    }
+
+]
