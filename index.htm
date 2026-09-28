@@ -1,272 +1,769 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>MB DRYFIT</title>
-
-<link rel="stylesheet" href="style.css">
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>SPX Route Pro</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+ --bg:#eef2f7;--panel:#fff;--ink:#101828;--muted:#667085;--line:#e4e7ec;
+ --dark:#0b1220;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--amber:#d97706;
+ --violet:#7c3aed;--shadow:0 12px 30px rgba(16,24,40,.10)
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);background:var(--bg)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.app{height:100%;display:grid;grid-template-rows:64px 1fr}
+.topbar{background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:12px;box-shadow:0 2px 16px #0004;z-index:1200}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:-.02em}
+.brandmark{width:38px;height:38px;border-radius:12px;background:#fff;color:var(--dark);display:grid;place-items:center}
+.top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:10px 13px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:.15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none}
+.btn-dark{background:#1f2937;color:#fff;border:1px solid #344054}
+.btn-white{background:#fff;color:#101828}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
+.btn-amber{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa}
+.btn-soft{background:#eef4ff;color:#3538cd;border:1px solid #d9e2ff}
+.workspace{min-height:0;display:grid;grid-template-columns:410px 1fr}
+.sidebar{min-height:0;background:var(--panel);border-right:1px solid var(--line);display:grid;grid-template-rows:auto auto 1fr}
+.import-card{padding:12px;border-bottom:1px solid var(--line)}
+.drop{padding:14px;border:2px dashed #cbd5e1;border-radius:14px;background:#f8fafc;text-align:center}
+.drop.drag{background:#eff6ff;border-color:#60a5fa}
+.drop strong{display:block;font-size:14px}.drop small{color:var(--muted)}
+#fileInput{display:none}
+.metrics{padding:10px 12px;display:grid;grid-template-columns:repeat(4,1fr);gap:7px;border-bottom:1px solid var(--line)}
+.metric{padding:9px 5px;border-radius:10px;background:#f8fafc;border:1px solid #edf0f4;text-align:center}
+.metric b{display:block;font-size:15px}.metric span{font-size:9px;color:var(--muted);font-weight:800}
+.tools{padding:10px 12px;border-bottom:1px solid var(--line)}
+.searchrow{display:grid;grid-template-columns:1fr auto;gap:7px}
+.control{width:100%;border:1px solid #d0d5dd;border-radius:10px;padding:10px 11px;outline:none;background:#fff}
+.control:focus{border-color:#84adff;box-shadow:0 0 0 3px #dbe7ff}
+.actiongrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.list-area{min-height:0;display:grid;grid-template-rows:auto 1fr}
+.listhead{padding:10px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0f1f3}
+.listhead small{color:var(--muted)}
+.stoplist{overflow:auto;padding:7px 9px 18px}
+.empty{padding:34px 14px;text-align:center;color:var(--muted);font-size:13px}
+.stop{display:grid;grid-template-columns:34px 1fr auto;gap:9px;padding:10px;margin:7px 0;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 1px 2px #10182808}
+.stop.bad{border-color:#fecaca;background:#fffafa}
+.stop.selected{outline:2px solid #93c5fd}
+.seq{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:var(--dark);color:#fff;font-size:11px;font-weight:900}
+.stop-title{font-size:13px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stop-address{font-size:11px;line-height:1.35;color:var(--muted);margin-top:2px}
+.stop-meta{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.pill{font-size:9px;font-weight:900;border-radius:999px;padding:3px 6px;background:#eef2ff;color:#3730a3}
+.pill.red{background:#fef2f2;color:#b91c1c}
+.pill.green{background:#f0fdf4;color:#166534}
+.stopbuttons{display:flex;flex-direction:column;gap:4px}
+.ibtn{width:29px;height:29px;border:1px solid var(--line);border-radius:8px;background:#fff;font-weight:900}
+.mapbox{position:relative;min-width:0;min-height:0}
+#map{width:100%;height:100%}
+.status{position:absolute;left:12px;bottom:12px;z-index:900;background:rgba(11,18,32,.94);color:#fff;padding:10px 12px;border-radius:10px;font-size:11px;max-width:min(720px,calc(100% - 24px));box-shadow:var(--shadow)}
+.route-card{position:absolute;right:12px;top:12px;z-index:900;background:#fff;border-radius:14px;padding:11px 12px;box-shadow:var(--shadow);min-width:210px;border:1px solid var(--line)}
+.route-card h4{margin:0 0 7px;font-size:12px}
+.route-kpis{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.route-kpi{background:#f8fafc;border-radius:9px;padding:7px}
+.route-kpi b{display:block;font-size:14px}.route-kpi span{font-size:9px;color:var(--muted)}
+.modal{position:fixed;inset:0;background:#0009;z-index:5000;display:none;align-items:center;justify-content:center;padding:18px}
+.modal.open{display:flex}
+.dialog{background:#fff;border-radius:16px;box-shadow:0 30px 80px #0006;width:min(720px,100%);max-height:90vh;overflow:auto}
+.dialog-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.dialog-body{padding:16px 18px}
+.dialog-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+.field{margin-bottom:11px}.field label{display:block;font-size:11px;font-weight:900;margin-bottom:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mapping{display:grid;grid-template-columns:170px 1fr;gap:8px;align-items:center;margin:7px 0}
+.mapping label{font-size:11px;font-weight:800}
+.toast{position:fixed;right:16px;top:78px;z-index:9000;max-width:420px;padding:11px 14px;border-radius:10px;background:#101828;color:#fff;box-shadow:var(--shadow);display:none;font-size:12px}
+.toast.show{display:block}
+.progress{height:6px;border-radius:999px;background:#eaecf0;overflow:hidden;margin-top:8px}
+.progress>div{height:100%;width:0;background:#2563eb;transition:.2s}
+.tablewrap{overflow:auto;max-height:320px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:11px}
+th,td{padding:7px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:#f8fafc;z-index:1}
+.notice{font-size:11px;color:var(--muted);line-height:1.45;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:9px}
+@media(max-width:900px){
+ .app{grid-template-rows:auto 1fr}.topbar{padding:10px 12px;align-items:flex-start}.top-actions .label{display:none}
+ .workspace{grid-template-columns:1fr;grid-template-rows:48vh 52vh}
+ .sidebar{border-right:0;border-bottom:1px solid var(--line)}
+ .route-card{top:8px;right:8px;min-width:170px}
+}
+</style>
 </head>
-
-
 <body>
-
-
-<header>
-
-<div class="logo">
-MB <span>DRYFIT</span>
-</div>
-
-
-<nav>
-
-<button onclick="mostrarPagina('inicio')">
-Início
-</button>
-
-<button onclick="mostrarPagina('produtos')">
-Produtos
-</button>
-
-<button onclick="mostrarPagina('vendedor')">
-Vendedor
-</button>
-
-<button onclick="mostrarPagina('admin')">
-Admin
-</button>
-
-
-<button onclick="abrirCarrinho()">
-🛒 Carrinho
-</button>
-
-
-</nav>
-
+<div class="app">
+<header class="topbar">
+ <div class="brand"><div class="brandmark">SPX</div><div>Route Pro</div></div>
+ <div class="top-actions">
+  <button class="btn btn-dark" id="newBtn">↻ <span class="label">Nova rota</span></button>
+  <button class="btn btn-white" id="addBtn">＋ <span class="label">Parada</span></button>
+  <button class="btn btn-green" id="pdfBtn" disabled>PDF <span class="label">Baixar</span></button>
+ </div>
 </header>
 
-
-
-<section id="inicio" class="pagina">
-
-
-<div class="banner">
-
-
-<h1>
-MB DRYFIT
-</h1>
-
-
-<h2>
-Performance, estilo e qualidade
-</h2>
-
-
-<button onclick="mostrarPagina('produtos')">
-Comprar agora
-</button>
-
-
+<div class="workspace">
+ <aside class="sidebar">
+  <div>
+   <div class="import-card">
+    <div class="drop" id="drop">
+     <strong>Importar rota SPX</strong>
+     <small>XLSX, XLS ou CSV • arraste aqui ou selecione</small><br>
+     <label class="btn btn-blue" for="fileInput" style="margin-top:9px">Selecionar planilha</label>
+     <input id="fileInput" type="file" accept=".xlsx,.xls,.csv">
+     <div class="progress hidden" id="progress"><div id="progressBar"></div></div>
+    </div>
+   </div>
+   <div class="metrics">
+    <div class="metric"><b id="mTotal">0</b><span>PARADAS</span></div>
+    <div class="metric"><b id="mMapped">0</b><span>MAPEADAS</span></div>
+    <div class="metric"><b id="mKm">0</b><span>KM</span></div>
+    <div class="metric"><b id="mTime">0</b><span>TEMPO</span></div>
+   </div>
+   <div class="tools">
+    <div class="searchrow">
+     <input id="search" class="control" placeholder="Buscar SPX TN, nome ou endereço">
+     <button id="clearSearch" class="btn btn-white">×</button>
+    </div>
+    <div class="actiongrid">
+     <button id="geoBtn" class="btn btn-blue" disabled>📍 Mapear</button>
+     <button id="optBtn" class="btn btn-soft" disabled>⚡ Otimizar</button>
+     <button id="routeBtn" class="btn btn-green" disabled>🚗 Traçar ruas</button>
+     <button id="exportBtn" class="btn btn-white" disabled>⇩ XLSX</button>
+    </div>
+   </div>
+  </div>
+  <div class="list-area">
+   <div class="listhead"><strong>Sequência da rota</strong><small id="listInfo">0 itens</small></div>
+   <div class="stoplist" id="stopList"><div class="empty">Importe uma planilha para começar.</div></div>
+  </div>
+ </aside>
+ <main class="mapbox">
+  <div id="map"></div>
+  <div class="route-card">
+   <h4>Resumo da rota</h4>
+   <div class="route-kpis">
+    <div class="route-kpi"><b id="rkStops">0</b><span>paradas</span></div>
+    <div class="route-kpi"><b id="rkUnmapped">0</b><span>sem mapa</span></div>
+    <div class="route-kpi"><b id="rkKm">0 km</b><span>distância</span></div>
+    <div class="route-kpi"><b id="rkTime">—</b><span>tempo</span></div>
+   </div>
+  </div>
+  <div class="status" id="status">Pronto. Importe sua planilha SPX.</div>
+ </main>
+</div>
 </div>
 
-
-</section>
-
-
-
-
-
-<section id="produtos" class="pagina escondido">
-
-
-<h1>
-Produtos
-</h1>
-
-
-<div class="filtros">
-
-
-<input 
-id="busca"
-placeholder="Buscar produto..."
-onkeyup="buscarProduto()"
->
-
-
-<select id="marcaFiltro">
-
-<option value="">
-Todas marcas
-</option>
-
-<option>
-Nike
-</option>
-
-<option>
-Adidas
-</option>
-
-
-<option>
-Outras
-</option>
-
-
-</select>
-
-
+<div class="modal" id="mappingModal">
+ <div class="dialog">
+  <div class="dialog-head"><strong>Confirmar colunas da planilha</strong><button class="ibtn" data-close="mappingModal">×</button></div>
+  <div class="dialog-body">
+   <div class="notice">O sistema tentou reconhecer as colunas automaticamente. Confira principalmente <b>Endereço</b> e <b>SPX TN</b>.</div>
+   <div id="mappingFields"></div>
+   <div class="tablewrap" style="margin-top:12px"><table id="previewTable"></table></div>
+  </div>
+  <div class="dialog-foot"><button class="btn btn-white" data-close="mappingModal">Cancelar</button><button class="btn btn-blue" id="confirmImport">Importar rota</button></div>
+ </div>
 </div>
 
-
-
-<div id="listaProdutos">
-
+<div class="modal" id="stopModal">
+ <div class="dialog">
+  <div class="dialog-head"><strong id="stopModalTitle">Adicionar parada</strong><button class="ibtn" data-close="stopModal">×</button></div>
+  <div class="dialog-body">
+   <input type="hidden" id="editId">
+   <div class="grid2">
+    <div class="field"><label>Nome / destinatário</label><input class="control" id="fName"></div>
+    <div class="field"><label>SPX TN</label><input class="control" id="fTn"></div>
+   </div>
+   <div class="field"><label>Endereço completo</label><input class="control" id="fAddress" placeholder="Rua, número, bairro, cidade, UF, CEP"></div>
+   <div class="grid2">
+    <div class="field"><label>Latitude (opcional)</label><input class="control" id="fLat" inputmode="decimal"></div>
+    <div class="field"><label>Longitude (opcional)</label><input class="control" id="fLng" inputmode="decimal"></div>
+   </div>
+   <div class="field"><label>Observações</label><textarea class="control" id="fNotes" rows="3"></textarea></div>
+  </div>
+  <div class="dialog-foot"><button class="btn btn-white" data-close="stopModal">Cancelar</button><button class="btn btn-blue" id="saveStop">Salvar</button></div>
+ </div>
 </div>
 
-
-</section>
-
-
-
-
-
-
-<section id="vendedor" class="pagina escondido">
-
-
-<h1>
-Painel Vendedor
-</h1>
-
-
-
-<input 
-id="codigoEAN"
-placeholder="Digite ou bipar EAN"
->
-
-
-<button onclick="buscarEAN()">
-Buscar
-</button>
-
-
-
-<div id="resultadoEAN">
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-
-<section id="admin" class="pagina escondido">
-
-
-<h1>
-Painel Administrativo
-</h1>
-
-
-<input id="adminSenha"
-placeholder="Senha"
-type="password"
->
-
-
-<button onclick="loginAdmin()">
-Entrar
-</button>
-
-
-
-<div id="painelAdmin" class="escondido">
-
-
-<h2>
-Cadastro Produto
-</h2>
-
-
-<input id="nomeProduto"
-placeholder="Nome produto"
->
-
-
-<input id="marcaProduto"
-placeholder="Marca"
->
-
-
-<input id="referenciaProduto"
-placeholder="Referência"
->
-
-
-<button onclick="cadastrarProduto()">
-Cadastrar
-</button>
-
-
-</div>
-
-
-</section>
-
-
-
-
-
-
-
-<div id="carrinho" class="modal escondido">
-
-
-<div class="caixa">
-
-
-<h2>
-Carrinho
-</h2>
-
-
-<div id="itensCarrinho">
-
-</div>
-
-
-<button onclick="fecharCarrinho()">
-Fechar
-</button>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<script src="script.js"></script>
-
-
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+'use strict';
+
+
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const STORAGE_KEY='spx-route-pro-v2';
+const app={
+ stops:[],
+ markers:[],
+ routeLayer:null,
+ routeGeoJSON:null,
+ routeDistanceKm:0,
+ routeDurationMin:0,
+ rawRows:[],
+ headers:[],
+ detected:{},
+ filename:'',
+ busy:false
+};
+
+const map=L.map('map',{zoomControl:true,preferCanvas:true}).setView([-14.235,-51.9253],4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+ maxZoom:19,
+ attribution:'&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+function uid(){
+ if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+ return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+}
+function text(v){return String(v??'').trim()}
+function normalize(v){
+ return text(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'')
+}
+function html(v){
+ return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+}
+function num(v){
+ if(v===null||v===undefined||v==='')return null;
+ const n=Number(String(v).replace(',','.'));
+ return Number.isFinite(n)?n:null
+}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n))}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function setStatus(msg){$('#status').textContent=msg}
+function toast(msg,ms=3300){
+ const el=$('#toast');el.textContent=msg;el.classList.add('show');
+ clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>el.classList.remove('show'),ms)
+}
+function setProgress(show,value=0){
+ $('#progress').classList.toggle('hidden',!show);
+ $('#progressBar').style.width=clamp(value,0,100)+'%'
+}
+function setBusy(v){
+ app.busy=v;
+ ['#geoBtn','#optBtn','#routeBtn','#exportBtn','#pdfBtn'].forEach(s=>{
+   const el=$(s); if(el)el.dataset.busy=v?'1':'0'
+ });
+ updateButtons()
+}
+function formatKm(v){return Number.isFinite(v)?v.toFixed(v<10?1:0):'0'}
+function formatMinutes(min){
+ if(!Number.isFinite(min)||min<=0)return '—';
+ const h=Math.floor(min/60),m=Math.round(min%60);
+ return h?`${h}h ${m}min`:`${m} min`
+}
+function persist(){
+ try{
+  const payload={stops:app.stops,routeDistanceKm:app.routeDistanceKm,routeDurationMin:app.routeDurationMin,filename:app.filename};
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(payload))
+ }catch(e){}
+}
+function restore(){
+ try{
+  const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;
+  const d=JSON.parse(raw);
+  if(Array.isArray(d.stops)){
+   app.stops=d.stops;
+   app.routeDistanceKm=Number(d.routeDistanceKm)||0;
+   app.routeDurationMin=Number(d.routeDurationMin)||0;
+   app.filename=d.filename||'';
+   redrawMarkers();render();setStatus('Rota restaurada do armazenamento local.')
+  }
+ }catch(e){}
+}
+function resetRouteMetrics(){
+ app.routeDistanceKm=0;app.routeDurationMin=0;app.routeGeoJSON=null;
+ if(app.routeLayer){map.removeLayer(app.routeLayer);app.routeLayer=null}
+}
+function validCoord(s){
+ return Number.isFinite(Number(s.lat))&&Number.isFinite(Number(s.lng))&&Math.abs(Number(s.lat))<=90&&Math.abs(Number(s.lng))<=180
+}
+function mappedStops(){return app.stops.filter(validCoord)}
+function unmappedStops(){return app.stops.filter(s=>!validCoord(s))}
+function stopIndex(id){return app.stops.findIndex(s=>s.id===id)}
+function getStop(id){return app.stops.find(s=>s.id===id)}
+function haversine(a,b){
+ const R=6371,rad=x=>x*Math.PI/180;
+ const dlat=rad(Number(b.lat)-Number(a.lat)),dlng=rad(Number(b.lng)-Number(a.lng));
+ const q=Math.sin(dlat/2)**2+Math.cos(rad(Number(a.lat)))*Math.cos(rad(Number(b.lat)))*Math.sin(dlng/2)**2;
+ return 2*R*Math.asin(Math.sqrt(q))
+}
+function straightDistance(stops){
+ let d=0;for(let i=1;i<stops.length;i++)d+=haversine(stops[i-1],stops[i]);return d
+}
+
+
+const aliases={
+ name:['nome','cliente','destinatario','destinatário','recipient','customer','consignee','buyer name','buyer'],
+ tn:['spx tn','spxtn','tn','tracking','tracking number','trackingnumber','numero de rastreio','número de rastreio','codigo de rastreio','código de rastreio','waybill','awb','shipment id','order tracking'],
+ address:['endereco','endereço','endereco completo','endereço completo','address','full address','delivery address','localizacao','localização'],
+ street:['rua','logradouro','street','avenida','av'],
+ number:['numero','número','num','number','no'],
+ district:['bairro','district','neighborhood'],
+ city:['cidade','city','municipio','município'],
+ state:['uf','estado','state'],
+ zip:['cep','zipcode','zip code','postalcode','postal code'],
+ lat:['latitude','lat'],
+ lng:['longitude','lng','lon','long'],
+ notes:['observacao','observação','observacoes','observações','notes','note','comentario','comentário','remark']
+};
+
+function detectColumn(headers,options){
+ const hs=headers.map(normalize);
+ for(const a of options){
+  const exact=hs.indexOf(normalize(a));
+  if(exact>=0)return headers[exact]
+ }
+ let best=null,bestScore=0;
+ headers.forEach((h,i)=>{
+  const nh=hs[i];
+  options.forEach(a=>{
+   const na=normalize(a);
+   if(na.length>=3&&nh.includes(na)){
+    const score=na.length/Math.max(1,nh.length);
+    if(score>bestScore){bestScore=score;best=h}
+   }
+  })
+ });
+ return best
+}
+function autoDetect(headers){
+ const out={};
+ Object.keys(aliases).forEach(k=>out[k]=detectColumn(headers,aliases[k]));
+ return out
+}
+function buildAddress(row,m){
+ if(m.address&&text(row[m.address]))return text(row[m.address]);
+ const vals=[m.street&&row[m.street],m.number&&row[m.number],m.district&&row[m.district],m.city&&row[m.city],m.state&&row[m.state],m.zip&&row[m.zip]]
+  .map(text).filter(Boolean);
+ return vals.join(', ')
+}
+function rowsToStops(rows,m){
+ const seen=new Set();
+ return rows.map((r,i)=>{
+  const tn=m.tn?text(r[m.tn]):'';
+  const address=buildAddress(r,m);
+  const name=m.name?text(r[m.name]):`Parada ${i+1}`;
+  const lat=m.lat?num(r[m.lat]):null,lng=m.lng?num(r[m.lng]):null;
+  const fingerprint=normalize(tn||`${address}-${name}`);
+  const duplicate=fingerprint&&seen.has(fingerprint);
+  if(fingerprint)seen.add(fingerprint);
+  return{
+   id:uid(),name:name||`Parada ${i+1}`,tn,address,
+   lat,lng,notes:m.notes?text(r[m.notes]):'',
+   geocodeStatus:(lat!==null&&lng!==null)?'mapped':'pending',
+   duplicate,sourceRow:i+2
+  }
+ }).filter(s=>s.address||s.tn||s.name)
+}
+async function readSpreadsheet(file){
+ if(!file)return;
+ if(!/\.(xlsx|xls|csv)$/i.test(file.name)){toast('Formato não suportado. Use XLSX, XLS ou CSV.');return}
+ setBusy(true);setProgress(true,12);setStatus('Lendo planilha...');
+ try{
+  const buf=await file.arrayBuffer();setProgress(true,35);
+  const wb=XLSX.read(buf,{type:'array',cellDates:true});
+  if(!wb.SheetNames.length)throw new Error('Planilha sem abas');
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+  if(!rows.length)throw new Error('A primeira aba não possui linhas de dados');
+  app.rawRows=rows;app.headers=Object.keys(rows[0]||{});app.detected=autoDetect(app.headers);app.filename=file.name;
+  setProgress(true,75);openMapping();setProgress(false,100);setStatus('Confira o mapeamento das colunas antes de importar.')
+ }catch(err){
+  console.error(err);toast('Não foi possível ler a planilha: '+err.message,5000);setStatus('Falha ao ler a planilha.')
+ }finally{setBusy(false);setProgress(false)}
+}
+function fieldOptions(selected){
+ return `<option value="">— não usar —</option>`+app.headers.map(h=>`<option value="${html(h)}" ${h===selected?'selected':''}>${html(h)}</option>`).join('')
+}
+function openMapping(){
+ const labels=[
+  ['name','Nome / destinatário'],['tn','SPX TN / rastreio'],['address','Endereço completo'],
+  ['street','Rua / logradouro'],['number','Número'],['district','Bairro'],['city','Cidade'],
+  ['state','UF / estado'],['zip','CEP'],['lat','Latitude'],['lng','Longitude'],['notes','Observações']
+ ];
+ $('#mappingFields').innerHTML=labels.map(([k,l])=>`<div class="mapping"><label>${l}</label><select class="control mapselect" data-key="${k}">${fieldOptions(app.detected[k])}</select></div>`).join('');
+ const sample=app.rawRows.slice(0,5),heads=app.headers.slice(0,8);
+ $('#previewTable').innerHTML=`<thead><tr>${heads.map(h=>`<th>${html(h)}</th>`).join('')}</tr></thead><tbody>`+
+ sample.map(r=>`<tr>${heads.map(h=>`<td>${html(text(r[h]).slice(0,55))}</td>`).join('')}</tr>`).join('')+'</tbody>';
+ openModal('mappingModal')
+}
+function confirmImport(){
+ const m={};$$('.mapselect').forEach(s=>m[s.dataset.key]=s.value||null);
+ if(!m.address&&!m.street){toast('Selecione Endereço completo ou pelo menos a coluna de Rua/Logradouro.');return}
+ const stops=rowsToStops(app.rawRows,m);
+ if(!stops.length){toast('Nenhuma parada válida encontrada.');return}
+ app.stops=stops;resetRouteMetrics();closeModal('mappingModal');redrawMarkers();render();persist();
+ const dup=stops.filter(s=>s.duplicate).length;
+ setStatus(`${stops.length} paradas importadas${dup?`; ${dup} possível(is) duplicada(s)`:''}.`);
+ toast(`Rota importada: ${stops.length} paradas.`)
+}
+
+
+function updateButtons(){
+ const total=app.stops.length,mapped=mappedStops().length,busy=app.busy;
+ $('#geoBtn').disabled=busy||!total||!app.stops.some(s=>s.address&&!validCoord(s));
+ $('#optBtn').disabled=busy||mapped<3;
+ $('#routeBtn').disabled=busy||mapped<2;
+ $('#exportBtn').disabled=busy||!total;
+ $('#pdfBtn').disabled=busy||!total
+}
+function render(){
+ const q=normalize($('#search').value);
+ const list=app.stops.filter(s=>!q||normalize(`${s.name} ${s.tn} ${s.address} ${s.notes}`).includes(q));
+ const mapped=mappedStops().length,unmapped=app.stops.length-mapped;
+ $('#mTotal').textContent=app.stops.length;
+ $('#mMapped').textContent=mapped;
+ $('#mKm').textContent=app.routeDistanceKm?formatKm(app.routeDistanceKm):'0';
+ $('#mTime').textContent=app.routeDurationMin?Math.round(app.routeDurationMin):'0';
+ $('#rkStops').textContent=app.stops.length;
+ $('#rkUnmapped').textContent=unmapped;
+ $('#rkKm').textContent=(app.routeDistanceKm?formatKm(app.routeDistanceKm):'0')+' km';
+ $('#rkTime').textContent=formatMinutes(app.routeDurationMin);
+ $('#listInfo').textContent=`${list.length} de ${app.stops.length}`;
+ const box=$('#stopList');
+ if(!list.length){box.innerHTML='<div class="empty">Nenhuma parada encontrada.</div>';updateButtons();return}
+ box.innerHTML=list.map(s=>{
+  const i=stopIndex(s.id),bad=!validCoord(s)&&s.geocodeStatus==='failed';
+  return `<div class="stop ${bad?'bad':''}" data-id="${s.id}">
+   <div class="seq">${i+1}</div>
+   <div>
+    <div class="stop-title">${html(s.name||`Parada ${i+1}`)}</div>
+    <div class="stop-address">${html(s.address||'Sem endereço')}</div>
+    <div class="stop-meta">
+     ${s.tn?`<span class="pill">SPX TN ${html(s.tn)}</span>`:''}
+     ${validCoord(s)?'<span class="pill green">mapeada</span>':bad?'<span class="pill red">não localizada</span>':'<span class="pill">aguardando mapa</span>'}
+     ${s.duplicate?'<span class="pill red">possível duplicada</span>':''}
+    </div>
+   </div>
+   <div class="stopbuttons">
+    <button class="ibtn" title="Ver no mapa" onclick="focusStop('${s.id}')">⌖</button>
+    <button class="ibtn" title="Editar" onclick="editStop('${s.id}')">✎</button>
+    <button class="ibtn" title="Mover para cima" onclick="moveStop('${s.id}',-1)">↑</button>
+    <button class="ibtn" title="Mover para baixo" onclick="moveStop('${s.id}',1)">↓</button>
+    <button class="ibtn" title="Excluir" onclick="deleteStop('${s.id}')">×</button>
+   </div>
+  </div>`
+ }).join('');
+ updateButtons()
+}
+function markerIcon(n,failed=false){
+ const bg=failed?'#dc2626':'#0b1220';
+ return L.divIcon({className:'',iconSize:[32,32],iconAnchor:[16,32],html:
+ `<div style="width:31px;height:31px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${bg};border:2px solid #fff;box-shadow:0 2px 7px #0005;display:grid;place-items:center"><span style="transform:rotate(45deg);color:#fff;font:800 10px Arial">${n}</span></div>`})
+}
+function clearMarkersOnly(){app.markers.forEach(m=>map.removeLayer(m));app.markers=[]}
+function redrawMarkers(fit=true){
+ clearMarkersOnly();
+ mappedStops().forEach(s=>{
+  const i=stopIndex(s.id);
+  const marker=L.marker([Number(s.lat),Number(s.lng)],{icon:markerIcon(i+1)}).addTo(map);
+  marker.bindPopup(`<b>${html(s.name)}</b><br>${html(s.address)}${s.tn?`<br><b>SPX TN:</b> ${html(s.tn)}`:''}${s.notes?`<br><small>${html(s.notes)}</small>`:''}`);
+  marker.on('click',()=>selectStop(s.id));
+  app.markers.push(marker)
+ });
+ if(fit&&app.markers.length){
+  const group=L.featureGroup(app.markers);
+  map.fitBounds(group.getBounds().pad(.15),{maxZoom:16})
+ }
+}
+function selectStop(id){
+ $$('.stop').forEach(x=>x.classList.toggle('selected',x.dataset.id===id));
+ const row=document.querySelector(`.stop[data-id="${CSS.escape(id)}"]`);if(row)row.scrollIntoView({block:'nearest'})
+}
+window.focusStop=id=>{
+ const s=getStop(id);if(!s)return;
+ if(validCoord(s)){map.setView([Number(s.lat),Number(s.lng)],16);selectStop(id)}
+ else toast('Esta parada ainda não possui coordenadas válidas.')
+};
+window.moveStop=(id,delta)=>{
+ const i=stopIndex(id),j=i+delta;if(i<0||j<0||j>=app.stops.length)return;
+ [app.stops[i],app.stops[j]]=[app.stops[j],app.stops[i]];
+ resetRouteMetrics();redrawMarkers(false);render();persist()
+};
+window.deleteStop=id=>{
+ const s=getStop(id);if(!s)return;
+ if(!confirm(`Excluir a parada "${s.name}"?`))return;
+ app.stops=app.stops.filter(x=>x.id!==id);resetRouteMetrics();redrawMarkers(false);render();persist()
+};
+
+
+function geocodeCacheKey(address){return 'geo:'+normalize(address)}
+function getGeoCache(address){
+ try{const x=localStorage.getItem(geocodeCacheKey(address));return x?JSON.parse(x):null}catch(e){return null}
+}
+function setGeoCache(address,value){
+ try{localStorage.setItem(geocodeCacheKey(address),JSON.stringify(value))}catch(e){}
+}
+async function geocodeOne(stop){
+ const cached=getGeoCache(stop.address);
+ if(cached&&Number.isFinite(cached.lat)&&Number.isFinite(cached.lng))return cached;
+ const q=encodeURIComponent(stop.address);
+ const url=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=br&addressdetails=1&q=${q}`;
+ const res=await fetch(url,{headers:{'Accept-Language':'pt-BR'}});
+ if(!res.ok)throw new Error(`Geocodificação HTTP ${res.status}`);
+ const data=await res.json();
+ if(!data.length)return null;
+ const out={lat:Number(data[0].lat),lng:Number(data[0].lon),display:data[0].display_name||''};
+ setGeoCache(stop.address,out);return out
+}
+async function geocodeAll(){
+ const pending=app.stops.filter(s=>s.address&&!validCoord(s));
+ if(!pending.length){toast('Não há endereços pendentes para mapear.');return}
+ setBusy(true);setProgress(true,0);
+ let ok=0,fail=0;
+ try{
+  for(let i=0;i<pending.length;i++){
+   const s=pending[i];setStatus(`Mapeando ${i+1}/${pending.length}: ${s.address}`);setProgress(true,(i/pending.length)*100);
+   try{
+    const r=await geocodeOne(s);
+    if(r){s.lat=r.lat;s.lng=r.lng;s.geocodeStatus='mapped';ok++}
+    else{s.geocodeStatus='failed';fail++}
+   }catch(err){
+    console.warn(err);s.geocodeStatus='failed';fail++
+   }
+   if(i<pending.length-1)await sleep(1100)
+  }
+  resetRouteMetrics();redrawMarkers();render();persist();
+  setStatus(`Mapeamento concluído: ${ok} localizada(s), ${fail} não localizada(s).`);
+  toast(`Mapeamento concluído: ${ok} localizada(s), ${fail} não localizada(s).`,5000)
+ }finally{setProgress(false);setBusy(false)}
+}
+function routeDistance(arr){return straightDistance(arr)}
+function nearestNeighbor(stops){
+ if(stops.length<2)return [...stops];
+ const remaining=stops.slice(1),ordered=[stops[0]];
+ while(remaining.length){
+  const last=ordered[ordered.length-1];
+  let best=0,bestD=Infinity;
+  for(let i=0;i<remaining.length;i++){
+   const d=haversine(last,remaining[i]);
+   if(d<bestD){bestD=d;best=i}
+  }
+  ordered.push(remaining.splice(best,1)[0])
+ }
+ return ordered
+}
+function twoOpt(route,maxPasses=20){
+ if(route.length<4)return route;
+ let best=[...route],bestDist=routeDistance(best),pass=0,improved=true;
+ while(improved&&pass++<maxPasses){
+  improved=false;
+  for(let i=1;i<best.length-2;i++){
+   for(let k=i+1;k<best.length-1;k++){
+    const candidate=[...best.slice(0,i),...best.slice(i,k+1).reverse(),...best.slice(k+1)];
+    const d=routeDistance(candidate);
+    if(d+0.001<bestDist){best=candidate;bestDist=d;improved=true}
+   }
+  }
+ }
+ return best
+}
+async function optimizeRoute(){
+ const geo=mappedStops(),rest=unmappedStops();
+ if(geo.length<3)return;
+ setBusy(true);setStatus('Otimizando ordem das paradas...');
+ await sleep(30);
+ try{
+  const initial=straightDistance(geo);
+  let ordered=nearestNeighbor(geo);
+  ordered=twoOpt(ordered,25);
+  const final=straightDistance(ordered);
+  app.stops=[...ordered,...rest];
+  resetRouteMetrics();redrawMarkers();render();persist();
+  const gain=initial>0?((initial-final)/initial*100):0;
+  setStatus(`Ordem otimizada por coordenadas. Redução geométrica estimada: ${Math.max(0,gain).toFixed(1)}%. Agora use "Traçar ruas".`);
+  toast('Sequência otimizada. Trace a rota viária para distância e tempo reais.')
+ }finally{setBusy(false)}
+}
+function chunkRouteStops(stops,maxCoords=90){
+ if(stops.length<=maxCoords)return [stops];
+ const chunks=[];let i=0;
+ while(i<stops.length){
+  const start=i===0?i:i-1;
+  const end=Math.min(stops.length,start+maxCoords);
+  chunks.push(stops.slice(start,end));
+  if(end>=stops.length)break;
+  i=end
+ }
+ return chunks
+}
+async function osrmRoute(stops){
+ const coords=stops.map(s=>`${Number(s.lng)},${Number(s.lat)}`).join(';');
+ const url=`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
+ const res=await fetch(url);
+ if(!res.ok)throw new Error(`Roteamento HTTP ${res.status}`);
+ const data=await res.json();
+ if(data.code!=='Ok'||!data.routes?.length)throw new Error(data.message||'Rota não encontrada');
+ return data.routes[0]
+}
+async function drawRoadRoute(){
+ const stops=mappedStops();
+ if(stops.length<2)return;
+ setBusy(true);setProgress(true,0);setStatus('Consultando rota pelas ruas...');
+ try{
+  const chunks=chunkRouteStops(stops,90),features=[],allCoords=[];let meters=0,seconds=0;
+  for(let i=0;i<chunks.length;i++){
+   setProgress(true,(i/chunks.length)*100);
+   const r=await osrmRoute(chunks[i]);
+   meters+=r.distance||0;seconds+=r.duration||0;
+   const c=r.geometry?.coordinates||[];
+   if(allCoords.length&&c.length)allCoords.push(...c.slice(1));else allCoords.push(...c)
+  }
+  const geojson={type:'Feature',properties:{},geometry:{type:'LineString',coordinates:allCoords}};
+  if(app.routeLayer)map.removeLayer(app.routeLayer);
+  app.routeGeoJSON=geojson;
+  app.routeLayer=L.geoJSON(geojson,{style:{weight:6,opacity:.82}}).addTo(map);
+  app.routeDistanceKm=meters/1000;app.routeDurationMin=seconds/60;
+  map.fitBounds(app.routeLayer.getBounds().pad(.08));
+  render();persist();
+  setStatus(`Rota viária calculada: ${formatKm(app.routeDistanceKm)} km • ${formatMinutes(app.routeDurationMin)}.`);
+  toast('Rota pelas ruas calculada com sucesso.')
+ }catch(err){
+  console.error(err);
+  const d=straightDistance(stops);
+  app.routeDistanceKm=d;app.routeDurationMin=0;
+  if(app.routeLayer)map.removeLayer(app.routeLayer);
+  app.routeLayer=L.polyline(stops.map(s=>[Number(s.lat),Number(s.lng)]),{weight:4,dashArray:'8 8',opacity:.65}).addTo(map);
+  render();persist();
+  setStatus(`Serviço de rota indisponível. Exibindo apenas ligação aproximada entre pontos (${formatKm(d)} km em linha geográfica).`);
+  toast('Não foi possível obter a rota viária agora. O mapa mostra apenas uma aproximação.',5500)
+ }finally{setProgress(false);setBusy(false)}
+}
+
+
+function openModal(id){$('#'+id).classList.add('open')}
+function closeModal(id){$('#'+id).classList.remove('open')}
+$$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+$$('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
+
+function clearStopForm(){
+ $('#editId').value='';$('#fName').value='';$('#fTn').value='';$('#fAddress').value='';
+ $('#fLat').value='';$('#fLng').value='';$('#fNotes').value=''
+}
+function openNewStop(){
+ clearStopForm();$('#stopModalTitle').textContent='Adicionar parada';openModal('stopModal')
+}
+window.editStop=id=>{
+ const s=getStop(id);if(!s)return;
+ $('#editId').value=s.id;$('#fName').value=s.name||'';$('#fTn').value=s.tn||'';$('#fAddress').value=s.address||'';
+ $('#fLat').value=validCoord(s)?s.lat:'';$('#fLng').value=validCoord(s)?s.lng:'';$('#fNotes').value=s.notes||'';
+ $('#stopModalTitle').textContent='Editar parada';openModal('stopModal')
+};
+function saveStop(){
+ const id=$('#editId').value,name=text($('#fName').value),tn=text($('#fTn').value),address=text($('#fAddress').value);
+ const lat=num($('#fLat').value),lng=num($('#fLng').value),notes=text($('#fNotes').value);
+ if(!address&&!tn){toast('Informe pelo menos o endereço ou o SPX TN.');return}
+ if((lat===null)!==(lng===null)){toast('Preencha latitude e longitude juntas, ou deixe ambas vazias.');return}
+ if(lat!==null&&(Math.abs(lat)>90||Math.abs(lng)>180)){toast('Latitude/longitude inválidas.');return}
+ if(id){
+  const s=getStop(id);Object.assign(s,{name:name||s.name,tn,address,lat,lng,notes,geocodeStatus:lat!==null?'mapped':'pending'})
+ }else{
+  app.stops.push({id:uid(),name:name||`Parada ${app.stops.length+1}`,tn,address,lat,lng,notes,geocodeStatus:lat!==null?'mapped':'pending',duplicate:false})
+ }
+ resetRouteMetrics();closeModal('stopModal');redrawMarkers();render();persist()
+}
+function exportXlsx(){
+ const rows=app.stops.map((s,i)=>({
+  Sequencia:i+1,
+  Nome:s.name||'',
+  'SPX TN':s.tn||'',
+  Endereco:s.address||'',
+  Latitude:validCoord(s)?Number(s.lat):'',
+  Longitude:validCoord(s)?Number(s.lng):'',
+  Observacoes:s.notes||'',
+  StatusMapa:validCoord(s)?'Mapeada':s.geocodeStatus==='failed'?'Não localizada':'Pendente'
+ }));
+ const ws=XLSX.utils.json_to_sheet(rows);
+ ws['!cols']=[{wch:10},{wch:25},{wch:25},{wch:60},{wch:14},{wch:14},{wch:35},{wch:18}];
+ const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Rota');
+ XLSX.writeFile(wb,`rota-spx-${new Date().toISOString().slice(0,10)}.xlsx`);
+ toast('XLSX da rota exportado.')
+}
+function pdfText(doc,value,x,y,maxWidth,opts={}){
+ const lines=doc.splitTextToSize(String(value??''),maxWidth);doc.text(lines,x,y,opts);return lines.length
+}
+async function makePdf(){
+ const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
+ const margin=13,pageW=210,pageH=297,contentW=184;
+ let y=16;
+ function header(){
+  doc.setTextColor(16,24,40);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('SPX ROUTE PRO',margin,y);
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Relatório da rota',margin,y+6);
+  doc.setFontSize(8);doc.setTextColor(102,112,133);doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')}`,margin,y+11);
+  y+=17;doc.setDrawColor(220);doc.line(margin,y,197,y);y+=6
+ }
+ function ensure(h){if(y+h>pageH-14){doc.addPage();y=16;header()}}
+ header();
+ doc.setTextColor(16,24,40);doc.setFont('helvetica','bold');doc.setFontSize(10);
+ doc.text(`Paradas: ${app.stops.length}`,margin,y);
+ doc.text(`Mapeadas: ${mappedStops().length}`,70,y);
+ doc.text(`Distância: ${app.routeDistanceKm?formatKm(app.routeDistanceKm)+' km':'não calculada'}`,120,y);y+=6;
+ doc.setFont('helvetica','normal');
+ doc.text(`Tempo estimado: ${formatMinutes(app.routeDurationMin)}`,margin,y);y+=9;
+ for(let i=0;i<app.stops.length;i++){
+  const s=app.stops[i];
+  const addrLines=doc.splitTextToSize(s.address||'Sem endereço',contentW-14);
+  const tnLines=s.tn?doc.splitTextToSize('SPX TN: '+s.tn,contentW-14):[];
+  const noteLines=s.notes?doc.splitTextToSize('Obs.: '+s.notes,contentW-14):[];
+  const h=12+(addrLines.length+tnLines.length+noteLines.length)*4;
+  ensure(h+4);
+  doc.setFillColor(248,250,252);doc.roundedRect(margin,y,contentW,h,2,2,'F');
+  doc.setTextColor(16,24,40);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(`${i+1}. ${s.name||'Parada'}`,margin+4,y+5);
+  let yy=y+10;doc.setFont('helvetica','normal');doc.setFontSize(8);
+  doc.text(addrLines,margin+4,yy);yy+=addrLines.length*4;
+  if(tnLines.length){doc.setTextColor(37,99,235);doc.text(tnLines,margin+4,yy);yy+=tnLines.length*4}
+  if(noteLines.length){doc.setTextColor(102,112,133);doc.text(noteLines,margin+4,yy)}
+  y+=h+3
+ }
+ doc.save(`rota-spx-${new Date().toISOString().slice(0,10)}.pdf`);
+ toast('PDF da rota gerado.')
+}
+function newRoute(){
+ if(app.stops.length&&!confirm('Limpar a rota atual e começar outra?'))return;
+ app.stops=[];app.rawRows=[];app.headers=[];app.filename='';resetRouteMetrics();clearMarkersOnly();
+ localStorage.removeItem(STORAGE_KEY);render();map.setView([-14.235,-51.9253],4);setStatus('Nova rota. Importe uma planilha SPX.')
+}
+
+
+const drop=$('#drop'),fileInput=$('#fileInput');
+fileInput.addEventListener('change',e=>{const f=e.target.files?.[0];if(f)readSpreadsheet(f);e.target.value=''});
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer?.files?.[0];if(f)readSpreadsheet(f)});
+$('#confirmImport').addEventListener('click',confirmImport);
+$('#search').addEventListener('input',render);
+$('#clearSearch').addEventListener('click',()=>{$('#search').value='';render();$('#search').focus()});
+$('#geoBtn').addEventListener('click',geocodeAll);
+$('#optBtn').addEventListener('click',optimizeRoute);
+$('#routeBtn').addEventListener('click',drawRoadRoute);
+$('#exportBtn').addEventListener('click',exportXlsx);
+$('#pdfBtn').addEventListener('click',makePdf);
+$('#addBtn').addEventListener('click',openNewStop);
+$('#saveStop').addEventListener('click',saveStop);
+$('#newBtn').addEventListener('click',newRoute);
+window.addEventListener('resize',()=>setTimeout(()=>map.invalidateSize(),100));
+window.addEventListener('beforeunload',persist);
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape')$$('.modal.open').forEach(m=>closeModal(m.id));
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'){e.preventDefault();$('#search').focus()}
+});
+restore();render();
+setTimeout(()=>map.invalidateSize(),150);
+</script>
 </body>
-
 </html>
