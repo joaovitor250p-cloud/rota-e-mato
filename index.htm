@@ -1082,109 +1082,37 @@
         #btnDownloadAuth { display:none !important; }
         @media (max-width:380px) { .auth-access-card,.auth-plans-card{padding:16px 14px}.auth-title-premium{font-size:1.48rem}.auth-benefits span{font-size:.6rem} }
 
-/* ===== PACOTE É MATO - REFINO MOBILE APP =====
-   Somente camada visual. Não altera lógica JS, Firebase,
-   câmera, bipagem, pagamentos ou assinaturas.
-*/
-
-body{
-    padding-bottom:0!important;
-}
-
-#telaBloqueio{
-    overflow:hidden!important;
-    justify-content:center!important;
-    padding:14px!important;
-}
-
-.auth-wrapper-premium{
-    padding:0!important;
-}
-
-.auth-hero-premium{
-    margin-bottom:12px!important;
-}
-
-.auth-logo-shell{
-    width:70px!important;
-    height:70px!important;
-}
-
-.auth-title-premium{
-    font-size:1.45rem!important;
-}
-
-.auth-copy-premium{
-    font-size:.74rem!important;
-}
-
-.auth-access-card,
-.auth-plans-card{
-    border-radius:18px!important;
-    padding:15px!important;
-    margin-bottom:8px!important;
-}
-
-.auth-benefits{
-    display:none!important;
-}
-
-.input-auth{
-    height:46px!important;
-}
-
-.auth-main-button,
-.auth-trial-button,
-.auth-payment-button{
-    height:46px!important;
-}
-
-/* Cards de assinatura mais estilo aplicativo */
-.auth-plan-stack .plan-item{
-    min-height:62px!important;
-    display:flex!important;
-}
-
-.plan-name{
-    font-size:.86rem!important;
-}
-
-.plan-meta{
-    font-size:.62rem!important;
-}
-
-/* Bipagem: prioridade para câmera e indicadores */
-.camera-viewport{
-    height:calc(100vh - 270px)!important;
-    min-height:300px!important;
-    max-height:520px!important;
-    margin-bottom:10px!important;
-}
-
-.metrics-board{
-    position:sticky;
-    top:0;
-    z-index:20;
-}
-
-.result-panel{
-    border-radius:16px!important;
-}
-
-/* Botão/ícone de visualizar rota */
-.btn-acao-card{
-    border-radius:50%!important;
-    width:42px!important;
-    height:42px!important;
-    padding:0!important;
-}
-
-/* Remove aparência de página longa em telas pequenas */
-@media(max-height:760px){
-    #telaBloqueio{
-        overflow-y:auto!important;
-    }
-}
+/* ===== PACOTE E MATO APP UI V2 ===== */
+html,body{height:100%;overflow:hidden!important;}
+body{position:fixed;width:100%;}
+.container{height:100vh;overflow:hidden!important;padding-bottom:10px!important;}
+#telaBloqueio{height:100vh;overflow:hidden!important;display:flex;align-items:center;justify-content:center;}
+.auth-wrapper-premium{height:100vh!important;max-height:100vh!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:10px!important;padding:16px!important;}
+.auth-header-center{margin:0!important;}
+.auth-copy-premium,.auth-benefits{display:none!important;}
+.auth-logo-shell{transform:scale(.75);margin:-15px auto -20px!important;}
+.brand-title-pro{font-size:1.7rem!important;margin:0!important;}
+.auth-access-card,.auth-plans-card{padding:14px!important;margin:0!important;}
+.auth-section-heading{margin-bottom:8px!important;}
+.referral-details{display:none!important;}
+.auth-main-button,.auth-trial-button,.auth-payment-button{min-height:48px!important;margin-top:8px!important;}
+.plan-stack{display:grid!important;grid-template-columns:1fr 1fr 1fr!important;gap:8px!important;}
+.plan-item{padding:10px!important;min-height:80px!important;}
+.plan-name{font-size:.75rem!important;}
+.plan-meta{display:none!important;}
+.plan-val{font-size:1rem!important;}
+.auth-footer-premium{display:none!important;}
+/* bipagem */
+.hero-banner{margin-top:8px!important;}
+.upload-section{padding:14px!important;}
+#areaExecucao{height:calc(100vh - 150px);display:flex;flex-direction:column;overflow:hidden!important;}
+.metrics-board{order:1!important;margin-bottom:8px!important;}
+.result-panel{order:2!important;margin-bottom:8px!important;}
+.camera-viewport{order:3!important;flex:1!important;min-height:0!important;height:auto!important;}
+#inputManual{order:4!important;margin:8px 0!important;}
+#btnVerParadasModal{width:48px!important;height:48px!important;border-radius:50%!important;font-size:0!important;position:relative!important;}
+#btnVerParadasModal::after{content:'👁️';font-size:22px!important;}
+.upload-section,.card-retomar-rota,.hero-banner{max-height:none!important;}
 
 </style>
 </head>
