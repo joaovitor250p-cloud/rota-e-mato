@@ -1081,6 +1081,83 @@
         .auth-footer-status span { display:inline-block; width:6px; height:6px; border-radius:50%; background:#22c55e; margin-right:4px; box-shadow:0 0 8px rgba(34,197,94,.55); }
         #btnDownloadAuth { display:none !important; }
         @media (max-width:380px) { .auth-access-card,.auth-plans-card{padding:16px 14px}.auth-title-premium{font-size:1.48rem}.auth-benefits span{font-size:.6rem} }
+
+
+/* ===== AJUSTES PREMIUM FINAIS ===== */
+
+/* Plano R$ 9,99 */
+.plan-item.featured {
+    overflow: visible !important;
+    position: relative;
+    margin-top: 14px;
+}
+
+.plan-badge-top {
+    top: 8px !important;
+    right: 12px !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    font-size: .55rem !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    z-index: 10;
+}
+
+/* Barra lateral profissional */
+.drawer-panel {
+    width: 260px !important;
+    padding: 22px 16px !important;
+    background: linear-gradient(180deg,#0b0d0c,#050605) !important;
+}
+
+.drawer-panel .nav-btn,
+.drawer-panel button {
+    border-radius: 14px;
+    min-height: 46px;
+    font-weight: 800;
+}
+
+/* Separação visual */
+.drawer-section-title {
+    color:#34d399;
+    font-size:.62rem;
+    font-weight:900;
+    letter-spacing:1px;
+    margin:18px 0 10px;
+    text-transform:uppercase;
+}
+
+/* Esconder download do app */
+#btnDownloadAuth,
+.btn-download-app,
+.download-app-option {
+    display:none !important;
+}
+
+/* Histórico mais organizado */
+.history-item {
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:10px;
+}
+
+.history-item .date,
+.history-item .time {
+    color:#34d399;
+    font-weight:800;
+}
+
+/* Melhor visual mobile */
+@media(max-width:420px){
+    .drawer-panel{
+        width:250px !important;
+    }
+
+    .plan-item{
+        padding:14px !important;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -1849,7 +1926,7 @@
                 whatsapp_placeholder: "Número com DDD",
                 password_placeholder: "Crie ou digite sua senha",
                 btn_enter: "Entrar no Sistema",
-                btn_trial: "Testar 3 Dias Grátis",
+                btn_trial: "Testar 10 Dias Grátis",
                 choose_plan: "Planos de Acesso",
                 plan_weekly_name: "Plano Semanal",
                 plan_weekly_meta: "7 dias de acesso total",
