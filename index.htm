@@ -455,7 +455,7 @@
 
         .plan-item.featured { border-color: rgba(16, 185, 129, 0.45); }
 
-        .plan-badge-top {
+        .plan-badge-top { top: -8px; transform: translateY(-1px);
             position: absolute;
             top: -7px;
             right: 12px;
@@ -1081,131 +1081,6 @@
         .auth-footer-status span { display:inline-block; width:6px; height:6px; border-radius:50%; background:#22c55e; margin-right:4px; box-shadow:0 0 8px rgba(34,197,94,.55); }
         #btnDownloadAuth { display:none !important; }
         @media (max-width:380px) { .auth-access-card,.auth-plans-card{padding:16px 14px}.auth-title-premium{font-size:1.48rem}.auth-benefits span{font-size:.6rem} }
-
-        /* =========================================================
-           PACOTE É MATO — NATIVE MOBILE REDESIGN
-           Somente camada visual + fluxo de navegação. IDs e funções
-           existentes de login, pagamento, PDF e scanner são preservados.
-           ========================================================= */
-        html, body { width:100%; height:100%; min-height:100%; overflow:hidden; }
-        body { min-height:100dvh; height:100dvh; padding:0; background:#000; overscroll-behavior:none; }
-        button,input { touch-action:manipulation; }
-
-        #telaBloqueio.auth-screen-native {
-            position:fixed; inset:0; width:100%; height:100dvh; min-height:100dvh;
-            padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
-            display:flex; align-items:center; justify-content:center; overflow:hidden;
-            background:
-                radial-gradient(circle at 50% 0%, rgba(16,185,129,.20), transparent 38%),
-                linear-gradient(180deg,#07100c 0%,#030504 48%,#000 100%);
-            z-index:1000000;
-        }
-        #telaBloqueio.auth-screen-native::before { content:""; position:absolute; inset:0; pointer-events:none; opacity:.25; background:radial-gradient(circle at 50% 35%,transparent 0 24%,rgba(0,0,0,.34) 70%); }
-        .native-auth-shell { position:relative; z-index:2; width:min(100%,430px); max-height:100%; display:flex; flex-direction:column; justify-content:center; gap:10px; }
-        .native-auth-brand { text-align:center; flex:0 0 auto; }
-        .native-auth-logo { width:60px; height:60px; margin:0 auto 8px; filter:drop-shadow(0 10px 26px rgba(16,185,129,.28)); }
-        .native-auth-logo .app-logo-pro { width:100%; height:100%; }
-        .native-auth-kicker { color:#34d399; font:900 .61rem/1 'Chakra Petch',sans-serif; letter-spacing:2px; margin-bottom:3px; }
-        .native-auth-title { color:#fff; font-size:1.52rem; line-height:1.04; font-weight:900; letter-spacing:-.8px; }
-        .native-auth-subtitle { color:#7e8a85; font-size:.68rem; margin-top:5px; }
-        .native-auth-card { background:rgba(12,17,15,.92); border:1px solid rgba(255,255,255,.08); border-radius:22px; padding:15px; box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 1px rgba(255,255,255,.035); }
-        .native-card-topline { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; color:#8a9791; font-size:.59rem; font-weight:900; letter-spacing:1.1px; }
-        .native-card-topline b { color:#34d399; font-size:.57rem; letter-spacing:.5px; }
-        .native-label { display:block; color:#89958f; font-size:.61rem; font-weight:900; text-transform:uppercase; letter-spacing:.7px; margin:0 0 5px 3px; }
-        .native-input-wrap { height:47px; display:flex; align-items:center; gap:9px; padding:0 12px; background:#070a09; border:1px solid rgba(255,255,255,.09); border-radius:13px; margin-bottom:9px; transition:.2s; }
-        .native-input-wrap:focus-within { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.10); }
-        .native-input-wrap > span { opacity:.75; font-size:.92rem; }
-        .native-input { min-width:0; flex:1; width:100%; border:0; outline:0; background:transparent; color:#fff; font-size:.88rem; font-weight:700; }
-        .native-input::placeholder { color:#56615c; }
-        .native-eye { border:0; background:transparent; color:#fff; font-size:1rem; padding:5px; cursor:pointer; }
-        .native-primary { width:100%; height:47px; border:0; border-radius:13px; background:linear-gradient(135deg,#059669,#34d399); color:#00130c; font-size:.9rem; font-weight:900; display:flex; align-items:center; justify-content:center; gap:12px; box-shadow:0 10px 25px rgba(16,185,129,.20); cursor:pointer; }
-        .native-primary b { font-size:1.1rem; }
-        .native-trial { width:100%; min-height:39px; margin-top:7px; border:1px solid rgba(52,211,153,.20); border-radius:12px; background:rgba(16,185,129,.06); color:#d9fbe9; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:7px; padding:7px 10px; text-align:left; cursor:pointer; }
-        .native-trial span:nth-child(2) { font-size:.75rem; font-weight:900; }
-        .native-trial small { color:#6f7b76; font-size:.55rem; }
-        .native-plan-launch { width:100%; min-height:53px; border:1px solid rgba(255,255,255,.09); border-radius:16px; background:#0b0f0d; color:#fff; display:flex; align-items:center; gap:11px; padding:9px 12px; cursor:pointer; text-align:left; }
-        .native-plan-icon { width:34px; height:34px; display:grid; place-items:center; border-radius:11px; background:rgba(16,185,129,.12); color:#34d399; }
-        .native-plan-launch span:nth-child(2) { flex:1; display:flex; flex-direction:column; gap:2px; }
-        .native-plan-launch small { color:#6f7b76; font-size:.53rem; font-weight:900; letter-spacing:1px; }
-        .native-plan-launch strong { font-size:.77rem; }
-        .native-plan-launch > b { color:#34d399; font-size:1.3rem; font-weight:500; }
-        .native-referral { background:transparent; color:#87928d; font-size:.64rem; }
-        .native-referral summary { list-style:none; text-align:center; padding:3px; cursor:pointer; }
-        .native-referral summary::-webkit-details-marker { display:none; }
-        .native-referral-body { background:#080b0a; border:1px solid rgba(255,255,255,.06); border-radius:13px; padding:10px; margin-top:3px; }
-        .native-referral-body small { color:#59645f; font-size:.56rem; }
-        .native-auth-footer { text-align:center; color:#4e5954; font-size:.54rem; padding-top:1px; }
-
-        .plans-screen-native { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; padding:calc(env(safe-area-inset-top) + 15px) 16px calc(env(safe-area-inset-bottom) + 15px); background:linear-gradient(180deg,#06100c,#020302 55%,#000); transform:translateX(105%); transition:transform .28s cubic-bezier(.2,.8,.2,1); }
-        .plans-screen-native.active { transform:translateX(0); }
-        .plans-native-head { display:flex; align-items:center; gap:11px; flex:0 0 auto; }
-        .native-back { width:40px; height:40px; border:1px solid rgba(255,255,255,.09); background:#0b0f0d; color:#fff; border-radius:13px; font-size:1.65rem; line-height:1; cursor:pointer; }
-        .plans-native-head div { flex:1; display:flex; flex-direction:column; gap:2px; }
-        .plans-native-head small { color:#34d399; font-size:.56rem; font-weight:900; letter-spacing:1.4px; }
-        .plans-native-head strong { font-size:1.05rem; }
-        .plans-native-head > span { opacity:.8; }
-        .plans-native-intro { color:#6f7b76; font-size:.65rem; line-height:1.4; margin:12px 2px 14px; }
-        .plans-native-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; flex:0 0 auto; }
-        .plan-native-card { min-width:0; min-height:157px; padding:13px 8px 10px; border-radius:17px; border:1px solid rgba(255,255,255,.08); background:#090d0b; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; cursor:pointer; position:relative; box-shadow:inset 0 1px rgba(255,255,255,.025); }
-        .plan-native-card.selecionado { border-color:#34d399 !important; background:linear-gradient(180deg,rgba(16,185,129,.16),#090d0b); box-shadow:0 0 0 2px rgba(16,185,129,.10),0 12px 30px rgba(16,185,129,.12); }
-        .plan-native-featured { border-color:rgba(52,211,153,.34); }
-        .plan-native-days { color:#34d399; font-size:1.45rem; line-height:1; font-weight:900; }
-        .plan-native-days small { display:block; font-size:.46rem; letter-spacing:1px; margin-top:3px; }
-        .plan-native-name { color:#fff; font-size:.72rem; font-weight:900; margin-top:10px; }
-        .plan-native-price { color:#fff; font-size:.86rem; font-weight:900; margin-top:6px; }
-        .plan-native-meta { color:#626e69; font-size:.5rem; margin-top:3px; }
-        .plans-native-grid .plan-badge-top { top:-7px; right:7px; font-size:.45rem; padding:3px 5px; }
-        .plans-native-selected { flex:1; min-height:38px; display:flex; align-items:center; justify-content:center; color:#64716b; font-size:.63rem; text-align:center; }
-        .native-payment-button { min-height:49px; border-radius:14px; margin:0 !important; display:none; }
-        .plans-native-safe { text-align:center; color:#4d5b54; font-size:.51rem; margin-top:8px; }
-        .plans-screen-native .plan-item .plan-name,.plans-screen-native .plan-item .plan-meta,.plans-screen-native .plan-item .plan-val { display:none; }
-
-        #elTopNav { width:100%; max-width:none; height:58px; padding:10px 14px 7px; flex:0 0 58px; background:rgba(0,0,0,.94); border-bottom:1px solid rgba(255,255,255,.06); backdrop-filter:blur(14px); }
-        #elTopNav .nav-btn { border-radius:13px; padding:8px 12px; background:#0b0f0d; }
-        .container { max-width:520px; width:100%; height:calc(100dvh - 58px); min-height:0; padding:10px 12px calc(env(safe-area-inset-bottom) + 8px); overflow:hidden; }
-        .hero-banner { padding:11px 12px; margin-bottom:8px; border-radius:17px; }
-        .hero-banner .app-logo-pro { width:45px !important; height:45px !important; }
-        .hero-banner > div:first-of-type { font-size:1rem !important; }
-        .btn-instalar-dinamico { margin-bottom:8px; padding:9px 11px; }
-        .upload-section { padding:14px 13px; margin-bottom:8px; border-radius:17px; }
-        .route-eye-btn,.scanner-eye-btn { width:40px; height:40px; border:1px solid rgba(255,255,255,.09); border-radius:13px; background:#0b0f0d; color:#fff; display:grid; place-items:center; font-size:1rem; cursor:pointer; }
-        .scanner-mode .hero-banner, .scanner-mode #btnDownloadPrincipal, .scanner-mode #bannerBroadcast, .scanner-mode #cardRetomarRota, .scanner-mode #elSecaoUpload { display:none !important; }
-        .scanner-mode .container { height:calc(100dvh - 58px); padding:7px 10px calc(env(safe-area-inset-bottom) + 7px); }
-        #areaExecucao { height:100%; display:flex; flex-direction:column; min-height:0; }
-        .scanner-route-bar { height:42px; flex:0 0 42px; display:flex; align-items:center; justify-content:space-between; }
-        .scanner-back-btn { border:0; background:transparent; color:#d8dfdc; font-size:.75rem; font-weight:800; padding:7px 4px; cursor:pointer; }
-        .scanner-back-btn:first-letter { color:#34d399; font-size:1.4rem; }
-        .metrics-board { flex:0 0 66px; margin-bottom:7px; padding:7px; border-radius:15px; }
-        .metric-val { font-size:1.15rem; }
-        .metric-lbl { font-size:.54rem; }
-        .result-panel { flex:0 0 auto; margin-bottom:7px; padding:9px; border-radius:15px; }
-        .stop-number { font-size:2rem; margin-bottom:2px; }
-        .stop-address { font-size:.73rem; margin-bottom:2px; }
-        .stop-package-id { font-size:.6rem; }
-        #boxAviso { flex:0 0 auto; margin-bottom:7px !important; padding:7px !important; font-size:.65rem !important; }
-        .camera-viewport { flex:1 1 auto; min-height:0; height:auto; margin:0; border-radius:19px; }
-        #reader, #reader > div { width:100% !important; height:100% !important; }
-        #reader video { width:100% !important; height:100% !important; object-fit:cover !important; }
-        #inputManual { flex:0 0 43px; min-height:43px; margin:7px 0 0 !important; border-radius:13px; }
-        .scanner-mode .camera-viewport { min-height:0; }
-
-        @media (max-height:720px) {
-            .native-auth-shell { gap:6px; }
-            .native-auth-logo { width:48px; height:48px; margin-bottom:5px; }
-            .native-auth-title { font-size:1.3rem; }
-            .native-auth-subtitle { font-size:.61rem; }
-            .native-auth-card { padding:12px; }
-            .native-input-wrap { height:42px; margin-bottom:6px; }
-            .native-primary { height:43px; }
-            .native-trial { min-height:35px; }
-            .native-plan-launch { min-height:46px; }
-            .native-auth-footer { display:none; }
-            .plan-native-card { min-height:145px; }
-        }
-        @media (min-width:600px) {
-            .native-auth-shell { width:430px; }
-        }
-
 </style>
 </head>
 <body>
@@ -1238,101 +1113,131 @@
 
     <div id="toastNotificacao"></div>
 
-    <div id="telaBloqueio" class="auth-screen-native">
-        <div class="native-auth-shell">
-            <div class="native-auth-brand">
-                <div class="native-auth-logo">
+    <div id="telaBloqueio">
+        <div class="auth-wrapper auth-wrapper-premium">
+            <div class="auth-header-center auth-hero-premium">
+                <div class="auth-logo-shell">
                     <svg class="app-logo-pro" viewBox="0 0 100 100" onclick="registrarCliqueAdmin()">
                         <defs>
-                            <linearGradient id="loginBoxGradNew" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#047857"/>
+                            <linearGradient id="logoBoxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#059669"/>
+                                <stop offset="100%" stop-color="#047857"/>
+                            </linearGradient>
+                            <linearGradient id="logoPlantGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#34d399"/>
+                                <stop offset="100%" stop-color="#10b981"/>
                             </linearGradient>
                         </defs>
-                        <rect width="100" height="100" rx="24" fill="#07100c" stroke="#10b981" stroke-width="2"/>
-                        <path d="M22 68 Q10 46 28 32 Q38 50 22 68 Z" fill="#34d399"/>
-                        <path d="M78 68 Q90 46 72 32 Q62 50 78 68 Z" fill="#10b981"/>
-                        <polygon points="50,22 78,36 50,50 22,36" fill="#10b981" stroke="#6ee7b7" stroke-width="1.5"/>
-                        <polygon points="22,36 50,50 50,78 22,64" fill="url(#loginBoxGradNew)"/>
-                        <polygon points="78,36 50,50 50,78 78,64" fill="#047857"/>
-                        <path d="M50 22 L50 50 M36 43 L64 43" stroke="#d1fae5" stroke-width="2" stroke-linecap="round"/>
+                        <rect width="100" height="100" rx="24" fill="#0b0b0d" stroke="rgba(52,211,153,0.3)" stroke-width="2"/>
+                        <path d="M22 68 Q10 46 28 32 Q38 50 22 68 Z" fill="url(#logoPlantGrad)"/>
+                        <path d="M78 68 Q90 46 72 32 Q62 50 78 68 Z" fill="url(#logoPlantGrad)"/>
+                        <polygon points="50,22 78,36 50,50 22,36" fill="#10b981" stroke="#34d399" stroke-width="1.5"/>
+                        <polygon points="22,36 50,50 50,78 22,64" fill="url(#logoBoxGrad)" stroke="#047857" stroke-width="1.5"/>
+                        <polygon points="78,36 50,50 50,78 78,64" fill="#047857" stroke="#065f46" stroke-width="1.5"/>
+                        <path d="M50 22 L50 50 M36 43 L64 43" stroke="#a7f3d0" stroke-width="2" stroke-linecap="round"/>
                         <path d="M50 78 Q40 60 50 42 Q60 60 50 78 Z" fill="#34d399"/>
+                        <path d="M50 56 Q44 48 38 52 Q42 60 50 56 Z" fill="#6ee7b7"/>
+                        <path d="M50 50 Q56 42 62 46 Q58 54 50 50 Z" fill="#6ee7b7"/>
                     </svg>
                 </div>
-                <div class="native-auth-kicker">PACOTE É MATO</div>
-                <div class="native-auth-title">Seu turno começa aqui.</div>
-                <div class="native-auth-subtitle">Entre para carregar sua rota e começar a bipagem.</div>
+                <div class="auth-kicker">LOGÍSTICA NA PALMA DA MÃO</div>
+                <h1 class="brand-title-pro auth-title-premium" onclick="registrarCliqueAdmin()">PACOTE É MATO</h1>
+                <p class="auth-copy-premium">Bipe, confira e organize seus pacotes antes de sair para a rota.</p>
+                <div class="auth-benefits">
+                    <span>✓ Conferência rápida</span>
+                    <span>✓ Mais segurança na rota</span>
+                </div>
             </div>
 
-            <div class="native-auth-card">
-                <div class="native-card-topline"><span>ACESSO DO MOTORISTA</span><b>● ONLINE</b></div>
-                <label class="native-label" data-i18n="whatsapp_label">Número do WhatsApp</label>
-                <div class="native-input-wrap">
-                    <span>📱</span>
-                    <input type="tel" id="inputTel" class="native-input" placeholder="(00) 00000-0000" maxlength="15" data-i18n-placeholder="whatsapp_placeholder">
+            <div class="auth-access-card">
+                <div class="auth-section-heading">
+                    <div>
+                        <span class="auth-section-eyebrow">ÁREA DO MOTORISTA</span>
+                        <h2>Acesse sua conta</h2>
+                    </div>
+                    <span class="auth-secure-badge">● Seguro</span>
                 </div>
-                <label class="native-label" data-i18n="password_label">Senha</label>
-                <div class="native-input-wrap">
-                    <span>🔐</span>
-                    <input type="password" id="inputSenha" class="native-input" placeholder="Digite sua senha" data-i18n-placeholder="password_placeholder">
-                    <button type="button" class="native-eye" id="toggleSenhaVisivel" onclick="alternarVisibilidadeSenha()" aria-label="Mostrar senha">👁️</button>
+
+                <label class="form-label-pro" data-i18n="whatsapp_label">WhatsApp / Acesso</label>
+                <div class="input-group">
+                    <span class="input-icon-left">📱</span>
+                    <input type="tel" id="inputTel" class="input-auth" placeholder="(00) 00000-0000" maxlength="15" data-i18n-placeholder="whatsapp_placeholder">
                 </div>
-                <button class="native-primary" id="btnEntrarAuth" onclick="autenticarUsuarioFirebase()"><span>Entrar</span><b>→</b></button>
-                <button class="native-trial" id="btnTesteGratis" onclick="ativarTesteGratis()"><span>🎁</span><span data-i18n="btn_trial">3 dias grátis</span><small>uma vez por conta</small></button>
+
+                <label class="form-label-pro" data-i18n="password_label">Sua Senha Pessoal</label>
+                <div class="input-group">
+                    <span class="input-icon-left">🔑</span>
+                    <input type="password" id="inputSenha" class="input-auth com-icone-direita" placeholder="Crie ou digite sua senha" data-i18n-placeholder="password_placeholder">
+                    <span class="input-icon-right" id="toggleSenhaVisivel" onclick="alternarVisibilidadeSenha()">👁️</span>
+                </div>
+
+                <details class="referral-details">
+                    <summary>🎁 Tenho um código de indicação</summary>
+                    <div class="referral-content">
+                        <label class="form-label-pro" style="color:#34d399;">Código de Indicação <span style="color:var(--text-muted);font-weight:600;">(opcional)</span></label>
+                        <div class="input-group" style="margin-bottom:0;">
+                            <span class="input-icon-left">🎟️</span>
+                            <input type="tel" id="inputCupomIndicacao" class="input-auth" placeholder="WhatsApp de quem indicou" maxlength="15">
+                        </div>
+                        <small>Ao usar um código válido, você pode receber dias extras de acesso.</small>
+                    </div>
+                </details>
+
+                <button class="btn-action-primary auth-main-button" id="btnEntrarAuth" onclick="autenticarUsuarioFirebase()">
+                    <span data-i18n="btn_enter">Entrar no Sistema</span> <span aria-hidden="true">→</span>
+                </button>
+                <button class="btn-action-trial auth-trial-button" id="btnTesteGratis" onclick="ativarTesteGratis()">
+                    🎁 <span data-i18n="btn_trial">Testar 10 Dias Grátis</span>
+                </button>
+
                 <div id="msgErro" class="auth-error-message" style="display:none;"></div>
             </div>
 
-            <button class="native-plan-launch" type="button" onclick="abrirTelaPlanos()">
-                <span class="native-plan-icon">⚡</span>
-                <span><small>ASSINATURAS</small><strong>Ver planos e preços</strong></span>
-                <b>›</b>
-            </button>
-
-            <details class="native-referral">
-                <summary>🎁 Tenho código de indicação</summary>
-                <div class="native-referral-body">
-                    <label class="native-label">WhatsApp de quem indicou</label>
-                    <div class="native-input-wrap">
-                        <span>🎟️</span>
-                        <input type="tel" id="inputCupomIndicacao" class="native-input" placeholder="(00) 00000-0000" maxlength="15">
+            <div class="auth-plans-card">
+                <div class="auth-plans-header">
+                    <div>
+                        <span class="auth-section-eyebrow">ASSINATURA</span>
+                        <h3>Escolha seu plano</h3>
                     </div>
-                    <small>Um código válido pode liberar dias extras.</small>
+                    <span class="auth-plans-note">Acesso completo</span>
                 </div>
-            </details>
 
-            <div class="native-auth-footer">🔒 Acesso protegido • Pacote É Mato</div>
-        </div>
+                <div class="plan-stack auth-plan-stack">
+                    <div class="plan-item" id="cardPlano7" onclick="selecionarPlano(7, 4.99, '7 Dias (Semanal)', 'cardPlano7')">
+                        <div>
+                            <div class="plan-name" data-i18n="plan_weekly_name">Plano Semanal</div>
+                            <div class="plan-meta" data-i18n="plan_weekly_meta">7 dias de acesso total</div>
+                        </div>
+                        <div class="plan-val">R$ 4,99</div>
+                    </div>
 
-        <div id="telaPlanos" class="plans-screen-native" aria-hidden="true">
-            <div class="plans-native-head">
-                <button type="button" class="native-back" onclick="fecharTelaPlanos()">‹</button>
-                <div><small>ASSINATURAS</small><strong>Escolha seu acesso</strong></div>
-                <span>🔐</span>
+                    <div class="plan-item featured" id="cardPlano30" onclick="selecionarPlano(30, 9.99, '30 Dias (Mensal)', 'cardPlano30')">
+                        <span class="plan-badge-top" data-i18n="most_popular">Popular</span>
+                        <div>
+                            <div class="plan-name" data-i18n="plan_monthly_name">Plano Mensal (1 Mês)</div>
+                            <div class="plan-meta" data-i18n="plan_monthly_meta">30 dias • Melhor custo-benefício</div>
+                        </div>
+                        <div class="plan-val">R$ 9,99</div>
+                    </div>
+
+                    <div class="plan-item" id="cardPlano90" onclick="selecionarPlano(90, 24.99, '90 Dias (3 Meses)', 'cardPlano90')">
+                        <div>
+                            <div class="plan-name" data-i18n="plan_quarterly_name">Plano Trimestral (3 Meses)</div>
+                            <div class="plan-meta" data-i18n="plan_quarterly_meta">90 dias com desconto</div>
+                        </div>
+                        <div class="plan-val">R$ 24,99</div>
+                    </div>
+                </div>
+
+                <button id="btnConfirmarPagamento" class="btn-gerar-pix-confirm auth-payment-button" onclick="iniciarPixPlanoSelecionado()">
+                    ⚡ <span data-i18n="generate_pix">Gerar Pagamento Pix</span>
+                </button>
             </div>
-            <div class="plans-native-intro">Escolha um período. O pagamento continua usando o mesmo fluxo seguro já existente.</div>
-            <div class="plans-native-grid">
-                <div class="plan-item plan-native-card" id="cardPlano7" onclick="selecionarPlano(7, 4.99, '7 Dias (Semanal)', 'cardPlano7')">
-                    <div class="plan-native-days">7 <small>DIAS</small></div>
-                    <div class="plan-native-name" data-i18n="plan_weekly_name">Semanal</div>
-                    <div class="plan-native-price">R$ 4,99</div>
-                    <div class="plan-native-meta">acesso total</div>
-                </div>
-                <div class="plan-item featured plan-native-card plan-native-featured" id="cardPlano30" onclick="selecionarPlano(30, 9.99, '30 Dias (Mensal)', 'cardPlano30')">
-                    <span class="plan-badge-top" data-i18n="most_popular">Popular</span>
-                    <div class="plan-native-days">30 <small>DIAS</small></div>
-                    <div class="plan-native-name" data-i18n="plan_monthly_name">Mensal</div>
-                    <div class="plan-native-price">R$ 9,99</div>
-                    <div class="plan-native-meta">melhor custo</div>
-                </div>
-                <div class="plan-item plan-native-card" id="cardPlano90" onclick="selecionarPlano(90, 24.99, '90 Dias (3 Meses)', 'cardPlano90')">
-                    <div class="plan-native-days">90 <small>DIAS</small></div>
-                    <div class="plan-native-name" data-i18n="plan_quarterly_name">Trimestral</div>
-                    <div class="plan-native-price">R$ 24,99</div>
-                    <div class="plan-native-meta">economia</div>
-                </div>
+
+            <div class="auth-footer-premium">
+                <button type="button" class="auth-support-link" onclick="abrirSuporteWhatsApp()">💬 Precisa de ajuda? <strong>Falar com o suporte</strong></button>
+                <div class="auth-footer-status"><span></span> Sistema online • Pacote É Mato</div>
             </div>
-            <div class="plans-native-selected" id="plansSelectedHint">Toque em um plano para continuar</div>
-            <button id="btnConfirmarPagamento" class="btn-gerar-pix-confirm auth-payment-button native-payment-button" onclick="iniciarPixPlanoSelecionado()">⚡ <span data-i18n="generate_pix">Gerar Pagamento Pix</span></button>
-            <div class="plans-native-safe">✓ Pagamento processado pelo fluxo atual do aplicativo</div>
         </div>
     </div>
 
@@ -1396,6 +1301,7 @@
                 <span onclick="fecharModalHistorico()" style="cursor:pointer; color:var(--text-muted); font-weight:bold;">✕</span>
             </div>
             <div id="listaHistoricoRotas" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
+                <div id="resumoHistoricoRotas" style="margin-top:10px; font-size:0.72rem; color:#34d399; font-weight:800;"></div>
             <button onclick="fecharModalHistorico()" class="btn-action-primary" style="margin-top:12px;">Fechar</button>
         </div>
     </div>
@@ -1602,10 +1508,19 @@
 
         <div style="margin-bottom:16px;">
             <a href="https://wa.me/5511990059547?text=Ol%C3%A1%2C+preciso+de+suporte+no+app+Pacote+%C3%89+Mato" style="text-decoration:none;">
-                <button class="btn-action-primary" id="btnSuporteSidebar" style="background: linear-gradient(135deg, #059669, #10b981); margin-bottom:0; font-size:0.82rem; padding:10px;">
+                <button class="btn-action-primary" id="btnSuporteSidebar" style="background: linear-gradient(135deg, #059669, #10b981); margin-bottom:0; font-size:0.72rem; padding:7px;">
                     💬 Suporte
                 </button>
             </a>
+        </div>
+
+        <div style="margin-bottom:14px;">
+            <!-- idiomas removidos -->
+            <div class="segmented-control" id="controlLangReal">
+                <button class="segmented-btn active" id="lang_pt" onclick="mudarIdioma('pt')">PT</button>
+                <button class="segmented-btn" id="lang_es" onclick="mudarIdioma('es')">ES</button>
+                <button class="segmented-btn" id="lang_en" onclick="mudarIdioma('en')">EN</button>
+            </div>
         </div>
 
         <div style="margin-bottom:14px;">
@@ -1688,16 +1603,14 @@
                 📄 Escolher Arquivo PDF
             </button>
 
-            <button class="route-eye-btn" id="btnVerParadasModal" aria-label="Ver paradas" title="Ver paradas da rota" style="display:none;" onclick="abrirModalRota()">👁️</button>
+            <button class="btn-action-primary" id="btnVerParadasModal" style="background:var(--surface-2); color:var(--text-main); border:1px solid var(--surface-border); display:none; margin-bottom:0;" onclick="abrirModalRota()">
+                👀 Visualizar Paradas da Rota
+            </button>
 
             <input type="file" id="pdfInput" accept="application/pdf" style="display:none;">
         </div>
 
         <div id="areaExecucao" style="display:none;">
-            <div class="scanner-route-bar">
-                <button type="button" class="scanner-back-btn" onclick="voltarParaUploadRota()">‹ <span>Trocar rota</span></button>
-                <button type="button" class="scanner-eye-btn" onclick="abrirModalRota()" aria-label="Ver paradas" title="Ver paradas">👁️</button>
-            </div>
             <div class="metrics-board" id="elMetricsBoard">
                 <div class="metric-cell">
                     <div class="metric-val" id="valPacotes">0 / 0</div>
@@ -1959,7 +1872,7 @@
                 whatsapp_placeholder: "Número com DDD",
                 password_placeholder: "Crie ou digite sua senha",
                 btn_enter: "Entrar no Sistema",
-                btn_trial: "Testar 3 Dias Grátis",
+                btn_trial: "Testar 10 Dias Grátis",
                 choose_plan: "Planos de Acesso",
                 plan_weekly_name: "Plano Semanal",
                 plan_weekly_meta: "7 dias de acesso total",
@@ -2209,9 +2122,8 @@
         }
 
         function carregarConfiguracoesSalvas() {
-            let lang = 'pt';
-            localStorage.setItem('idioma_preferido','pt');
-            mudarIdioma('pt');
+            let lang = localStorage.getItem('idioma_preferido') || 'pt';
+            mudarIdioma(lang);
 
             let tema = localStorage.getItem('tema_preferido') || 'black_oled';
             mudarTema(tema);
@@ -2577,12 +2489,12 @@
                 if (docZap.exists && docZap.data().jaUsouTeste) {
                     msgErro.innerText = "❌ Este WhatsApp já utilizou o teste gratuito.";
                     msgErro.style.display = 'block';
-                    btn.innerText = "🎁 Testar 3 Dias Grátis";
+                    btn.innerText = "🎁 Testar 10 Dias Grátis";
                     btn.disabled = false;
                     return;
                 }
 
-                let diasTeste = (cupomIndicador && cupomIndicador !== zap && validarNumeroWhatsApp(cupomIndicador)) ? 6 : 3;
+                let diasTeste = 10;
                 let expiraEm = Date.now() + (diasTeste * 24 * 60 * 60 * 1000);
 
                 await db.collection("usuarios").doc(zap).set({
@@ -2594,7 +2506,7 @@
                     deviceId: MEU_DEVICE_ID,
                     jaUsouTeste: true,
                     tipo: "teste",
-                    plano: diasTeste === 6 ? "Teste Grátis (6 Dias - Indicação)" : "Teste Grátis (3 Dias)",
+                    plano: "Teste Grátis (10 Dias)",
                     duracaoDias: diasTeste,
                     indicadoPor: cupomIndicador || "",
                     ativadoEm: Date.now()
@@ -2610,13 +2522,13 @@
                 localStorage.setItem('usuario_zap_salvo', zap);
                 
                 msgErro.style.display = 'none';
-                notificar(diasTeste === 6 ? "🎉 Teste de 6 Dias Ativado com Bônus!" : "🎉 Teste de 3 Dias Ativado com Sucesso!");
+                notificar("🎉 Teste de 10 Dias Ativado com Sucesso!");
                 iniciarMonitoramentoSessao(zap);
 
             } catch(e) {
                 msgErro.innerText = "Erro ao ativar teste: " + e.message;
                 msgErro.style.display = 'block';
-                btn.innerText = "🎁 Testar 3 Dias Grátis";
+                btn.innerText = "🎁 Testar 10 Dias Grátis";
                 btn.disabled = false;
             }
         }
@@ -3251,6 +3163,12 @@
                     </div>
                 `).join('');
             }
+            let resumo = document.getElementById("resumoHistoricoRotas");
+            if (resumo) {
+                let pacotes = hist.reduce((s,h)=>s+(h.pacotes||0),0);
+                let paradas = hist.reduce((s,h)=>s+(h.paradas||0),0);
+                resumo.innerText = `📦 Total: ${pacotes} pacotes • 📍 Total: ${paradas} paradas`;
+            }
             document.getElementById('modalHistoricoRotas').style.display = 'flex';
         }
 
@@ -3401,11 +3319,7 @@
                 document.getElementById('btnVerParadasModal').style.display = 'flex';
 
                 document.getElementById('areaExecucao').style.display = 'block';
-                document.getElementById('elSecaoUpload').style.display = 'none';
-                document.body.classList.add('scanner-mode');
-                document.getElementById('elSecaoUpload').style.display = 'none';
                 document.getElementById('cardRetomarRota').style.display = 'none';
-                document.body.classList.add('scanner-mode');
 
                 atualizarStats();
                 iniciarScanner();
@@ -3792,9 +3706,7 @@
             document.getElementById('btnUploadTxt').innerHTML = "📄 " + nomeArquivo.substring(0, 20) + "...";
             document.getElementById('btnVerParadasModal').style.display = 'flex';
             document.getElementById('areaExecucao').style.display = 'block';
-            document.getElementById('elSecaoUpload').style.display = 'none';
             document.getElementById('cardRetomarRota').style.display = 'none';
-            document.body.classList.add('scanner-mode');
 
             salvarEstadoCompletoRota(nomeArquivo);
             salvarHistoricoRotaConcluida(nomeArquivo, todosPacotes.size, Object.keys(mapaRotas).length);
@@ -3971,39 +3883,6 @@
 
                 window.speechSynthesis.speak(msg);
             } catch(e) {}
-        }
-
-        function abrirTelaPlanos() {
-            const tela = document.getElementById('telaPlanos');
-            if (!tela) return;
-            tela.classList.add('active');
-            tela.setAttribute('aria-hidden', 'false');
-        }
-
-        function fecharTelaPlanos() {
-            const tela = document.getElementById('telaPlanos');
-            if (!tela) return;
-            tela.classList.remove('active');
-            tela.setAttribute('aria-hidden', 'true');
-        }
-
-        async function voltarParaUploadRota() {
-            try { await finalizarCameraHardware(); } catch(e) {}
-            document.body.classList.remove('scanner-mode');
-            const exec = document.getElementById('areaExecucao');
-            const upload = document.getElementById('elSecaoUpload');
-            if (exec) exec.style.display = 'none';
-            if (upload) upload.style.display = 'block';
-            const result = document.getElementById('cardResult');
-            if (result) result.style.display = 'none';
-            const aviso = document.getElementById('boxAviso');
-            if (aviso) aviso.style.display = 'none';
-            const input = document.getElementById('pdfInput');
-            if (input) input.value = '';
-            const uploadBtn = document.getElementById('btnUploadTxt');
-            if (uploadBtn) uploadBtn.innerHTML = '📄 Escolher Arquivo PDF';
-            const eye = document.getElementById('btnVerParadasModal');
-            if (eye) eye.style.display = 'none';
         }
 
         function zerarRota() {
