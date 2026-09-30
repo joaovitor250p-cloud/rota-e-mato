@@ -455,7 +455,7 @@
 
         .plan-item.featured { border-color: rgba(16, 185, 129, 0.45); }
 
-        .plan-badge-top { top: -8px; transform: translateY(-1px);
+        .plan-badge-top { white-space: nowrap; min-width: max-content; 
             position: absolute;
             top: -7px;
             right: 12px;
@@ -1301,7 +1301,6 @@
                 <span onclick="fecharModalHistorico()" style="cursor:pointer; color:var(--text-muted); font-weight:bold;">✕</span>
             </div>
             <div id="listaHistoricoRotas" style="max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
-                <div id="resumoHistoricoRotas" style="margin-top:10px; font-size:0.72rem; color:#34d399; font-weight:800;"></div>
             <button onclick="fecharModalHistorico()" class="btn-action-primary" style="margin-top:12px;">Fechar</button>
         </div>
     </div>
@@ -1493,34 +1492,16 @@
             📲 <span data-i18n="download_app">Baixar App no Celular</span>
         </button>
 
-        <!-- BOTÃO INDIQUE E GANHE DIAS -->
-        <button class="btn-action-primary" style="background:linear-gradient(135deg, #059669, #10b981); color:#fff; margin-bottom:10px;" onclick="abrirModalIndicacao(); toggleSidebar();">
-            🎁 <span>Indique e Ganhe Dias</span>
-        </button>
-
-        <button class="btn-action-primary" style="background:linear-gradient(135deg,#059669,#10b981); color:#fff; margin-bottom:10px;" onclick="toggleSidebar(); abrirTutorialVideo();">
-            ▶️ <span>Assistir Tutorial em Vídeo</span>
-        </button>
-
         <button class="btn-action-primary" style="background:var(--surface-2); color:var(--text-main); border:1px solid var(--surface-border); margin-bottom:14px;" onclick="abrirModalHistorico(); toggleSidebar();">
             📊 <span>Histórico de Rotas</span>
         </button>
 
         <div style="margin-bottom:16px;">
             <a href="https://wa.me/5511990059547?text=Ol%C3%A1%2C+preciso+de+suporte+no+app+Pacote+%C3%89+Mato" style="text-decoration:none;">
-                <button class="btn-action-primary" id="btnSuporteSidebar" style="background: linear-gradient(135deg, #059669, #10b981); margin-bottom:0; font-size:0.72rem; padding:7px;">
+                <button class="btn-action-primary" id="btnSuporteSidebar" style="background: linear-gradient(135deg, #059669, #10b981); margin-bottom:0; font-size:0.82rem; padding:10px;">
                     💬 Suporte
                 </button>
             </a>
-        </div>
-
-        <div style="margin-bottom:14px;">
-            <!-- idiomas removidos -->
-            <div class="segmented-control" id="controlLangReal">
-                <button class="segmented-btn active" id="lang_pt" onclick="mudarIdioma('pt')">PT</button>
-                <button class="segmented-btn" id="lang_es" onclick="mudarIdioma('es')">ES</button>
-                <button class="segmented-btn" id="lang_en" onclick="mudarIdioma('en')">EN</button>
-            </div>
         </div>
 
         <div style="margin-bottom:14px;">
@@ -1872,7 +1853,7 @@
                 whatsapp_placeholder: "Número com DDD",
                 password_placeholder: "Crie ou digite sua senha",
                 btn_enter: "Entrar no Sistema",
-                btn_trial: "Testar 10 Dias Grátis",
+                btn_trial: "Testar 3 Dias Grátis",
                 choose_plan: "Planos de Acesso",
                 plan_weekly_name: "Plano Semanal",
                 plan_weekly_meta: "7 dias de acesso total",
@@ -2522,7 +2503,7 @@
                 localStorage.setItem('usuario_zap_salvo', zap);
                 
                 msgErro.style.display = 'none';
-                notificar("🎉 Teste de 10 Dias Ativado com Sucesso!");
+                notificar(diasTeste === 10 ? "🎉 Teste de 10 Dias Ativado com Sucesso!" : "🎉 Teste Grátis Ativado com Sucesso!");
                 iniciarMonitoramentoSessao(zap);
 
             } catch(e) {
@@ -3158,16 +3139,10 @@
                 container.innerHTML = hist.map(h => `
                     <div style="background:var(--surface-2); padding:10px; border-radius:10px; border:1px solid var(--surface-border);">
                         <div style="font-weight:800; font-size:0.8rem; color:#34d399;">📄 ${h.nome}</div>
-                        <div style="font-size:0.68rem; color:#fff;">${h.pacotes} pacotes • ${h.paradas} paradas</div>
-                        <div style="font-size:0.60rem; color:var(--text-muted);">🕒 Concluída em: ${h.data}</div>
+                        <div style="font-size:0.68rem; color:#fff;">📦 ${h.pacotes} pacotes • 📍 ${h.paradas} paradas</div>
+                        <div style="font-size:0.60rem; color:var(--text-muted);">🕒 Data e hora: ${h.data}</div>
                     </div>
                 `).join('');
-            }
-            let resumo = document.getElementById("resumoHistoricoRotas");
-            if (resumo) {
-                let pacotes = hist.reduce((s,h)=>s+(h.pacotes||0),0);
-                let paradas = hist.reduce((s,h)=>s+(h.paradas||0),0);
-                resumo.innerText = `📦 Total: ${pacotes} pacotes • 📍 Total: ${paradas} paradas`;
             }
             document.getElementById('modalHistoricoRotas').style.display = 'flex';
         }
