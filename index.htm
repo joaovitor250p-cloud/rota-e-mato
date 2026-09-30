@@ -1488,8 +1488,8 @@
         <div style="font-weight:900; font-size:1.05rem; margin-bottom:2px; color:var(--text-main);">PACOTE É MATO</div>
         <div style="font-size:0.68rem; color:#34d399; font-weight:800; margin-bottom:16px;" data-i18n="brand_subtitle">Plataforma de Logística</div>
 
-        <button class="btn-instalar-dinamico" id="btnDownloadSidebar" style="margin-bottom:10px;" onclick="dispararInstalacaoPWA()">
-            📲 <span data-i18n="download_app">Baixar App no Celular</span>
+        <button class="btn-action-primary" style="background:var(--surface-2); color:var(--text-main); border:1px solid var(--surface-border); margin-bottom:10px;" onclick="abrirTutorialVideo(); toggleSidebar();">
+            ▶️ <span>Vídeo Tutorial</span>
         </button>
 
         <button class="btn-action-primary" style="background:var(--surface-2); color:var(--text-main); border:1px solid var(--surface-border); margin-bottom:14px;" onclick="abrirModalHistorico(); toggleSidebar();">
@@ -1536,10 +1536,6 @@
     <div class="container">
         <!-- BANNER DE AVISO GERAL (BROADCAST) COM ANIMAÇÃO -->
         <div id="bannerBroadcast"></div>
-
-        <button id="btnDownloadPrincipal" class="btn-instalar-dinamico" onclick="dispararInstalacaoPWA()">
-            📲 <span data-i18n="download_app">Baixar Aplicativo no Celular</span>
-        </button>
         
         <div class="hero-banner" onclick="registrarCliqueAdmin()">
             <svg class="app-logo-pro" viewBox="0 0 100 100" style="width:62px; height:62px; margin:0 auto 4px;">
